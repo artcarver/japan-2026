@@ -35,16 +35,11 @@ let daysUnsub     = null;
 let currentEditDayId  = null;
 let currentEditActId  = null;
 
-// Seed data: flat activity format for Firestore days collection
-const SEED_ACTS = {
-  '2026-04-15': [
-    { id:'s0001', time:'11:20', title:'Depart LAX — United Flight UA39', category:'transport', notes:'Seats 31L (Gwen) & 31J (Christina) · Confirmation: F354LH · Boeing 787-10 Dreamliner · Duration 11h 45m', cost:0, currency:'USD', driveUrl:'', order:0 },
-  ],
-  '2026-04-16': [
-    { id:'s0002', time:'15:05', title:'Arrive Tokyo Haneda (HND)', category:'transport', notes:'Take Keikyu Line or Tokyo Monorail → Shinjuku (~60–75 min)', cost:0, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0003', time:'17:00', title:'Check in — Hotel Gracery Shinjuku', category:'hotel', notes:'Conf: 5594.831.309 · PIN: 6506 · Standard Twin · Check-in from 14:00 · Kabukicho 1-19-1, Shinjuku · +81 3 6833 1111', cost:200692, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0004', time:'19:00', title:'Omoide Yokocho (Memory Lane)', category:'food', notes:'Tiny yakitori stalls 5 min walk from hotel · ease into Japan tonight', cost:0, currency:'JPY', driveUrl:'', order:2 },
-  ],
+// Drive folder URL (synced via Firestore settings doc)
+let driveFolderUrl = '';
+
+// ── Dates ─────────────────────────────────────────────────────────────────────
+const TRIP_START = new Date('2026-04-15');
   '2026-04-17': [
     { id:'s0005', time:'08:30', title:'teamLab Borderless · Azabudai Hills', category:'activity', notes:'¥5,600/person · 2 tickets booked · Kamiyacho Exit 5 · Wear pants (mirrored floors) · Download teamLab app first · Hit Bubble Universe + Infinite Crystal World first', cost:11200, currency:'JPY', driveUrl:'', order:0 },
     { id:'s0006', time:'12:30', title:'Meiji Shrine · Harajuku', category:'activity', notes:'Very peaceful forested approach · 1-1 Yoyogikamizonocho, Shibuya-ku', cost:0, currency:'JPY', driveUrl:'', order:1 },
@@ -665,12 +660,10 @@ const TIPS_DATA = [
 ];
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
-const landingEl     = document.getElementById('landing');
-const appEl         = document.getElementById('app');
 const itineraryEl   = document.getElementById('itinerary');
 const confirmEl     = document.getElementById('confirmations');
 const checklistEl   = document.getElementById('checklist');
-const tipsEl        = document.getElementById('tips');
+const tipsEl        = null; // merged into Pre-trip tab
 const editBtn       = document.getElementById('editBtn');
 const editBtnLabel  = document.getElementById('editBtnLabel');
 const userAvatar    = document.getElementById('userAvatar');
@@ -690,86 +683,13 @@ const jpyInput      = document.getElementById('jpyInput');
 const usdInput      = document.getElementById('usdInput');
 const currRate      = document.getElementById('currRate');
 const backTop       = document.getElementById('backTop');
-const landingSignIn = document.getElementById('landingSignInBtn');
 const themeColor    = document.getElementById('theme-color-meta');
 
 // ── Landing / App toggle ──────────────────────────────────────────────────────
-const blossomCanvas = document.getElementById('blossom-canvas');
+// Navigate to landing page
+window.showLanding = function () { window.location.href = 'index.html'; };
 
-window.enterApp = function () {
-  landingEl.classList.add('hidden');
-  appEl.classList.remove('hidden');
-  blossomCanvas.classList.add('hidden-canvas'); // hide blossoms in app
-};
-
-window.showLanding = function () {
-  appEl.classList.add('hidden');
-  landingEl.classList.remove('hidden');
-  blossomCanvas.classList.remove('hidden-canvas'); // show blossoms on landing
-};
-
-// ── Cherry blossom canvas — landing page only, very subtle ────────────────────
-(function initBlossoms() {
-  const canvas = document.getElementById('blossom-canvas');
-  const ctx    = canvas.getContext('2d');
-  let petals   = [];
-  const PETAL_COUNT = 8; // subtle
-
-  function resize() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-
-  function createPetal() {
-    return {
-      x:      Math.random() * canvas.width,
-      y:      -20 - Math.random() * 100,
-      r:      3 + Math.random() * 3,
-      rot:    Math.random() * Math.PI * 2,
-      rotV:   (Math.random() - 0.5) * 0.02,
-      vx:     (Math.random() - 0.5) * 0.4,
-      vy:     0.25 + Math.random() * 0.4,
-      sway:   Math.random() * Math.PI * 2,
-      swayR:  0.006 + Math.random() * 0.01,
-      alpha:  0.5 + Math.random() * 0.4,
-      color:  Math.random() > 0.5 ? '#FFB7C5' : '#FFCDD8',
-    };
-  }
-
-  function drawPetal(p) {
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rot);
-    ctx.globalAlpha = p.alpha;
-    ctx.fillStyle   = p.color;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, p.r * 1.4, p.r * 0.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function tick() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    petals.forEach((p, i) => {
-      p.sway += p.swayR;
-      p.x  += p.vx + Math.sin(p.sway) * 0.3;
-      p.y  += p.vy;
-      p.rot += p.rotV;
-      drawPetal(p);
-      if (p.y > canvas.height + 20) petals[i] = createPetal();
-    });
-    requestAnimationFrame(tick);
-  }
-
-  resize();
-  window.addEventListener('resize', resize);
-  for (let i = 0; i < PETAL_COUNT; i++) {
-    const p = createPetal();
-    p.y = Math.random() * window.innerHeight;
-    petals.push(p);
-  }
-  tick();
-})();
+// (blossoms on landing page only — see index.html)
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 const toastEl = document.getElementById('toast');
@@ -1039,35 +959,167 @@ function renderDay(d) {
 }
 
 function renderItem(item) {
-  const cls  = item.type==='booked'?' booked':'';
-  const tag  = item.type==='booked'?'<span class="tag tag-booked">BOOKED</span>':'';
-  const time = item.time?`<div class="act-time">${item.time}</div>`:'<div class="act-time"></div>';
-  const sub  = item.sub?`<div class="act-sub">${item.sub}</div>`:'';
-  const dur  = item.dur?`<div class="act-duration">${item.dur}</div>`:'';
-  const text = item.addr
+  const isSub  = item.sub === true;
+  const cls    = item.type==='booked' && !isSub ? ' booked' : '';
+  const tag    = item.type==='booked' && !isSub ? '<span class="tag tag-booked">BOOKED</span>' : '';
+  const time   = item.time && !isSub ? `<div class="act-time">${item.time}</div>` : '<div class="act-time"></div>';
+  const dur    = item.dur ? `<div class="act-duration">${item.dur}</div>` : '';
+  const textContent = item.addr
     ? `<a href="https://maps.google.com/?q=${encodeURIComponent(item.addr)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-decoration-color:var(--border)">${item.text}</a>${tag}`
     : `${item.text}${tag}`;
+
+  // Sub-items: no time slot, rendered as muted supporting text
+  if (isSub) {
+    return `
+      <div class="act sub-item">
+        <div class="act-time"></div>
+        <div class="act-body">
+          <div class="act-sub" style="padding-left:2px">${textContent}${dur}</div>
+        </div>
+      </div>`;
+  }
+
   return `
     <div class="act${cls}">
       ${time}
       <div class="act-body">
-        <div class="act-text">${text}</div>
-        ${sub}${dur}
+        <div class="act-text">${textContent}</div>
+        ${dur}
+      </div>
+    </div>`;
+}
+
+// ── Drive Folder Helpers ──────────────────────────────────────────────────────
+function driveFolderIdFromUrl(url) {
+  if (!url) return null;
+  // https://drive.google.com/drive/folders/FOLDER_ID
+  // https://drive.google.com/drive/u/0/folders/FOLDER_ID
+  const m = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+function driveFolderEmbedUrl(url) {
+  const id = driveFolderIdFromUrl(url);
+  return id ? `https://drive.google.com/embeddedfolderview?id=${id}#list` : null;
+}
+
+async function saveDriveFolderUrl(url) {
+  driveFolderUrl = url;
+  try {
+    await setDoc(doc(db, 'settings', 'drive'), { folderUrl: url });
+    showToast('Drive folder saved');
+  } catch {
+    // fallback: local
+    try { localStorage.setItem('japan-drive-url', url); } catch {}
+    showToast('Saved locally');
+  }
+  renderConfirmations();
+}
+
+async function loadDriveSettings() {
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'drive'));
+    if (snap.exists()) driveFolderUrl = snap.data().folderUrl || '';
+  } catch {
+    try { driveFolderUrl = localStorage.getItem('japan-drive-url') || ''; } catch {}
+  }
+}
+
+function renderDriveSection() {
+  const embedUrl  = driveFolderEmbedUrl(driveFolderUrl);
+  const folderId  = driveFolderIdFromUrl(driveFolderUrl);
+  const openUrl   = folderId ? `https://drive.google.com/drive/folders/${folderId}` : null;
+
+  const embedHtml = embedUrl
+    ? `<div class="drive-embed-wrap">
+        <iframe src="${embedUrl}" allowfullscreen loading="lazy" title="Confirmation Documents"></iframe>
+       </div>`
+    : `<div class="drive-embed-empty">
+        <svg width="36" height="36" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.25">
+          <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5L6.6 66.85z" fill="#0066DA"/>
+          <path d="M43.65 25L29.9 1.4c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5A8.87 8.87 0 000 53h27.5L43.65 25z" fill="#00AC47"/>
+          <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3L78.3 70l4.8-8.3c.8-1.4 1.2-2.95 1.2-4.5H57.3l5.9 11.05 10.35 8.55z" fill="#EA4335"/>
+          <path d="M43.65 25L57.4 1.4A8.87 8.87 0 0053.65 0H33.65c-1.55 0-3.1.4-4.4 1.1L43.65 25z" fill="#00832D"/>
+          <path d="M57.3 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.45 1.2h50.6c1.55 0 3.1-.4 4.45-1.2L57.3 53z" fill="#2684FC"/>
+          <path d="M73.4 26.5l-12.85-22.2c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 57.3 53h27.45c0-1.55-.4-3.1-1.2-4.5L73.4 26.5z" fill="#FFBA00"/>
+        </svg>
+        <div class="drive-embed-empty-text">
+          ${currentUser ? 'Paste your Google Drive folder link below to embed all confirmation documents.' : 'Sign in to configure the documents folder.'}
+        </div>
+      </div>`;
+
+  const editRow = currentUser ? `
+    <div class="drive-url-row">
+      <input type="url" class="drive-url-input" id="driveUrlInput"
+        placeholder="https://drive.google.com/drive/folders/…"
+        value="${esc(driveFolderUrl)}">
+      <button class="drive-url-save" id="driveUrlSave">Save</button>
+    </div>` : '';
+
+  const openLink = openUrl ? `
+    <a href="${openUrl}" target="_blank" rel="noopener" class="drive-open-btn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Open folder in Google Drive
+    </a>` : '';
+
+  return `
+    <div class="drive-section expanded" id="driveSection">
+      <div class="drive-section-hd" onclick="toggleDriveSection()">
+        <div class="drive-section-left">
+          <div class="drive-icon">
+            <svg width="22" height="19" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5L6.6 66.85z" fill="#0066DA"/>
+              <path d="M43.65 25L29.9 1.4c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5A8.87 8.87 0 000 53h27.5L43.65 25z" fill="#00AC47"/>
+              <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3L78.3 70l4.8-8.3c.8-1.4 1.2-2.95 1.2-4.5H57.3l5.9 11.05 10.35 8.55z" fill="#EA4335"/>
+              <path d="M43.65 25L57.4 1.4A8.87 8.87 0 0053.65 0H33.65c-1.55 0-3.1.4-4.4 1.1L43.65 25z" fill="#00832D"/>
+              <path d="M57.3 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.45 1.2h50.6c1.55 0 3.1-.4 4.45-1.2L57.3 53z" fill="#2684FC"/>
+              <path d="M73.4 26.5l-12.85-22.2c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 57.3 53h27.45c0-1.55-.4-3.1-1.2-4.5L73.4 26.5z" fill="#FFBA00"/>
+            </svg>
+          </div>
+          <div>
+            <div class="drive-section-title">Confirmation Documents</div>
+            <div class="drive-section-sub">${embedUrl ? 'Google Drive folder' : 'No folder linked yet'}</div>
+          </div>
+        </div>
+        <span class="drive-toggle">&#9660;</span>
+      </div>
+      <div class="drive-body">
+        ${embedHtml}
+        ${openLink}
+        ${editRow}
       </div>
     </div>
   `;
 }
 
+window.toggleDriveSection = function() {
+  document.getElementById('driveSection')?.classList.toggle('expanded');
+};
+
 // ── Render: Confirmations ─────────────────────────────────────────────────────
 function renderConfirmations() {
+  // Auth gate — confirmations and prices are private
+  if (!currentUser) {
+    confirmEl.innerHTML = `
+      <div class="auth-gate">
+        <div class="auth-gate-icon">🔒</div>
+        <div class="auth-gate-title">Confirmations are private</div>
+        <div class="auth-gate-sub">Confirmation numbers, costs, and booking details<br>are only visible to Gwen &amp; Christina.</div>
+        <button class="auth-gate-btn" onclick="openAuthModal()">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" opacity=".7" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#fff" opacity=".7" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#fff" opacity=".7" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#fff" opacity=".7" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Sign in with Google
+        </button>
+      </div>`;
+    return;
+  }
   // Cost summary
-  const total = COSTS.reduce((s,c) => s + (c.jpy||0), 0);
-  const totalUSD = COSTS.reduce((s,c) => s + (c.usd||0), 0);
+  const total = bookedCosts.reduce((s,c) => s + (c.jpy||0), 0);
+  const totalUSD = bookedCosts.reduce((s,c) => s + (c.usd||0), 0);
 
   const costHTML = `
     <div class="cost-summary-card">
       <div class="cost-summary-title">Booked Cost Summary</div>
-      ${COSTS.map(c => `
+      ${bookedCosts.map(c => `
         <div class="cost-row">
           <span class="cost-label">${c.label}${c.note?` <span style="font-size:10px;color:var(--light)">(${c.note})</span>`:''}</span>
           <div class="cost-vals">
@@ -1109,7 +1161,15 @@ function renderConfirmations() {
     </div>
   `).join('');
 
-  confirmEl.innerHTML = costHTML + confs;
+  confirmEl.innerHTML = renderDriveSection() + costHTML + confs;
+
+  // Wire Drive folder save
+  const driveInput = document.getElementById('driveUrlInput');
+  const driveSave  = document.getElementById('driveUrlSave');
+  if (driveSave && driveInput) {
+    driveSave.addEventListener('click', () => saveDriveFolderUrl(driveInput.value.trim()));
+    driveInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveDriveFolderUrl(driveInput.value.trim()); });
+  }
 
   // Wire copy buttons
   confirmEl.querySelectorAll('.copy-btn').forEach(btn => {
@@ -1156,6 +1216,16 @@ function renderChecklist() {
   document.querySelectorAll('.check-item').forEach(item => {
     item.addEventListener('click', () => toggleCheck(item.dataset.check));
   });
+
+  // Append Japan Tips + Packing List sections below checklist
+  const existing = document.getElementById('checklist-tips');
+  if (!existing) {
+    const tipDiv = document.createElement('div');
+    tipDiv.id = 'checklist-tips';
+    tipDiv.style.marginTop = '36px';
+    checklistEl.appendChild(tipDiv);
+  }
+  renderTips();
 }
 
 window.toggleChecklistSection = function(id) {
@@ -1175,7 +1245,7 @@ async function toggleCheck(id) {
 
 // ── Render: Japan Tips ────────────────────────────────────────────────────────
 function renderTips() {
-  tipsEl.innerHTML = TIPS_DATA.map(section => `
+  const tipsHtml = TIPS_DATA.map(section => `
     <div class="tips-section">
       <div class="tips-section-title">${section.title}</div>
       ${section.phrases ? `
@@ -1198,6 +1268,88 @@ function renderTips() {
       `).join('')}
     </div>
   `).join('');
+  // Append tips to checklist panel if element exists
+  const tipsContainer = document.getElementById('checklist-tips');
+  if (tipsContainer) tipsContainer.innerHTML = tipsHtml;
+  // Also render packing list
+  renderPackingList();
+}
+
+// ── Render: Packing List ─────────────────────────────────────────────────────
+const PACKING = [
+  {cat:'Clothing — April layers (10°C nights / 20°C days)',items:[
+    'Lightweight trench coat or packable jacket (essential — spring is unpredictable)',
+    '2–3 long-sleeve tops or lightweight knits',
+    '2 short-sleeve tops (for warmer days)',
+    '1 cardigan or fleece for evenings',
+    '2 pairs of pants or jeans (skip one pair — hotels have coin laundry)',
+    '1–2 dresses or skirts (longer styles for temples)',
+    '5–7 pairs of underwear + extra socks (you remove shoes constantly)',
+    'Compact umbrella — everyone uses one, rain jackets stand out',
+    'Comfortable slip-on walking shoes — NO laces (you remove them at temples, ryokan, restaurants)',
+    '1 pair water-resistant shoes for rain days',
+  ]},
+  {cat:'Ryokan (Tensui Saryo)',items:[
+    'Yukata and slippers are provided — you will live in them',
+    'Bring your own toiletries if you prefer your brands (shampoo/conditioner provided)',
+    'A small bag for the onsen area (towel provided)',
+    'NO need to pack pajamas',
+  ]},
+  {cat:'Toiletries',items:[
+    'Deodorant (bring your own — Japanese versions are mild)',
+    'Feminine hygiene products (tampons are hard to find — bring from home)',
+    'Sunscreen SPF 30+ (apply daily — you will walk 20,000 steps)',
+    'Any prescription medications in original packaging + a letter from your doctor',
+    'Antihistamines — sakura season means high pollen',
+    'Ibuprofen / Tylenol (easy to find in Japan but bring some)',
+    'Hand sanitizer + small pack of tissues (some bathrooms have no paper towels)',
+    'Lip balm and moisturizer (urban air is dry)',
+    'Leave fragrances at home — heavy perfume is considered rude in Japan',
+  ]},
+  {cat:'Documents & Money',items:[
+    'Passport (6+ months validity, 1+ empty pages)',
+    'Printed copies of all confirmation emails (or this app!)',
+    'Credit cards — Visa and Mastercard most accepted',
+    '¥20,000–30,000 cash on arrival (withdraw more at 7-Eleven ATMs)',
+    'Travel insurance info',
+  ]},
+  {cat:'Tech',items:[
+    'Phone + charger (Japan uses same plug as US — no adapter needed)',
+    'Portable battery bank (long days away from outlets)',
+    'Download Google Maps offline for Tokyo, Kyoto, Kanazawa, Hakone before leaving',
+    'Set up Suica on Apple Wallet before the flight',
+    'Download: Google Translate (camera mode), teamLab app, Google Maps',
+    'Earphones (required for phone use on trains)',
+  ]},
+  {cat:'Smart packing tips',items:[
+    'Leave space in your bag — you will shop',
+    'Pack packing cubes — you switch cities 5 times',
+    'Use takkyubin (hotel luggage forwarding) liberally — only carry a day bag when moving',
+    'Hole-free socks only — yours will be inspected at every temple',
+  ]},
+];
+
+function renderPackingList() {
+  const container = document.getElementById('checklist-tips');
+  if (!container) return;
+
+  const packHtml = `
+    <div class="tips-section" style="margin-top:28px">
+      <div class="tips-section-title">Packing List — April Japan</div>
+      ${PACKING.map(group => `
+        <div class="tip-card" style="margin-bottom:8px">
+          <div class="tip-card-title">${group.cat}</div>
+          <div class="tip-card-body">
+            <ul style="padding-left:16px;margin-top:6px">
+              ${group.items.map(i => `<li style="margin-bottom:4px;line-height:1.5">${i}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+
+  // Append after tips (tips renders first, then this)
+  container.insertAdjacentHTML('beforeend', packHtml);
 }
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
@@ -1226,17 +1378,32 @@ const CAT_COLORS = {
 };
 
 // Booked costs for reference
-const BOOKED_COSTS = [
-  {label:'Flights (both)',                  jpy:null},
-  {label:'Hotel Gracery Shinjuku',          jpy:200692},
-  {label:'teamLab Borderless (2 tickets)',  jpy:11200},
-  {label:'Fuji-Excursion 7 train',          jpy:8400},
-  {label:'Tensui Saryo, Hakone',            jpy:126340},
-  {label:'Shinkansen (Odawara→Kyoto)',      jpy:23800},
-  {label:'Hotel Granvia Kyoto',             jpy:268256},
-  {label:'Hotel Intergate Kanazawa',        jpy:39004},
-  {label:'Quintessa Hotel Ginza',           jpy:24713},
+// Pre-booked costs — stored in Firestore when signed in, editable per item
+const DEFAULT_BOOKED = [
+  {id:'b1', label:'Flights (both)',                  jpy:null,   usd:null,  paidBy:'split'},
+  {id:'b2', label:'Hotel Gracery Shinjuku',          jpy:200692, usd:1261,  paidBy:'gwen'},
+  {id:'b3', label:'teamLab Borderless (2 tickets)',  jpy:11200,  usd:70,    paidBy:'gwen'},
+  {id:'b4', label:'Fuji-Excursion 7 train',          jpy:8400,   usd:53,    paidBy:'gwen'},
+  {id:'b5', label:'Tensui Saryo, Hakone',            jpy:126340, usd:794,   paidBy:'gwen'},
+  {id:'b6', label:'Shinkansen (Odawara→Kyoto)',      jpy:23800,  usd:150,   paidBy:'gwen'},
+  {id:'b7', label:'Hotel Granvia Kyoto',             jpy:268256, usd:1686,  paidBy:'gwen'},
+  {id:'b8', label:'Hotel Intergate Kanazawa',        jpy:39004,  usd:245,   paidBy:'gwen'},
+  {id:'b9', label:'Quintessa Hotel Ginza',           jpy:24713,  usd:155,   paidBy:'gwen'},
 ];
+let bookedCosts = DEFAULT_BOOKED.map(b => ({...b})); // mutable copy
+
+async function loadBookedCosts() {
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'bookedCosts'));
+    if (snap.exists()) bookedCosts = snap.data().items || DEFAULT_BOOKED;
+  } catch {}
+}
+
+async function saveBookedCosts() {
+  try {
+    await setDoc(doc(db, 'settings', 'bookedCosts'), {items: bookedCosts});
+  } catch {}
+}
 
 // ── Expense Firestore ─────────────────────────────────────────────────────────
 function subscribeExpenses() {
@@ -1344,6 +1511,20 @@ function renderBudget() {
   const budgetEl = document.getElementById('budget');
   if (!budgetEl) return;
 
+  if (!currentUser) {
+    budgetEl.innerHTML = `
+      <div class="auth-gate">
+        <div class="auth-gate-icon">💴</div>
+        <div class="auth-gate-title">Budget is private</div>
+        <div class="auth-gate-sub">Expense tracking and settlement is only<br>visible to Gwen &amp; Christina.</div>
+        <button class="auth-gate-btn" onclick="openAuthModal()">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" opacity=".7" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/></svg>
+          Sign in with Google
+        </button>
+      </div>`;
+    return;
+  }
+
   const { total, gwenNet, christinaNet, settlement, byCat, byDate } = calcBudget();
   const maxCat = Math.max(...Object.values(byCat), 1);
 
@@ -1365,7 +1546,7 @@ function renderBudget() {
   const displayed = expFilter === 'all' ? expenses : expenses.filter(e => e.category === expFilter);
 
   // Booked costs total
-  const bookedTotal = BOOKED_COSTS.reduce((s,c) => s + (c.jpy||0), 0);
+  const bookedTotal = bookedCosts.filter(c=>c.jpy).reduce((s,c) => s + c.jpy, 0);
 
   budgetEl.innerHTML = `
     <div class="budget-header">
@@ -1410,21 +1591,45 @@ function renderBudget() {
       `).join('')}
     </div>
 
-    <!-- Booked reference -->
+    <!-- Booked costs — editable -->
     <div class="booked-ref-card">
-      <div class="booked-ref-title">Pre-booked Reference (excl. flights)</div>
-      ${BOOKED_COSTS.filter(c=>c.jpy).map(c=>`
-        <div class="booked-ref-row">
-          <span class="booked-ref-label">${c.label}</span>
-          <span class="booked-ref-val">¥${c.jpy.toLocaleString()}</span>
-        </div>
-      `).join('')}
+      <div class="booked-ref-hd">
+        <div class="booked-ref-title">Pre-booked Costs</div>
+        <button class="booked-edit-btn" id="bookedEditToggle">Edit</button>
+      </div>
+      <div id="bookedCostList">
+        ${bookedCosts.filter(c=>c.jpy).map(c=>`
+          <div class="booked-ref-row" data-id="${c.id}">
+            <span class="booked-ref-label">${c.label}</span>
+            <div class="booked-ref-right">
+              <span class="booked-ref-paidby booked-payer-${c.paidBy}">${c.paidBy === 'split' ? 'Split' : c.paidBy === 'gwen' ? 'Gwen' : 'Christina'}</span>
+              <span class="booked-ref-val">¥${c.jpy.toLocaleString()}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div id="bookedCostEdit" style="display:none">
+        ${bookedCosts.filter(c=>c.jpy).map(c=>`
+          <div class="booked-edit-row" data-id="${c.id}">
+            <span class="booked-edit-label">${c.label}</span>
+            <div class="booked-edit-controls">
+              <select class="booked-payer-sel" data-id="${c.id}">
+                <option value="gwen"${c.paidBy==='gwen'?' selected':''}>Gwen paid</option>
+                <option value="christina"${c.paidBy==='christina'?' selected':''}>Christina paid</option>
+                <option value="split"${c.paidBy==='split'?' selected':''}>Split 50/50</option>
+              </select>
+              <span class="booked-ref-val">¥${c.jpy.toLocaleString()}</span>
+            </div>
+          </div>
+        `).join('')}
+        <button class="booked-save-btn" id="bookedSave">Save</button>
+      </div>
       <div class="booked-ref-total">
-        <span class="booked-ref-total-label">Booked total</span>
+        <span class="booked-ref-total-label">Pre-booked total</span>
         <span class="booked-ref-total-val">¥${bookedTotal.toLocaleString()}</span>
       </div>
-      <div style="font-size:11px;color:var(--light);margin-top:8px">
-        Combined (booked + on-trip): ¥${(bookedTotal + total).toLocaleString()} &nbsp;·&nbsp; ~$${Math.round((bookedTotal + total)/exchRate).toLocaleString()}
+      <div style="font-size:11px;color:var(--light);margin-top:6px">
+        Total trip (booked + on-trip): ¥${(bookedTotal + total).toLocaleString()} &nbsp;·&nbsp; ~$${Math.round((bookedTotal + total)/exchRate).toLocaleString()}
       </div>
     </div>
 
@@ -1494,6 +1699,35 @@ function renderBudget() {
     })()}
     <div style="height:80px"></div>
   `;
+
+  // Booked costs edit toggle
+  const bookedEditToggle = document.getElementById('bookedEditToggle');
+  const bookedCostList   = document.getElementById('bookedCostList');
+  const bookedCostEdit   = document.getElementById('bookedCostEdit');
+  const bookedSaveBtn    = document.getElementById('bookedSave');
+  let bookedEditing = false;
+
+  if (bookedEditToggle) {
+    bookedEditToggle.addEventListener('click', () => {
+      bookedEditing = !bookedEditing;
+      bookedCostList.style.display = bookedEditing ? 'none' : '';
+      bookedCostEdit.style.display = bookedEditing ? '' : 'none';
+      bookedEditToggle.textContent = bookedEditing ? 'Cancel' : 'Edit';
+    });
+  }
+
+  if (bookedSaveBtn) {
+    bookedSaveBtn.addEventListener('click', async () => {
+      budgetEl.querySelectorAll('.booked-payer-sel').forEach(sel => {
+        const id = sel.dataset.id;
+        const item = bookedCosts.find(c => c.id === id);
+        if (item) item.paidBy = sel.value;
+      });
+      await saveBookedCosts();
+      showToast('Pre-booked costs saved');
+      renderBudget();
+    });
+  }
 
   // Filter buttons
   budgetEl.querySelectorAll('.exp-filter-btn').forEach(btn => {
@@ -1643,9 +1877,26 @@ function subscribeDays() {
       await seedDays();
       return;
     }
+
+    // Detect old seeded data: if any day has activities with IDs starting with 's00',
+    // those were auto-seeded and duplicate the hardcoded itinerary — clear them.
+    let needsClear = false;
+    snap.forEach(d => {
+      const acts = d.data().activities || [];
+      if (acts.some(a => a.id && a.id.startsWith('s00'))) needsClear = true;
+    });
+    if (needsClear) {
+      const clearOps = [];
+      snap.forEach(d => {
+        const acts = (d.data().activities || []).filter(a => !a.id?.startsWith('s00'));
+        clearOps.push(setDoc(doc(db, 'days', d.id), { dayDate: d.id, activities: acts }));
+      });
+      await Promise.all(clearOps);
+      return; // snapshot will re-fire after clear
+    }
+
     firestoreDays = {};
     snap.forEach(d => { firestoreDays[d.id] = d.data(); });
-    // Re-inject activity sections into any already-expanded cards
     enhanceExpandedCards();
   }, err => {
     console.error('Days listener error:', err);
@@ -1653,16 +1904,18 @@ function subscribeDays() {
 }
 
 async function seedDays() {
+  // Seed empty day records — the hardcoded itinerary IS the itinerary.
+  // The Firestore activities section is for user-added notes/activities only.
   try {
-    const batch = [];
-    for (const [dateId, acts] of Object.entries(SEED_ACTS)) {
-      batch.push(setDoc(doc(db, 'days', dateId), {
-        dayDate: dateId,
-        activities: acts,
-      }));
-    }
-    await Promise.all(batch);
-  } catch (e) { console.error('Seed failed', e); }
+    const dateIds = [
+      '2026-04-15','2026-04-16','2026-04-17','2026-04-18','2026-04-19',
+      '2026-04-20','2026-04-21','2026-04-22','2026-04-23','2026-04-24',
+      '2026-04-25','2026-04-26','2026-04-27','2026-04-28','2026-04-29',
+    ];
+    await Promise.all(dateIds.map(d =>
+      setDoc(doc(db, 'days', d), { dayDate: d, activities: [] })
+    ));
+  } catch(e) { console.error('Seed failed', e); }
 }
 
 function getDayActivities(dayId) {
@@ -1710,7 +1963,9 @@ function linkifyText(str) {
 // Render activity cards from Firestore data
 function renderFirestoreActivities(dayId, acts) {
   if (!acts || acts.length === 0) {
-    return `<div class="fs-empty">No activities yet — add one below.</div>`;
+    return currentUser
+      ? `<div class="fs-empty">Nothing added yet — use the button below to add restaurant picks, reminders, or anything you want to track for this day.</div>`
+      : `<div class="fs-empty">Sign in to add personal notes and activities.</div>`;
   }
   return acts.map(act => {
     const catClass = `cat-${act.category || 'other'}`;
@@ -1753,20 +2008,21 @@ function renderFirestoreActivities(dayId, acts) {
 function injectDayActsSection(dayId) {
   const card = document.getElementById('card-' + dayId);
   if (!card || !card.classList.contains('expanded')) return;
+
+  // Only show the editable section when signed in
+  if (!currentUser) return;
+
   const existing = card.querySelector('.day-acts-section');
   if (existing) existing.remove();
-
-  const acts = getDayActivities(dayId);
-  if (acts === null && !currentUser) return; // no Firestore + not signed in: show nothing
 
   const section = document.createElement('div');
   section.className = 'day-acts-section';
   section.innerHTML = `
-    <div class="day-acts-label">Activities</div>
+    <div class="day-acts-label">Your additions</div>
     <div class="day-acts-list" id="acts-list-${dayId}">
       ${renderFirestoreActivities(dayId, acts || [])}
     </div>
-    ${currentUser ? `<button class="add-act-btn" onclick="openAddAct('${dayId}')">+ Add Activity</button>` : ''}
+    ${currentUser ? `<button class="add-act-btn" onclick="openAddAct('${dayId}')">+ Add activity, note, or reminder</button>` : ''}
   `;
 
   // Insert before notes section
@@ -1971,20 +2227,16 @@ lightboxClose.addEventListener('click', closeLightbox);
 lightboxEl.addEventListener('click', e => { if (e.target === lightboxEl) closeLightbox(); });
 
 // ── Google Auth ───────────────────────────────────────────────────────────────
-function openAuthModal() {
+window.openAuthModal = function openAuthModal() {
   authErr.textContent = '';
   overlay.classList.add('open');
-}
+};
 
 editBtn.addEventListener('click', () => {
   if (currentUser) fbSignOut(auth);
   else openAuthModal();
 });
 
-landingSignIn.addEventListener('click', () => {
-  enterApp();
-  setTimeout(openAuthModal, 100);
-});
 
 overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
 authClose.addEventListener('click', () => overlay.classList.remove('open'));
@@ -2018,6 +2270,8 @@ onAuthStateChanged(auth, async user => {
     if (user.photoURL) userAvatar.src = user.photoURL;
     await loadAllNotes();
     await loadChecks();
+    await loadDriveSettings();
+    await loadBookedCosts();
     refreshNoteDisplays();
     setupEditors();
     subscribeExpenses();
@@ -2031,9 +2285,11 @@ onAuthStateChanged(auth, async user => {
     if (daysUnsub) { daysUnsub(); daysUnsub = null; }
     firestoreDays = {};
     loadLocalExpenses();
+    try { driveFolderUrl = localStorage.getItem('japan-drive-url') || ''; } catch {}
     refreshNoteDisplays();
     renderBudget();
-    renderItinerary(); // re-render without edit controls
+    renderConfirmations();
+    renderItinerary();
   }
 });
 
@@ -2109,8 +2365,20 @@ function esc(s) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+// Pre-initialize booked items as checked (they're all confirmed)
+const BOOKED_IDS = ['c1','c2','c3','c4','c5','c6','c7','c8','c9'];
+BOOKED_IDS.forEach(id => { checks[id] = true; });
 try { Object.assign(checks, JSON.parse(localStorage.getItem('japan-checks')||'{}')); } catch {}
 loadLocalExpenses();
+try { driveFolderUrl = localStorage.getItem('japan-drive-url') || ''; } catch {}
+
+// Try loading drive URL from Firestore even before auth (public read)
+getDoc(doc(db, 'settings', 'drive')).then(snap => {
+  if (snap.exists() && snap.data().folderUrl) {
+    driveFolderUrl = snap.data().folderUrl;
+    renderConfirmations();
+  }
+}).catch(() => {});
 
 renderItinerary();
 renderConfirmations();
@@ -2121,6 +2389,11 @@ buildDestPills();
 updateTripStatus();
 updateClock();
 fetchRate();
+
+// Auto-open auth modal if redirected from landing with ?signin=1
+if (new URLSearchParams(window.location.search).get('signin') === '1') {
+  setTimeout(() => openAuthModal(), 400);
+}
 
 setInterval(updateClock, 30000);
 setInterval(updateTripStatus, 60000);
