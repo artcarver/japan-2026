@@ -23,12 +23,26 @@
         Sign in with Google
       </button>
       <p class="login-note">Only accessible to Gwen &amp; Christina</p>
+      <div id="login-error" class="login-error hidden"></div>
     </div>
   </div>
 
   <!-- APP -->
   <div id="app" class="app hidden">
-    <aside class="sidebar">
+
+    <!-- MOBILE TOP BAR -->
+    <div class="mobile-top-bar" id="mobile-top-bar">
+      <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+      <span class="mobile-title"><span class="mobile-title-kana">日本</span> Japan 2026</span>
+      <button class="mobile-currency-btn" onclick="toggleCurrencyWidget()">¥ / $</button>
+    </div>
+
+    <!-- SIDEBAR BACKDROP -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-header-top">
           <div>
@@ -37,29 +51,35 @@
             <div class="trip-dates">Apr 15 – 29</div>
           </div>
           <div class="sidebar-header-btns">
-            <button class="icon-btn" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">&#9790;</button>
-            <button class="icon-btn" onclick="triggerPrint()" title="Print itinerary">&#9113;</button>
+            <button class="icon-btn" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">☽</button>
+            <button class="icon-btn" onclick="triggerPrint()" title="Print itinerary">⎙</button>
           </div>
         </div>
       </div>
+
       <div class="sidebar-nav">
         <button class="nav-btn active" data-view="overview">Overview</button>
         <button class="nav-btn" data-view="budget">Budget</button>
         <button class="nav-btn" data-view="packing">Packing</button>
         <button class="nav-btn" data-view="info">Info</button>
       </div>
+
       <div class="day-list-header">
-        <span>Itinerary</span>
+        <span class="day-list-label">
+          <span class="day-list-active-dot"></span>
+          Itinerary
+        </span>
         <button class="today-btn" onclick="jumpToToday()">Today</button>
       </div>
       <div class="day-list" id="day-list"></div>
+
       <div class="sidebar-footer">
         <div class="budget-label-text">Total Booked</div>
-        <div id="budget-summary" class="budget-summary"></div>
+        <div id="budget-summary"></div>
         <div class="user-row">
           <img id="user-avatar" class="user-avatar" src="" alt="">
           <span id="user-name" class="user-name"></span>
-          <button class="sign-out-btn" onclick="signOut()" title="Sign out">&#8617;</button>
+          <button class="sign-out-btn" onclick="signOut()">Sign out</button>
         </div>
       </div>
     </aside>
@@ -79,7 +99,8 @@
       <div class="modal-body">
         <div class="form-row">
           <div class="form-group half"><label>Time</label><input type="time" id="form-time"></div>
-          <div class="form-group half"><label>Category</label>
+          <div class="form-group half">
+            <label>Category</label>
             <select id="form-category">
               <option value="activity">Activity</option>
               <option value="transport">Transport</option>
@@ -90,30 +111,33 @@
             </select>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>Title *</label><input type="text" id="form-title" placeholder="e.g. Fushimi Inari Shrine"></div>
-          <div class="form-group half"><label>Status</label>
-            <select id="form-status"><option value="booked">Booked</option><option value="idea">Idea</option></select>
-          </div>
+        <div class="form-group"><label>Title *</label><input type="text" id="form-title" placeholder="e.g. Fushimi Inari Shrine"></div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="form-status">
+            <option value="booked">Booked ✓</option>
+            <option value="idea">Idea (unconfirmed)</option>
+          </select>
         </div>
         <div class="form-group"><label>Confirmation Number</label><input type="text" id="form-confirmation" placeholder="e.g. F354LH"></div>
         <div class="form-group"><label>Address</label><input type="text" id="form-address" placeholder="Street address or place name"></div>
         <div class="form-group"><label>Notes</label><textarea id="form-notes" rows="3" placeholder="Tips, reminders, links..."></textarea></div>
         <div class="form-row">
           <div class="form-group half"><label>Cost</label><input type="number" id="form-cost" placeholder="0" min="0"></div>
-          <div class="form-group half"><label>Currency</label>
-            <select id="form-currency"><option value="JPY">JPY</option><option value="USD">USD</option></select>
+          <div class="form-group half">
+            <label>Currency</label>
+            <select id="form-currency"><option value="JPY">JPY ¥</option><option value="USD">USD $</option></select>
           </div>
         </div>
         <div class="form-group">
           <label>Google Drive Photo Link</label>
           <input type="url" id="form-photo-url" placeholder="Paste a Google Drive share link...">
-          <span class="field-hint">Drive: right-click photo → Share → Copy link → paste here</span>
+          <span class="field-hint">Drive → right-click photo → Share → Copy link → paste here</span>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-        <button class="btn-save" onclick="saveActivity()">Save</button>
+        <button class="btn-save" onclick="saveActivity()">Save Activity</button>
       </div>
     </div>
   </div>
@@ -142,7 +166,7 @@
       <img id="lightbox-img" src="" alt="">
       <div class="lightbox-bar">
         <a id="lightbox-link" href="" target="_blank" class="lightbox-open">Open in Google Drive</a>
-        <button class="lightbox-close" onclick="closeLightbox()">Close</button>
+        <button class="lightbox-close" onclick="closeLightbox()">Close ✕</button>
       </div>
     </div>
   </div>

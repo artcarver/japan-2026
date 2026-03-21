@@ -16,6 +16,24 @@ const ALLOWED_EMAILS  = ['ghstilson@gmail.com', 'cmelikian@gmail.com'];
 const TRIP_START      = new Date('2026-04-15T00:00:00');
 const TRIP_END        = new Date('2026-04-29T23:59:59');
 let   JPY_RATE        = parseFloat(localStorage.getItem('jpyRate') || '149');
+let   rateIsLive      = false;
+
+async function fetchExchangeRate() {
+  try {
+    const res  = await fetch('https://open.er-api.com/v6/latest/USD');
+    const data = await res.json();
+    if (data?.rates?.JPY) {
+      JPY_RATE   = Math.round(data.rates.JPY * 10) / 10;
+      rateIsLive = true;
+      localStorage.setItem('jpyRate', JPY_RATE);
+      const ri = document.getElementById('jpy-rate-input');
+      if (ri) ri.value = JPY_RATE;
+      const rn = document.getElementById('currency-rate-note');
+      if (rn) rn.textContent = 'Rate: 1 USD = ' + JPY_RATE + ' JPY (live)';
+      renderSidebarBudget();
+    }
+  } catch (e) { /* silently fall back to stored/default rate */ }
+}
 
 const CATEGORIES = {
   activity:  { color: '#10b981' }, transport: { color: '#3b82f6' },
@@ -44,7 +62,7 @@ function estimateTransitMins(from, to) {
 // ── SEED DATA ────────────────────────────────────────────────
 const SEED_DAYS = [
   { id:'2026-04-15', dayNum:1, city:'Los Angeles', hotel:'', activities:[
-    { id:'a001', time:'11:20', title:'Depart LAX — United Flight UA39', category:'transport', order:0, cost:0, currency:'USD', status:'booked', done:false, confirmation:'F354LH', address:'LAX - Tom Bradley International Terminal', notes:'Seats 31L (Gwen) & 31J (Christina) · Boeing 787-10 Dreamliner · Duration 11h 45m', driveUrl:'' }
+    { id:'a001', time:'11:20', title:'Depart LAX — United Flight UA39', category:'transport', order:0, cost:2196.86, currency:'USD', status:'booked', done:false, confirmation:'F354LH', address:'LAX - Tom Bradley International Terminal', notes:'Seats 31L (Gwen) & 31J (Christina) · Boeing 787-10 Dreamliner · Duration 11h 45m · Economy Plus seats included · $1,098.43/person', driveUrl:'' }
   ]},
   { id:'2026-04-16', dayNum:2, city:'Tokyo — Shinjuku', hotel:'Hotel Gracery Shinjuku', activities:[
     { id:'a002', time:'15:05', title:'Arrive Tokyo Haneda (HND)', category:'transport', order:0, cost:0, currency:'JPY', status:'booked', done:false, confirmation:'', address:'Tokyo Haneda Airport (HND), Tokyo', notes:'Flight UA39 · Take Keikyu Line or Airport Limousine Bus to Shinjuku (~1 hr)', driveUrl:'' },
@@ -181,7 +199,11 @@ function toggleDark() {
     ctx.beginPath(); ctx.ellipse(0,-p.sz*0.2,p.sz*0.2,p.sz*0.42,0,0,Math.PI*2);
     ctx.fillStyle='#fce4ec'; ctx.fill(); ctx.restore();
   }
+  let blossomRunning = true;
+  window.stopBlossom  = () => { blossomRunning = false; };
+  window.startBlossom = () => { if (!blossomRunning) { blossomRunning = true; tick(); } };
   function tick() {
+    if (!blossomRunning) return;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     petals.forEach(p=>{
       p.sw+=p.ss; p.x+=Math.sin(p.sw)*p.sa+p.vx; p.y+=p.vy; p.rot+=p.rs;
@@ -215,8 +237,18 @@ document.getElementById('sign-in-btn').addEventListener('click', () =>
   auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => showLoginError(e.message))
 );
 function signOut() { stopListening(); auth.signOut(); }
-function showLogin() { document.getElementById('login-screen').classList.remove('hidden'); document.getElementById('app').classList.add('hidden'); }
-function showApp()   { document.getElementById('login-screen').classList.add('hidden');    document.getElementById('app').classList.remove('hidden'); }
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+  if (window.startBlossom) window.startBlossom();
+}
+function showApp()   {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  if (window.stopBlossom) window.stopBlossom();
+  initMobileUI();
+  fetchExchangeRate();
+}
 function showLoginError(msg) {
   let el = document.querySelector('.login-error');
   if (!el) { el = document.createElement('p'); el.className='login-error'; document.querySelector('.login-card').appendChild(el); }
@@ -282,27 +314,49 @@ function renderSidebar() {
   const list = document.getElementById('day-list');
   list.innerHTML = '';
   Object.values(days).sort((a,b)=>a.dayNum-b.dayNum).forEach(day => {
-    const el    = document.createElement('div');
-    const acts  = day.activities||[];
-    const isT   = TRANSIT_DAYS.has(day.id);
+    const el   = document.createElement('div');
+    const acts = day.activities||[];
+    const isT  = TRANSIT_DAYS.has(day.id);
     el.className = 'day-item'+(day.id===currentDayId?' active':'')+(isT?' transit':'');
     el.dataset.id = day.id;
-    const d   = new Date(day.id+'T12:00:00');
-    const ds  = d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    const filled = Math.min(acts.length,5);
-    const dots = Array.from({length:5},(_,i)=>'<div class="density-dot'+(i<filled?' filled':'')+'"></div>').join('');
-    el.innerHTML = '<div class="day-item-num">D'+day.dayNum+'</div><div class="day-item-info"><div class="day-item-date">'+ds+'</div><div class="day-item-city">'+day.city+'</div></div><div class="day-item-dots">'+dots+'</div>';
-    el.addEventListener('click', ()=>{ currentView='itinerary'; document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); selectDay(day.id,true); });
+    const d  = new Date(day.id+'T12:00:00');
+    const ds = d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    // First activity title as preview
+    const firstAct = acts.find(a=>a.title);
+    const preview  = firstAct ? firstAct.title : '';
+    el.innerHTML =
+      '<div class="day-item-num">D'+day.dayNum+'</div>'+
+      '<div class="day-item-info">'+
+        '<div class="day-item-date">'+ds+' · '+day.city.split('—')[0].trim()+'</div>'+
+        (preview ? '<div class="day-item-preview">'+escHtml(preview.slice(0,26))+'</div>' : '<div class="day-item-city">'+day.city+'</div>')+
+      '</div>'+
+      '<div class="day-item-ind'+(acts.length>0?' filled':'')+'"></div>';
+    el.addEventListener('click', ()=>{
+      currentView='itinerary';
+      document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelector('.day-list-header').classList.add('in-itinerary');
+      selectDay(day.id,true);
+      closeSidebar();
+    });
     list.appendChild(el);
   });
+  // Show itinerary active dot if in itinerary view
+  const dlh = document.querySelector('.day-list-header');
+  if (dlh) dlh.classList.toggle('in-itinerary', currentView==='itinerary');
   renderSidebarBudget();
 }
 
 function renderSidebarBudget() {
   let jpy=0, usd=0;
-  Object.values(days).forEach(d=>(d.activities||[]).forEach(a=>{ if(a.cost>0&&a.status!=='idea'){if(a.currency==='JPY')jpy+=a.cost;else usd+=a.cost;} }));
-  const est = (jpy/JPY_RATE+usd).toFixed(0);
-  document.getElementById('budget-summary').innerHTML = '<div class="budget-row"><span>¥'+Math.round(jpy).toLocaleString()+'</span><span class="budget-label">JPY</span></div>'+(usd>0?'<div class="budget-row"><span>$'+usd.toLocaleString()+'</span><span class="budget-label">USD</span></div>':'')+'<div class="budget-usd-est">~$'+parseInt(est).toLocaleString()+' USD est.</div>';
+  Object.values(days).forEach(d=>(d.activities||[]).forEach(a=>{
+    if(a.cost>0&&a.status!=='idea'){if(a.currency==='JPY')jpy+=a.cost;else usd+=a.cost;}
+  }));
+  const est        = jpy/JPY_RATE+usd;
+  const perPerson  = Math.round(est/2);
+  document.getElementById('budget-summary').innerHTML =
+    '<div class="budget-row"><span>¥'+Math.round(jpy).toLocaleString()+'</span><span class="budget-label">JPY</span></div>'+
+    (usd>0?'<div class="budget-row"><span>$'+usd.toFixed(0)+'</span><span class="budget-label">USD</span></div>':'')+
+    '<div class="budget-usd-est">~$'+Math.round(est).toLocaleString()+' total · $'+perPerson.toLocaleString()+'/person</div>';
 }
 
 // ── JAPAN SVG MAP ────────────────────────────────────────────
@@ -388,15 +442,54 @@ function renderOverview() {
     const todayDay = days[todayId];
     countdownHtml = `<div class="countdown-banner"><div class="countdown-banner-bg">旅</div><div class="countdown-top"><div><div class="countdown-num">Day ${todayDay?todayDay.dayNum:'?'}</div><div class="countdown-label">of 15 · You are in Japan!</div></div><div class="countdown-dates"><div class="countdown-trip-label">Traveling</div><div class="countdown-trip-dates">Apr 15 – 29</div></div></div><div style="margin-top:0.5rem"><a href="#" class="in-trip-link" onclick="jumpToToday();return false;">Jump to today</a></div></div>`;
   } else {
-    const planDays = Math.ceil((TRIP_START - new Date('2026-01-01'))/msPerDay);
-    const elapsed  = Math.ceil((now - new Date('2026-01-01'))/msPerDay);
-    const pct      = Math.min(100,Math.round((elapsed/planDays)*100));
+    const bookDate  = new Date('2025-12-22');
+    const planDays  = Math.ceil((TRIP_START - bookDate)/msPerDay);
+    const elapsed   = Math.max(0, Math.ceil((now - bookDate)/msPerDay));
+    const pct       = Math.min(100,Math.round((elapsed/planDays)*100));
     countdownHtml = `<div class="countdown-banner"><div class="countdown-banner-bg">待</div><div class="countdown-top"><div><div class="countdown-num">${daysUntil}</div><div class="countdown-label">days until departure</div></div><div class="countdown-dates"><div class="countdown-trip-label">Departing</div><div class="countdown-trip-dates">Apr 15, 2026</div></div></div><div class="countdown-progress"><div class="countdown-bar" style="width:${pct}%"></div></div></div>`;
   }
 
-  const flightsHtml = `<div class="flights-card"><div class="section-label">Flights</div>
-    <div class="flight-row"><div class="flight-direction">Out</div><div class="flight-route"><div class="flight-num">UA39 · LAX → HND</div><div class="flight-detail">Apr 15 · 11:20am · Arrives Apr 16 3:05pm · Seats 31L / 31J · 787-10</div></div><button class="flight-conf" onclick="copyText('F354LH',this)">F354LH</button></div>
-    <div class="flight-row"><div class="flight-direction">Return</div><div class="flight-route"><div class="flight-num">UA38 · HND → LAX</div><div class="flight-detail">Apr 29 · 6:10pm · Arrives same day 12:15pm · Seats 31J / 31L · 787-10</div></div><button class="flight-conf" onclick="copyText('F354LH',this)">F354LH</button></div>
+  let todayFocusHtml = '';
+  if (inTrip) {
+    const todayId  = now.toISOString().split('T')[0];
+    const todayDay = days[todayId];
+    if (todayDay) {
+      const todayActs = [...(todayDay.activities||[])].sort((a,b)=>a.order-b.order);
+      const actsRowsHtml = todayActs.length
+        ? todayActs.map(a =>
+            `<div class="today-act-mini">
+              <span class="today-act-time">${a.time||'—'}</span>
+              <span class="today-act-name">${escHtml(a.title)}</span>
+              ${a.confirmation?`<button class="today-act-conf" onclick="copyText('${escAttr(a.confirmation)}',this)">${escHtml(a.confirmation)}</button>`:''}
+            </div>`).join('')
+        : '<div style="color:var(--text-light);font-size:0.8rem;padding:0.4rem 0">Free day — nothing scheduled yet</div>';
+      todayFocusHtml = `<div class="today-focus-card">
+        <div class="today-focus-header">
+          <div class="today-focus-title">Today · ${escHtml(todayDay.city)}</div>
+          <a href="#" class="today-focus-go" onclick="jumpToToday();return false;">See full day →</a>
+        </div>${actsRowsHtml}</div>`;
+    }
+  }
+
+
+  const flightsHtml = `<div class="section-label" style="margin-bottom:0.75rem">Flights · Conf: F354LH</div>
+  <div class="flights-card" style="margin-bottom:1.4rem">
+    <div class="flight-row">
+      <div class="flight-direction">Out</div>
+      <div class="flight-route">
+        <div class="flight-num">UA39 · LAX → HND</div>
+        <div class="flight-detail">Apr 15 · 11:20am → Apr 16 3:05pm · Seats 31L / 31J · 787-10 · $1,098 / person</div>
+      </div>
+      <button class="flight-conf" onclick="copyText('F354LH',this)">F354LH</button>
+    </div>
+    <div class="flight-row">
+      <div class="flight-direction">Return</div>
+      <div class="flight-route">
+        <div class="flight-num">UA38 · HND → LAX</div>
+        <div class="flight-detail">Apr 29 · 6:10pm → same day 12:15pm · Seats 31J / 31L · 787-10</div>
+      </div>
+      <button class="flight-conf" onclick="copyText('F354LH',this)" style="opacity:0.55;cursor:default" disabled>F354LH</button>
+    </div>
   </div>`;
 
   const cityCardsHtml = CITY_GROUPS.map(g => {
@@ -410,6 +503,7 @@ function renderOverview() {
 
   document.getElementById('main-view').innerHTML =
     countdownHtml +
+    todayFocusHtml +
     `<div class="japan-map-wrap"><div class="section-label" style="margin-bottom:0.8rem">Route</div>${buildJapanMapSVG()}</div>` +
     flightsHtml +
     `<div class="section-label" style="margin-bottom:0.75rem">Cities</div><div class="city-grid">${cityCardsHtml}</div>`;
@@ -444,29 +538,31 @@ function renderDay(dayId) {
   const acts = [...(day.activities||[])].sort((a,b)=>a.order-b.order);
   const d    = new Date(dayId+'T12:00:00');
   const fullDate = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  const mapUrl   = 'https://www.google.com/maps/search/'+encodeURIComponent((day.hotel||day.city)+' Japan');
   const isTransit = TRANSIT_DAYS.has(dayId);
 
-  // Build activity cards with travel connectors between them
+  // Build multi-stop Google Maps link from activities with addresses
+  const mapsActs = acts.filter(a => a.address && a.category !== 'transport');
+  let mapUrl;
+  if (mapsActs.length >= 2) {
+    const parts = mapsActs.map(a => encodeURIComponent(a.address));
+    mapUrl = 'https://www.google.com/maps/dir/' + parts.join('/');
+  } else if (mapsActs.length === 1) {
+    mapUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(mapsActs[0].address);
+  } else {
+    mapUrl = 'https://www.google.com/maps/search/' + encodeURIComponent((day.hotel||day.city)+' Japan');
+  }
+
   let actsHtml = '';
   if (acts.length === 0) {
     actsHtml = '<div class="empty-state">Nothing planned yet — add something below</div>';
   } else {
     for (let i = 0; i < acts.length; i++) {
       actsHtml += renderActivityCard(acts[i]);
-      // Travel connector between this and next activity
       if (i < acts.length - 1) {
-        const curr = acts[i];
-        const next = acts[i+1];
+        const curr = acts[i], next = acts[i+1];
         if (curr.address && next.address && curr.category !== 'transport' && next.category !== 'transport') {
-          const mapsUrl = 'https://www.google.com/maps/dir/'+encodeURIComponent(curr.address)+'/'+encodeURIComponent(next.address);
-          const mins = estimateTransitMins(curr, next);
-          actsHtml += `<div class="travel-connector">
-            <div class="travel-connector-info">
-              ${mins ? '<span class="travel-time-est">~'+mins+' min</span><span style="color:var(--border)">·</span>' : ''}
-              <a href="${mapsUrl}" target="_blank">Get directions</a>
-            </div>
-          </div>`;
+          const mUrl = 'https://www.google.com/maps/dir/'+encodeURIComponent(curr.address)+'/'+encodeURIComponent(next.address);
+          actsHtml += `<div class="travel-connector"><div class="travel-connector-info"><a href="${mUrl}" target="_blank">Get directions</a></div></div>`;
         }
       }
     }
@@ -474,12 +570,12 @@ function renderDay(dayId) {
 
   document.getElementById('main-view').innerHTML = `
     <div class="day-header">
-      <div>
+      <div class="day-header-left">
         <span class="day-type-badge ${isTransit?'day-type-transit':'day-type-explore'}">${isTransit?'Transit day':'Explore day'}</span>
         <div class="day-header-num">Day ${day.dayNum} of ${Object.keys(days).length}</div>
         <h2 class="day-header-city">${day.city}</h2>
         <div class="day-header-date">${fullDate}</div>
-        <a href="${mapUrl}" target="_blank" class="map-link">View on map</a>
+        <a href="${mapUrl}" target="_blank" class="map-link">${mapsActs.length>=2?'View all stops on map':'View on map'}</a>
       </div>
       ${day.hotel?'<div class="day-header-hotel"><div class="hotel-label">Staying at</div>'+escHtml(day.hotel)+'</div>':''}
     </div>
@@ -501,7 +597,15 @@ function renderActivityCard(act) {
   const addrHtml = act.address
     ? `<div class="address-row"><span class="address-value">${escHtml(act.address)}</span><a href="https://www.google.com/maps/search/${encodeURIComponent(act.address)}" target="_blank" class="maps-btn">Maps</a></div>` : '';
 
-  let photoHtml = '';
+  const NOTES_LIMIT = 130;
+  const notesLong   = act.notes && act.notes.length > NOTES_LIMIT;
+  const notesShown  = notesLong ? act.notes.slice(0, NOTES_LIMIT) + '…' : act.notes;
+  const notesHtml   = act.notes
+    ? `<div class="activity-notes" id="notes-${act.id}">${linkify(escHtml(notesShown))}</div>`+
+      (notesLong ? `<button class="notes-toggle" onclick="toggleNotes('${act.id}',${JSON.stringify(act.notes).replace(/'/g,"&#39;")})">Show more</button>` : '')
+    : '';
+
+
   if (act.driveUrl && act.driveUrl.trim()) {
     const embed = driveUrlToEmbed(act.driveUrl.trim());
     if (embed) photoHtml = `<div class="activity-drive-photo" onclick="openLightbox('${escAttr(embed)}','${escAttr(act.driveUrl)}')"><img src="${escAttr(embed)}" alt="Photo" loading="lazy" onerror="this.closest('.activity-drive-photo').style.display='none'"><div class="drive-photo-label">Google Drive photo</div></div>`;
@@ -524,7 +628,7 @@ function renderActivityCard(act) {
       </div>
       <div class="activity-title">${escHtml(act.title)}</div>
       ${confirmHtml}${addrHtml}
-      ${act.notes?'<div class="activity-notes">'+linkify(escHtml(act.notes))+'</div>':''}
+      ${notesHtml}
       ${act.cost>0?'<span class="activity-cost">'+formatCost(act.cost,act.currency)+'</span>':''}
       ${photoHtml}
     </div>
@@ -639,43 +743,82 @@ function renderBudgetView() {
   const byCat={};
   const byCity = CITY_GROUPS.map(g=>({...g,jpy:0,usd:0}));
   Object.values(days).forEach(day=>(day.activities||[]).filter(a=>a.cost>0&&a.status!=='idea').forEach(act=>{
-    if(act.currency==='JPY'){totalJPY+=act.cost;byCat[act.category]=(byCat[act.category]||0)+act.cost;}else totalUSD+=act.cost;
+    if(act.currency==='JPY'){totalJPY+=act.cost;byCat[act.category]=(byCat[act.category]||0)+act.cost;}
+    else totalUSD+=act.cost;
     const city=byCity.find(g=>g.dayIds.includes(day.id));
     if(city){if(act.currency==='JPY')city.jpy+=act.cost;else city.usd+=act.cost;}
   }));
-  const usdEst=(totalJPY/JPY_RATE+totalUSD).toFixed(0);
-  const maxCat=Math.max(...Object.values(byCat),1);
-  const catBarsHtml=Object.entries(CATEGORIES).map(([k,v])=>{
+  const usdEst     = (totalJPY/JPY_RATE+totalUSD);
+  const perPerson  = (usdEst/2).toFixed(0);
+  const maxCat     = Math.max(...Object.values(byCat),1);
+  const liveBadge  = rateIsLive ? '<span class="rate-live-badge">Live</span>' : '';
+  const catBarsHtml= Object.entries(CATEGORIES).map(([k,v])=>{
     const amt=byCat[k]||0; if(!amt)return '';
     return `<div class="cat-bar-row"><span class="cat-bar-label">${k}</span><div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.round((amt/maxCat)*100)}%;background:${v.color}"></div></div><span class="cat-bar-amt">¥${Math.round(amt).toLocaleString()}</span></div>`;
   }).filter(Boolean).join('');
-  const cityRowsHtml=byCity.filter(g=>g.jpy>0||g.usd>0).map(g=>`<div class="city-cost-row"><span class="city-cost-name">${g.name}${g.sub?' · '+g.sub:''}</span><span class="city-cost-nights">${g.nights}n</span><span class="city-cost-amt">¥${Math.round(g.jpy).toLocaleString()}${g.usd>0?' + $'+g.usd:''}</span></div>`).join('');
-  document.getElementById('main-view').innerHTML = `<div class="view-header"><div class="view-title">Budget</div><div class="view-subtitle">Booked expenses only. Ideas excluded.</div></div>
-    <div class="rate-control"><span>Exchange rate: 1 USD =</span><input type="number" class="rate-input" id="jpy-rate-input" value="${JPY_RATE}" min="100" max="200"><span>JPY</span></div>
-    <div class="budget-totals"><div class="budget-total-card"><div class="budget-total-num">¥${Math.round(totalJPY).toLocaleString()}</div><div class="budget-total-lbl">Total in JPY</div></div><div class="budget-total-card accent"><div class="budget-total-num">~$${parseInt(usdEst).toLocaleString()}</div><div class="budget-total-lbl">USD estimate</div></div></div>
-    <div class="budget-section-title">By Category</div><div class="category-bars">${catBarsHtml||'<span style="color:var(--text-light);font-size:0.82rem">No booked costs yet</span>'}</div>
-    <div class="budget-section-title">By City</div><div class="city-cost-table">${cityRowsHtml||'<div style="padding:1rem;color:var(--text-light);font-size:0.82rem">No costs yet</div>'}</div>`;
+  const cityRowsHtml=byCity.filter(g=>g.jpy>0||g.usd>0).map(g=>{
+    const amt = g.jpy>0&&g.usd>0 ? `¥${Math.round(g.jpy).toLocaleString()} + $${g.usd.toFixed(2)}` : g.jpy>0 ? `¥${Math.round(g.jpy).toLocaleString()}` : `$${g.usd.toFixed(2)}`;
+    return `<div class="city-cost-row"><span class="city-cost-name">${g.name}${g.sub?' · '+g.sub:''}</span><span class="city-cost-nights">${g.nights}n</span><span class="city-cost-amt">${amt}</span></div>`;
+  }).join('');
+  document.getElementById('main-view').innerHTML =
+    `<div class="view-header"><div class="view-title">Budget</div><div class="view-subtitle">Booked expenses only · Ideas excluded</div></div>
+    <div class="rate-control"><span>1 USD =</span><input type="number" class="rate-input" id="jpy-rate-input" value="${JPY_RATE}" min="50" max="300"><span>JPY</span>${liveBadge}</div>
+    <div class="budget-totals">
+      <div class="budget-total-card"><div class="budget-total-num">¥${Math.round(totalJPY).toLocaleString()}</div><div class="budget-total-lbl">Total in JPY</div></div>
+      <div class="budget-total-card accent"><div class="budget-total-num">~$${Math.round(usdEst).toLocaleString()}</div><div class="budget-total-lbl">USD estimate</div></div>
+      <div class="budget-total-card per-person"><div class="budget-total-num">~$${parseInt(perPerson).toLocaleString()}</div><div class="budget-total-lbl">Per person ÷ 2</div></div>
+    </div>
+    <div class="budget-section-title">By Category</div>
+    <div class="category-bars">${catBarsHtml||'<span style="color:var(--text-light);font-size:0.82rem">No booked costs yet</span>'}</div>
+    <div class="budget-section-title">By City</div>
+    <div class="city-cost-table">${cityRowsHtml||'<div style="padding:1rem;color:var(--text-light);font-size:0.82rem">No costs yet</div>'}</div>`;
   document.getElementById('jpy-rate-input').addEventListener('change', e=>{
-    const v=parseFloat(e.target.value); if(v>0){JPY_RATE=v;localStorage.setItem('jpyRate',v);renderBudgetView();renderSidebarBudget();}
+    const v=parseFloat(e.target.value); if(v>0){JPY_RATE=v;rateIsLive=false;localStorage.setItem('jpyRate',v);renderBudgetView();renderSidebarBudget();}
   });
 }
 
 // ── PACKING ──────────────────────────────────────────────────
 function renderPackingView() {
   if (!packingData) { document.getElementById('main-view').innerHTML='<div class="loading-state"><div class="spinner"></div></div>'; return; }
-  const items=packingData.items||[];
-  const done=items.filter(i=>i.done).length;
-  const cats=[...new Set(items.map(i=>i.category))];
-  const pct=items.length?Math.round((done/items.length)*100):0;
-  const groupsHtml=cats.map(cat=>{
-    const ci=items.filter(i=>i.category===cat);
-    const cd=ci.filter(i=>i.done).length;
-    return `<div class="packing-cat-group"><div class="packing-cat-header"><span class="packing-cat-name">${cat}</span><span class="packing-cat-count">${cd}/${ci.length}</span></div>
-      ${ci.map(item=>`<div class="packing-item${item.done?' done':''}" data-id="${item.id}"><input type="checkbox" class="packing-check" ${item.done?'checked':''} onchange="togglePackingItem('${item.id}')"><span class="packing-text">${escHtml(item.text)}</span><button class="packing-delete" onclick="deletePackingItem('${item.id}')">✕</button></div>`).join('')}
-      <div class="packing-add-row"><input type="text" class="packing-add-input" placeholder="Add to ${cat}..." data-cat="${cat}" onkeydown="if(event.key==='Enter')addPackingItem(this)"><button class="packing-add-btn" onclick="addPackingItem(this.previousElementSibling)">Add</button></div>
+  const items = packingData.items||[];
+  const done  = items.filter(i=>i.done).length;
+  const cats  = [...new Set(items.map(i=>i.category))];
+  const pct   = items.length ? Math.round((done/items.length)*100) : 0;
+
+  const groupsHtml = cats.map(cat => {
+    const ci   = items.filter(i=>i.category===cat);
+    const cd   = ci.filter(i=>i.done).length;
+    const cpct = ci.length ? Math.round((cd/ci.length)*100) : 0;
+    return `<div class="packing-cat-group">
+      <div class="packing-cat-header">
+        <span class="packing-cat-name">${cat}</span>
+        <div class="packing-cat-progress">
+          <div class="packing-cat-bar-track"><div class="packing-cat-bar-fill" style="width:${cpct}%"></div></div>
+          <span class="packing-cat-count">${cd}/${ci.length}</span>
+        </div>
+      </div>
+      ${ci.map(item=>`<div class="packing-item${item.done?' done':''}" data-id="${item.id}">
+        <input type="checkbox" class="packing-check" ${item.done?'checked':''} onchange="togglePackingItem('${item.id}')">
+        <span class="packing-text">${escHtml(item.text)}</span>
+        <button class="packing-delete" onclick="deletePackingItem('${item.id}')" aria-label="Delete">✕</button>
+      </div>`).join('')}
+      <div class="packing-add-row">
+        <input type="text" class="packing-add-input" placeholder="Add to ${cat}…" data-cat="${cat}" onkeydown="if(event.key==='Enter')addPackingItem(this)">
+        <button class="packing-add-btn" onclick="addPackingItem(this.previousElementSibling)">Add</button>
+      </div>
     </div>`;
   }).join('');
-  document.getElementById('main-view').innerHTML=`<div class="view-header"><div class="view-title">Packing List</div><div class="view-subtitle">Syncs between both of you in real time.</div></div><div class="packing-progress"><div class="packing-progress-track"><div class="packing-progress-fill" style="width:${pct}%"></div></div><span class="packing-progress-text">${done} / ${items.length} packed</span></div>${groupsHtml}`;
+
+  const addCatHtml = `<div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center">
+    <input type="text" id="new-cat-input" class="packing-add-input" style="flex:1" placeholder="New category name…" onkeydown="if(event.key==='Enter')addPackingCategory()">
+    <button class="packing-add-btn" onclick="addPackingCategory()">+ Category</button>
+  </div>`;
+
+  document.getElementById('main-view').innerHTML =
+    `<div class="view-header"><div class="view-title">Packing List</div><div class="view-subtitle">Syncs between both of you in real time.</div></div>
+    <div class="packing-progress"><div class="packing-progress-track"><div class="packing-progress-fill" style="width:${pct}%"></div></div><span class="packing-progress-text">${done} / ${items.length} packed</span></div>
+    ${groupsHtml}
+    ${addCatHtml}`;
 }
 async function togglePackingItem(id) {
   const items=(packingData?.items||[]).map(i=>i.id===id?{...i,done:!i.done}:i);
@@ -692,6 +835,16 @@ async function addPackingItem(input) {
 async function deletePackingItem(id) {
   const items=(packingData?.items||[]).filter(i=>i.id!==id);
   await db.collection('meta').doc('packing').update({items});
+}
+async function addPackingCategory() {
+  const input = document.getElementById('new-cat-input');
+  const cat   = input?.value?.trim();
+  if (!cat) return;
+  // Add a placeholder item to create the category
+  const items = [...(packingData?.items||[])];
+  items.push({ id:'pk-'+Date.now(), text:'(add items here)', category:cat, done:false });
+  await db.collection('meta').doc('packing').update({items});
+  if (input) input.value = '';
 }
 
 // ── TRIP INFO ────────────────────────────────────────────────
@@ -797,6 +950,57 @@ document.addEventListener('keydown', e => {
     }
   }
 });
+
+// ── MOBILE UI ────────────────────────────────────────────────
+function initMobileUI() {
+  // Nothing to wire beyond what HTML onclick handlers do —
+  // sidebar/backdrop already in DOM. Just sync initial state.
+  closeSidebar();
+}
+
+function toggleSidebar() {
+  const sidebar  = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const burger   = document.getElementById('hamburger');
+  const isOpen   = sidebar.classList.contains('open');
+  if (isOpen) {
+    closeSidebar();
+  } else {
+    sidebar.classList.add('open');
+    backdrop.classList.add('visible');
+    burger.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeSidebar() {
+  const sidebar  = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const burger   = document.getElementById('hamburger');
+  if (!sidebar) return;
+  sidebar.classList.remove('open');
+  backdrop.classList.remove('visible');
+  if (burger) burger.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── NOTES EXPAND / COLLAPSE ────────────────────────────────────────────────
+function toggleNotes(actId, fullText) {
+  const el  = document.getElementById('notes-' + actId);
+  const btn = el ? el.nextElementSibling : null;
+  if (!el || !btn) return;
+  const expanded = btn.dataset.expanded === 'true';
+  if (expanded) {
+    const short = fullText.length > 130 ? fullText.slice(0, 130) + '…' : fullText;
+    el.innerHTML  = linkify(escHtml(short));
+    btn.textContent   = 'Show more';
+    btn.dataset.expanded = 'false';
+  } else {
+    el.innerHTML  = linkify(escHtml(fullText));
+    btn.textContent   = 'Show less';
+    btn.dataset.expanded = 'true';
+  }
+}
 
 // ── UTILS ────────────────────────────────────────────────────
 function formatCost(c,currency) { return currency==='JPY'?'¥'+Math.round(c).toLocaleString():'$'+c.toFixed(2); }
