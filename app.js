@@ -1,704 +1,666 @@
-import { initializeApp }                                                          from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js';
+/* ─────────────────────────────────────────
+   JAPAN 2026 — App v4 (Merged)
+   ───────────────────────────────────────── */
 
-// ── Firebase ──────────────────────────────────────────────────────────────────
-const app = initializeApp({
+// ── Firebase ──────────────────────────────────────────────────
+const firebaseConfig = {
   apiKey:            "AIzaSyBCIaluRd8u7M88DbL59Cs_6_sfcb86f0E",
   authDomain:        "japan-2026-gc.firebaseapp.com",
   projectId:         "japan-2026-gc",
   storageBucket:     "japan-2026-gc.firebasestorage.app",
   messagingSenderId: "661642949404",
-  appId:             "1:661642949404:web:c6a554f3c243171d5a00d9",
-});
+  appId:             "1:661642949404:web:c6a554f3c243171d5a00d9"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
 
-const auth     = getAuth(app);
-const db       = getFirestore(app);
-const provider = new GoogleAuthProvider();
-const ALLOWED  = ['ghstilson@gmail.com', 'cmelikian@gmail.com'];
+// ── Constants ─────────────────────────────────────────────────
+const ALLOWED_EMAILS = ['ghstilson@gmail.com', 'cmelikian@gmail.com'];
+const TRIP_START     = new Date('2026-04-15T00:00:00');
+const TRIP_END       = new Date('2026-04-29T23:59:59');
 
-// ── State ─────────────────────────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────────
 let currentUser = null;
-const notes  = {};
-const checks = {};
-let exchRate  = 159;
+let exchRate    = parseFloat(localStorage.getItem('japan-rate') || '149');
+let rateIsLive  = false;
+const notes     = {};
+const checks    = {};
+let packingData  = null;
+let bookingsData = null; // loaded from Firestore, seeded from BUDGET_BOOKINGS
 
-// Expense state
-let expenses = [];       // [{id, amount, category, description, paidBy, split, date, createdAt}]
-let expUnsub  = null;    // Firestore onSnapshot unsubscribe
-let expFilter = 'all';   // category filter for list
-let localExpenses = [];  // fallback when not signed in
-
-// ── Dates ─────────────────────────────────────────────────────────────────────
-const TRIP_START = new Date('2026-04-15');
-const TRIP_END   = new Date('2026-04-29T23:59:59');
-
+// ── Day dates ─────────────────────────────────────────────────
 const DAY_DATES = {
-  apr15:new Date('2026-04-15'), apr16:new Date('2026-04-16'), apr17:new Date('2026-04-17'),
-  apr18:new Date('2026-04-18'), apr19:new Date('2026-04-19'), apr20:new Date('2026-04-20'),
-  apr21:new Date('2026-04-21'), apr22:new Date('2026-04-22'), apr23:new Date('2026-04-23'),
-  apr24:new Date('2026-04-24'), apr25:new Date('2026-04-25'), apr26:new Date('2026-04-26'),
-  apr27:new Date('2026-04-27'), apr28:new Date('2026-04-28'), apr29:new Date('2026-04-29'),
+  apr15: new Date('2026-04-15'), apr16: new Date('2026-04-16'),
+  apr17: new Date('2026-04-17'), apr18: new Date('2026-04-18'),
+  apr19: new Date('2026-04-19'), apr20: new Date('2026-04-20'),
+  apr21: new Date('2026-04-21'), apr22: new Date('2026-04-22'),
+  apr23: new Date('2026-04-23'), apr24: new Date('2026-04-24'),
+  apr25: new Date('2026-04-25'), apr26: new Date('2026-04-26'),
+  apr27: new Date('2026-04-27'), apr28: new Date('2026-04-28'),
+  apr29: new Date('2026-04-29'),
 };
 
-// ── Trip data ─────────────────────────────────────────────────────────────────
+// ── Itinerary data ────────────────────────────────────────────
 const DAYS = {
-  apr15:{id:'apr15',date:'WED APR 15',title:'Depart Los Angeles',location:'LAX → HND Tokyo',periods:[
-    {label:'Flight',items:[
-      {time:'11:20 AM',text:'United UA 39 departs LAX',type:'booked'},
-      {text:'Arrives HND Thursday April 16, 3:05 PM'},
-      {text:'Boeing 787-10 Dreamliner · Economy (K) · Seats 31L & 31J',sub:true},
-      {text:'Confirmation: F354LH',sub:true},
-    ]},
-  ],tip:'Get to LAX by 8:30 AM. Check in online beforehand. Settle in and adjust to the time zone.'},
-
-  apr16:{id:'apr16',date:'THU APR 16',title:'Arrival Day',location:'Tokyo · Shinjuku',periods:[
-    {label:'Afternoon',items:[
-      {time:'3:05 PM',text:'Arrive HND · clear customs, collect bags',dur:'~90 min'},
-      {text:'Tokyo Monorail or Keikyu Line → Shinjuku (~60–75 min)',sub:true},
-      {time:'~5:30 PM',text:'Check in Hotel Gracery Shinjuku',type:'booked'},
-      {text:'From 14:00 · Conf: 5594.831.309 · PIN: 6506',sub:true},
-      {text:'Kabukicho 1-19-1, Shinjuku 160-0021',sub:true,addr:'Hotel Gracery Shinjuku, Kabukicho 1-19-1, Shinjuku, Tokyo'},
-    ]},
-    {label:'Evening — take it easy',items:[
-      {time:'7:00 PM',text:'Omoide Yokocho (Memory Lane) · 5 min walk from hotel'},
-      {text:'Tiny smoky yakitori stalls, beer — ease into Japan',sub:true},
-      {time:'9:00 PM',text:'Wander Kabukicho · neon, arcades, vending machines'},
-    ]},
-  ],tip:'Jet lag will hit in waves. Keep tonight very light — you have four full days ahead.'},
-
-  apr17:{id:'apr17',date:'FRI APR 17',title:'Art + Harajuku + Shibuya',location:'Tokyo · Shinjuku',periods:[
-    {label:'Morning — teamLab Borderless',items:[
-      {time:'8:15 AM',text:'Depart hotel · Metro Hibiya Line → Kamiyacho (Exit 5)'},
-      {time:'8:30 AM',text:'teamLab Borderless · Azabudai Hills',type:'booked',dur:'~3 hrs'},
-      {text:'¥5,600/person (~$35) · 2 tickets · no re-entry',sub:true},
-      {text:'Wear pants (mirrored floors) · download teamLab app beforehand',sub:true},
-      {text:'Hit Bubble Universe + Infinite Crystal World first · EN Tea House is extra',sub:true},
-      {text:'Azabudai Hills Garden Plaza B, B1, 1-2-4 Azabudai, Minato-ku',sub:true,addr:'teamLab Borderless, Azabudai Hills, 1-2-4 Azabudai, Minato-ku, Tokyo'},
-      {time:'11:30 AM',text:'Exit teamLab · explore Azabudai Hills complex'},
-    ]},
-    {label:'Afternoon — Harajuku',items:[
-      {time:'12:30 PM',text:'Metro Hibiya Line → Meiji-Jingumae (Harajuku)'},
-      {time:'1:00 PM',text:'Meiji Shrine · forested approach, very peaceful',dur:'~1 hr'},
-      {text:'1-1 Yoyogikamizonocho, Shibuya-ku',sub:true,addr:'Meiji Shrine, Yoyogi, Shibuya, Tokyo'},
-      {time:'2:30 PM',text:'Takeshita-dori · Harajuku street fashion, crepes'},
-      {time:'3:30 PM',text:'Omotesando · tree-lined boulevard, flagship architecture'},
-    ]},
-    {label:'Evening — Shibuya',items:[
-      {time:'5:30 PM',text:'Shibuya Scramble Crossing · view from above first, then walk through'},
-      {time:'7:00 PM',text:'Dinner in Shibuya or Shimokitazawa · izakayas, wine bars'},
-    ]},
-  ],tip:'teamLab closes at 10 PM on Apr 17 (extended spring hours). 8:30 AM is the least crowded slot — crowds don\'t arrive until after 11 AM.'},
-
-  apr18:{id:'apr18',date:'SAT APR 18',title:'Old Tokyo',location:'Asakusa · Yanaka · Akihabara',periods:[
-    {label:'Morning — Asakusa',items:[
-      {time:'7:30 AM',text:'Arrive Asakusa · Senso-ji before the crowds',dur:'~2 hrs'},
-      {text:'Tour buses arrive by 10 AM — early light through incense smoke is worth it',sub:true},
-      {text:'2-3-1 Asakusa, Taito-ku',sub:true,addr:'Senso-ji Temple, 2-3-1 Asakusa, Taito, Tokyo'},
-      {time:'8:30 AM',text:'Nakamise-dori · ningyo-yaki, age-manju, melonpan'},
-      {time:'9:30 AM',text:'Kappabashi-dori · restaurant supply street, plastic food models'},
-    ]},
-    {label:'Afternoon — Yanaka + Akihabara',items:[
-      {time:'11:00 AM',text:'Yanaka · Tokyo\'s best-preserved traditional neighborhood',dur:'~1.5 hrs'},
-      {text:'Yanaka Cemetery (cherry trees) · Yanaka Ginza covered shopping street',sub:true},
-      {time:'1:00 PM',text:'Lunch in Yanaka · local tofu shops, small restaurants'},
-      {time:'2:30 PM',text:'Akihabara · 15 min walk · electronics, retro games, arcade floors'},
-    ]},
-    {label:'Evening — Shinjuku',items:[
-      {time:'7:00 PM',text:'Fuunji ramen · exceptional tsukemen · short queue likely',addr:'Fuunji Ramen, Nishi-Shinjuku, Tokyo'},
-      {time:'8:30 PM',text:'Golden Gai · cluster of tiny themed bars (jazz, film, rock) · just wander in'},
-    ]},
-  ],tip:null},
-
-  apr19:{id:'apr19',date:'SUN APR 19',title:'Kamakura Day Trip',location:'Tokyo → Kamakura (~1 hr)',periods:[
-    {label:'Morning — Kita-Kamakura',items:[
-      {time:'8:00 AM',text:'Depart Shinjuku · JR Shonan-Shinjuku Line → Kita-Kamakura (~1 hr · ¥920/~$6)'},
-      {time:'9:15 AM',text:'Engaku-ji Temple · cedar forest, zen garden',dur:'~45 min',addr:'Engaku-ji, 409 Yamanouchi, Kamakura, Kanagawa'},
-      {time:'10:00 AM',text:'Walk the trail south toward Kamakura (20–30 min scenic walk)'},
-    ]},
-    {label:'Afternoon — Kamakura',items:[
-      {time:'11:00 AM',text:'Great Buddha · Kotoku-in · ¥300 (~$2) · enter the hollow statue',dur:'~1 hr',addr:'Kotoku-in Great Buddha, 4-2-28 Hase, Kamakura, Kanagawa'},
-      {time:'12:00 PM',text:'Hase-dera Temple · ocean views, cave system · ¥400 (~$3)',dur:'~1 hr',addr:'Hase-dera Temple, 3-11-2 Hase, Kamakura, Kanagawa'},
-      {time:'1:00 PM',text:'Lunch near Hase Station · shirasu (whitebait) dishes, a local specialty'},
-      {time:'2:30 PM',text:'Optional: Tsurugaoka Hachimangu Shrine',addr:'Tsurugaoka Hachimangu, 2-1-31 Yukinoshita, Kamakura'},
-    ]},
-    {label:'Evening — Return + Luggage Forwarding',items:[
-      {time:'4:00 PM',text:'Return to Shinjuku by 5:30 PM'},
-      {time:'6:00 PM',text:'Arrange takkyubin at hotel front desk tonight',type:'booked'},
-      {text:'Send luggage: Hotel Gracery Shinjuku → Hotel Granvia Kyoto',sub:true},
-      {text:'Sent Apr 19 arrives Apr 21 · ~¥1,500–2,000/bag (~$10–13)',sub:true},
-      {time:'7:30 PM',text:'Last dinner in Shinjuku'},
-    ]},
-  ],tip:'Weekends in Kamakura are busy — arriving before 10 AM puts you ahead of the tour groups.'},
-
-  apr20:{id:'apr20',date:'MON APR 20',title:'Fuji Excursion → Kawaguchiko → Hakone',location:'Shinjuku → Kawaguchiko → Gora',periods:[
-    {label:'Morning — Fuji Excursion',items:[
-      {time:'8:30 AM',text:'Fuji-Excursion 7 departs Shinjuku',type:'booked'},
-      {text:'¥8,400 total (~$53) · Car 3, Seats 13-C & 13-D · Res: E77821',sub:true},
-      {time:'10:26 AM',text:'Arrive Kawaguchiko Station'},
-    ]},
-    {label:'Mid-Morning — Kawaguchiko',items:[
-      {time:'10:30 AM',text:'Oishi Park · north shore · best Fuji reflections + late cherry blossoms',dur:'~1.5 hrs',addr:'Oishi Park, Kawaguchiko, Fujikawaguchiko, Yamanashi'},
-      {time:'12:00 PM',text:'Optional: Chureito Pagoda (30 min to Fujiyoshida · ~400 steps)',addr:'Chureito Pagoda, Fujiyoshida, Yamanashi'},
-      {text:'Iconic 5-story pagoda framing Fuji with blossoms',sub:true},
-    ]},
-    {label:'Afternoon — Transit to Hakone',items:[
-      {time:'1:30 PM',text:'Bus via Gotemba → Gora (~2.5 hrs) · day bags only'},
-      {time:'4:00 PM',text:'Check in Tensui Saryo · Gora, Hakone',type:'booked'},
-      {text:'1320-276 Gora, Hakone-machi, Ashigarashimo-gun',sub:true,addr:'Tensui Saryo, Gora, Hakone, Ashigarashimo-gun, Kanagawa'},
-      {text:'Reservation: IK1516984808 · check-in 15:00–21:30',sub:true},
-    ]},
-    {label:'Evening',items:[
-      {time:'5:30 PM',text:'Ryokan · change into yukata, explore property, private onsen'},
-      {time:'7:45 PM',text:'Kaiseki dinner at Tensui Saryo — 19:45',type:'booked'},
-      {text:'Dinner and breakfast included · 10-course traditional kaiseki',sub:true},
-    ]},
-  ],tip:'Morning is the best window for Mt. Fuji views before clouds build. The train ride itself often offers Fuji sightlines.'},
-
-  apr21:{id:'apr21',date:'TUE APR 21',title:'The Hakone Loop',location:'Gora → Owakudani → Lake Ashi',periods:[
-    {label:'Morning — Open Air Museum + Ropeway',items:[
-      {time:'9:00 AM',text:'Hakone Open Air Museum · opens 9 AM · ¥2,000 (~$13)',dur:'~2 hrs',addr:'Hakone Open Air Museum, 1121 Ninotaira, Hakone, Kanagawa'},
-      {text:'10 min walk from ryokan · outdoor sculptures, Picasso Pavilion (300+ works), foot onsen inside',sub:true},
-      {time:'11:00 AM',text:'Hakone Tozan Railway: Gora → Sounzan (10 min)'},
-      {time:'11:15 AM',text:'Ropeway: Sounzan → Owakudani (~25 min) · Hakone Free Pass'},
-      {text:'Best Fuji views in the morning before clouds build',sub:true},
-    ]},
-    {label:'Midday — Owakudani + Lake Ashi',items:[
-      {time:'12:00 PM',text:'Owakudani volcanic valley · sulfur steam vents · black eggs',addr:'Owakudani, Hakone, Ashigarashimo-gun, Kanagawa'},
-      {text:'¥500 for 5 eggs (~$3) · supposedly add 7 years per egg',sub:true},
-      {time:'1:00 PM',text:'Ropeway → Togendai on Lake Ashi (~25 min)'},
-      {time:'1:30 PM',text:'Lake Ashi sightseeing boat → Moto-Hakone (~30 min · Free Pass)',dur:'30 min'},
-    ]},
-    {label:'Afternoon — Hakone Shrine + Return',items:[
-      {time:'2:30 PM',text:'Hakone Shrine · torii gate rising from the lake',dur:'~45 min',addr:'Hakone Shrine, 80-1 Motohakone, Hakone, Kanagawa'},
-      {time:'3:30 PM',text:'Lunch near Moto-Hakone · tofu cuisine, soba'},
-      {time:'5:00 PM',text:'Head back to Gora · Hakone Tozan Railway'},
-      {time:'5:30 PM',text:'Tensui Saryo · private open-air onsen',dur:'~1.5 hrs'},
-    ]},
-    {label:'Evening',items:[
-      {time:'7:45 PM',text:'Kaiseki dinner at Tensui Saryo — 19:45',type:'booked'},
-    ]},
-  ],tip:'Buy the Hakone Free Pass at Gora Station — covers Tozan Railway, ropeway, and Lake Ashi boat. ~¥4,000 (~$25) for 2 days.'},
-
-  apr22:{id:'apr22',date:'WED APR 22',title:'Depart Hakone → Arrive Kyoto',location:'Gora → Odawara → Kyoto',periods:[
-    {label:'Morning — Checkout + Shinkansen',items:[
-      {time:'7:00 AM',text:'Breakfast at ryokan · included'},
-      {time:'9:00 AM',text:'Check out Tensui Saryo · must leave by 9:00 AM'},
-      {time:'9:05 AM',text:'Hakone Tozan Railway: Gora → Hakone-Yumoto (~35 min)'},
-      {time:'9:45 AM',text:'Local train: Hakone-Yumoto → Odawara (~15 min)'},
-      {time:'10:11 AM',text:'HIKARI 637 departs Odawara',type:'booked'},
-      {text:'¥23,800 total (~$150) · Res: 2002 · Series N700 · seats TBD by email',sub:true},
-      {time:'12:12 PM',text:'Arrive Kyoto Station',dur:'2 hrs 1 min'},
-    ]},
-    {label:'Afternoon — Arrive Kyoto',items:[
-      {time:'12:15 PM',text:'Check in Hotel Granvia Kyoto',type:'booked'},
-      {text:'JR Kyoto Station (Karasuma) · Conf: #23151SF060529',sub:true,addr:'Hotel Granvia Kyoto, JR Kyoto Station, 600-8216 Kyoto'},
-      {text:'Luggage arriving from takkyubin (sent Apr 19)',sub:true},
-      {time:'2:30 PM',text:'Fushimi Inari Taisha · 5 min by JR · FREE · open 24 hrs',addr:'Fushimi Inari Taisha, 68 Fukakusa Yabunouchicho, Fushimi-ku, Kyoto'},
-      {text:'Preview visit — lower gates only · save energy for tomorrow 6 AM',sub:true},
-    ]},
-    {label:'Evening',items:[
-      {time:'5:30 PM',text:'Nishiki Market · closes ~5:30 PM weekdays',addr:'Nishiki Market, Nishikikoji Street, Nakagyo-ku, Kyoto'},
-      {time:'7:30 PM',text:'Dinner in Gion or Pontocho alley'},
-    ]},
-  ],tip:'Check out by 9 AM is essential. The full Fushimi Inari hike is tomorrow at 6 AM — the single most important timing decision of the Kyoto trip.'},
-
-  apr23:{id:'apr23',date:'THU APR 23',title:'Fushimi Inari + Higashiyama',location:'Kyoto · Southern + Eastern Kyoto',periods:[
-    {label:'Very Early Morning — Fushimi Inari',items:[
-      {time:'5:45 AM',text:'JR Nara Line → Inari Station (5 min · ¥150/~$1)'},
-      {time:'6:00 AM',text:'Fushimi Inari Taisha · FREE · open 24 hrs',dur:'~2.5 hrs',addr:'Fushimi Inari Taisha, 68 Fukakusa Yabunouchicho, Fushimi-ku, Kyoto'},
-      {text:'By 8 AM it\'s crowded · by 10 AM shoulder-to-shoulder · 6 AM is transformative',sub:true},
-      {text:'Full hike to summit and back ~2 hrs · Yotsutsuji crossroads has best views',sub:true},
-      {time:'8:30 AM',text:'Descend · grab breakfast from street stalls outside entrance'},
-    ]},
-    {label:'Late Morning — Higashiyama',items:[
-      {time:'10:00 AM',text:'Bus or taxi to Higashiyama district'},
-      {time:'10:30 AM',text:'Ninenzaka + Sannenzaka · preserved stone-paved streets',dur:'~1 hr',addr:'Ninenzaka, Higashiyama-ku, Kyoto'},
-      {time:'11:30 AM',text:'Kiyomizudera Temple · ¥500 (~$3)',dur:'~1 hr',addr:'Kiyomizudera, 1-294 Kiyomizu, Higashiyama-ku, Kyoto'},
-    ]},
-    {label:'Afternoon — Gion + Philosopher\'s Path',items:[
-      {time:'1:00 PM',text:'Lunch in Higashiyama · tofu kaiseki, soba, or matcha cafe'},
-      {time:'2:30 PM',text:'Gion district · Hanamikoji Street · watch for geiko/maiko',addr:'Hanamikoji Street, Gion, Higashiyama-ku, Kyoto'},
-      {time:'4:00 PM',text:'Philosopher\'s Path · 2 km canal walk lined with cherry trees',dur:'~1 hr',addr:'Philosopher\'s Path, Sakyo-ku, Kyoto'},
-      {time:'5:30 PM',text:'Nanzenji Temple · free grounds',addr:'Nanzenji, 86 Nanzenji Fukuchicho, Sakyo-ku, Kyoto'},
-    ]},
-    {label:'Evening',items:[
-      {time:'7:00 PM',text:'Dinner in Gion or Pontocho · book in advance'},
-    ]},
-  ],tip:'6 AM at Fushimi Inari is the single best timing call of the Kyoto trip. The difference between 6 AM and 10 AM is serene vs. a crush of tourists.'},
-
-  apr24:{id:'apr24',date:'FRI APR 24',title:'Arashiyama + Nishiki Market',location:'Kyoto · Western + Central',periods:[
-    {label:'Early Morning — Arashiyama Bamboo Grove',items:[
-      {time:'7:00 AM',text:'JR Sagano Line → Saga-Arashiyama (~15 min · ¥240/~$2)'},
-      {time:'7:30 AM',text:'Arashiyama Bamboo Grove · FREE · open 24 hrs',dur:'~45 min',addr:'Arashiyama Bamboo Grove, Sagatenryuji, Ukyo-ku, Kyoto'},
-      {text:'Tour groups arrive by 9 AM · 7:30 AM is dramatically quieter',sub:true},
-      {time:'8:30 AM',text:'Tenryu-ji Temple · opens 8:30 AM · ¥500 (~$3) for garden',dur:'~1 hr',addr:'Tenryu-ji, 68 Sagatenryuji Susukinobabacho, Ukyo-ku, Kyoto'},
-      {time:'9:30 AM',text:'Okochi-Sanso Villa · ¥1,000 (~$6) includes matcha + sweet',dur:'~45 min',addr:'Okochi Sanso Villa, Sagaogurayama, Ukyo-ku, Kyoto'},
-    ]},
-    {label:'Midday — Arashiyama',items:[
-      {time:'11:00 AM',text:'Togetsukyo Bridge · iconic bridge over the Oi River',addr:'Togetsukyo Bridge, Sagatenryuji, Ukyo-ku, Kyoto'},
-      {time:'11:30 AM',text:'Lunch · yudofu (hot tofu), matcha soba, or riverside cafe'},
-    ]},
-    {label:'Afternoon — Central Kyoto',items:[
-      {time:'2:30 PM',text:'Nishiki Market · go before 3 PM · closes ~5:30 PM weekdays',dur:'~1 hr',addr:'Nishiki Market, Nishikikoji Street, Nakagyo-ku, Kyoto'},
-      {text:'Kyoto\'s Kitchen · sakura-themed sweets in April · pickles · matcha soft serve',sub:true},
-      {time:'4:00 PM',text:'Teramachi + Shinkyogoku shopping arcades · adjacent to Nishiki'},
-    ]},
-    {label:'Evening',items:[
-      {time:'6:30 PM',text:'Gion at dusk · best light for wooden machiya architecture'},
-      {time:'7:30 PM',text:'Dinner in Pontocho or Gion'},
-    ]},
-  ],tip:null},
-
-  apr25:{id:'apr25',date:'SAT APR 25',title:'Nara Day Trip + Kinkaku-ji',location:'Kyoto → Nara → Northern Kyoto',periods:[
-    {label:'Morning — Nara',items:[
-      {time:'8:30 AM',text:'JR Nara Line: Kyoto → Nara (45 min · ¥760/~$5)'},
-      {time:'9:30 AM',text:'Nara Park · hundreds of freely roaming deer',dur:'~30 min',addr:'Nara Park, Zoshicho, Nara'},
-      {time:'10:00 AM',text:'Todai-ji Temple · world\'s largest wooden building · giant bronze Buddha',dur:'~1.5 hrs',addr:'Todai-ji, 406-1 Zoshicho, Nara'},
-      {text:'¥600 (~$4) · UNESCO · genuinely awe-inspiring scale',sub:true},
-      {time:'11:30 AM',text:'Kasuga Taisha Shrine · forest setting · lantern-lined paths',addr:'Kasuga Taisha, 160 Kasuganocho, Nara'},
-      {time:'12:30 PM',text:'Lunch in Nara · kakinoha-zushi (persimmon-leaf sushi)'},
-      {time:'2:00 PM',text:'Return to Kyoto'},
-    ]},
-    {label:'Afternoon — Northern Kyoto',items:[
-      {time:'3:00 PM',text:'Kinkaku-ji (Golden Pavilion) · ¥500 (~$3)',addr:'Kinkaku-ji, 1 Kinkakujicho, Kita-ku, Kyoto'},
-      {text:'Worth seeing once despite crowds · best on a clear afternoon',sub:true},
-      {time:'4:00 PM',text:'Ryoan-ji Temple · world-famous rock garden · ¥600 (~$4)',dur:'~45 min',addr:'Ryoan-ji, 13 Ryoanji Goryonoshitacho, Ukyo-ku, Kyoto'},
-    ]},
-    {label:'Evening — Last Night in Kyoto',items:[
-      {time:'7:00 PM',text:'Dinner · Kawaramachi or Shijo area · izakaya, sake bar, or splurge kaiseki'},
-    ]},
-  ],tip:'Saturdays in April are busy. Go to Nara before 10 AM and Kinkaku-ji after 3 PM when tour buses thin out. Golden Week starts April 29 — you leave just in time.'},
-
-  apr26:{id:'apr26',date:'SUN APR 26',title:'Depart Kyoto → Kanazawa',location:'Kyoto → Kanazawa',periods:[
-    {label:'Morning — Checkout',items:[
-      {time:'10:00 AM',text:'Check out Hotel Granvia Kyoto',type:'booked'},
-    ]},
-    {label:'Transit to Kanazawa',items:[
-      {text:'Thunderbird Limited Express: Kyoto → Kanazawa (~2 hrs · ~¥6,000–7,000/~$38–44)'},
-      {text:'Multiple departures · check timetable · aim for mid-morning',sub:true},
-    ]},
-    {label:'Afternoon — Arrive Kanazawa',items:[
-      {time:'3:00 PM',text:'Check in Hotel Intergate Kanazawa',type:'booked'},
-      {text:'2-5 Takaokamachi, Kanazawa · breakfast buffet included',sub:true,addr:'Hotel Intergate Kanazawa, 2-5 Takaokamachi, Kanazawa, Ishikawa'},
-      {time:'4:30 PM',text:'Higashi Chaya District · Japan\'s best-preserved geisha quarter outside Kyoto',dur:'~1.5 hrs',addr:'Higashi Chaya District, Higashiyama, Kanazawa, Ishikawa'},
-    ]},
-    {label:'Evening',items:[
-      {time:'7:00 PM',text:'Dinner · Nodoguro (blackthroat seaperch), sweet shrimp · Korinbo area'},
-    ]},
-  ],tip:null},
-
-  apr27:{id:'apr27',date:'MON APR 27',title:'Kanazawa Full Day',location:'Kenroku-en · 21st Century Museum · Omicho',periods:[
-    {label:'Morning — Kenroku-en + Castle',items:[
-      {time:'7:00 AM',text:'Kenroku-en Garden · opens 7 AM · ¥320 (~$2)',dur:'~1.5 hrs',addr:'Kenroku-en, 1 Kenrokumachi, Kanazawa, Ishikawa'},
-      {text:'One of Japan\'s three great gardens · Kasumigaike Pond + Kotojitoro lantern',sub:true},
-      {text:'Free early entry from 4 AM through Mayumizaka Gate',sub:true},
-      {time:'8:30 AM',text:'Kanazawa Castle Park · directly adjacent · free grounds',addr:'Kanazawa Castle, 1-1 Marunouchi, Kanazawa, Ishikawa'},
-    ]},
-    {label:'Mid-Morning — 21st Century Museum',items:[
-      {time:'10:00 AM',text:'21st Century Museum of Contemporary Art · opens 10 AM',dur:'~1.5 hrs',addr:'21st Century Museum, 1-2-1 Hirosaka, Kanazawa, Ishikawa'},
-      {text:'Free exchange zone · ~¥1,400 (~$9) for exhibitions',sub:true},
-      {text:'CLOSED MONDAYS — verify before visiting · kanazawa21.jp',sub:true},
-      {text:'Swimming Pool (Leandro Erlich) + Blue Planet Sky (James Turrell)',sub:true},
-    ]},
-    {label:'Afternoon — Omicho + Nagamachi',items:[
-      {time:'12:00 PM',text:'Omicho Market · Kanazawa\'s kitchen · 9 AM – 5 PM',dur:'~1.5 hrs',addr:'Omicho Market, 50 Kami-Omicho, Kanazawa, Ishikawa'},
-      {text:'Kaisendon (seafood rice bowl) · arrive by noon before lines grow',sub:true},
-      {text:'Popular items sell out before noon — arrive early',sub:true},
-      {time:'2:00 PM',text:'Nagamachi Samurai District · Nomura Clan House · ¥550 (~$4)',addr:'Nagamachi Samurai District, Nagamachi, Kanazawa, Ishikawa'},
-    ]},
-    {label:'Evening',items:[
-      {time:'6:30 PM',text:'Dinner · Kanazawa seafood · Nodoguro, crab, sweet shrimp'},
-    ]},
-  ],tip:'Apr 27 is Monday — the 21st Century Museum is typically closed. Verify on their website. If closed, add more time at Kenroku-en or visit Nagamachi Yuzen-kan.'},
-
-  apr28:{id:'apr28',date:'TUE APR 28',title:'Depart Kanazawa → Tokyo Ginza',location:'Kanazawa → Tokyo · Ginza',periods:[
-    {label:'Morning — Checkout + Shinkansen',items:[
-      {time:'8:00 AM',text:'Breakfast buffet at Hotel Intergate · included'},
-      {time:'10:00 AM',text:'Check out · by 11:00 AM'},
-      {text:'Hokuriku Shinkansen: Kanazawa → Tokyo (Ueno) · ~2.5 hrs · ~¥14,000 (~$88)',sub:true},
-    ]},
-    {label:'Afternoon — Arrive Tokyo Ginza',items:[
-      {time:'3:00 PM',text:'Check in Quintessa Hotel Tokyo Ginza',type:'booked'},
-      {text:'Conf: 6519361226 · PIN: 9235 · breakfast included',sub:true,addr:'Quintessa Hotel Tokyo Ginza, 4-11-4 Ginza, Chuo-ku, Tokyo'},
-      {time:'2:30 PM',text:'Hamarikyu Gardens · ¥300 (~$2) · traditional garden on Tokyo Bay',dur:'~1 hr',addr:'Hamarikyu Gardens, 1-1 Hamarikyuteien, Chuo-ku, Tokyo'},
-      {time:'4:00 PM',text:'Ginza main streets · Itoya stationery · Ginza Six · window shopping'},
-    ]},
-    {label:'Evening — Final Night',items:[
-      {time:'6:30 PM',text:'Tsukiji Outer Market area for dinner · sushi, grilled seafood, sake bars',addr:'Tsukiji Outer Market, 4-16-2 Tsukiji, Chuo-ku, Tokyo'},
-      {time:'8:00 PM',text:'Ginza evening stroll · excellent last night in Japan'},
-    ]},
-  ],tip:'Pack tonight and confirm you have everything. Flight departs HND at 6:10 PM tomorrow — leave the hotel by 12:30 PM.'},
-
-  apr29:{id:'apr29',date:'WED APR 29',title:'Final Morning + Depart',location:'Tokyo Ginza → HND → LAX',periods:[
-    {label:'Morning — Tsukiji Farewell',items:[
-      {time:'7:30 AM',text:'Tsukiji Outer Market · 10 min walk · classic Tokyo farewell breakfast',dur:'~1.5 hrs',addr:'Tsukiji Outer Market, 4-16-2 Tsukiji, Chuo-ku, Tokyo'},
-      {text:'Fresh sushi, tamagoyaki, grilled scallops, matcha · best before 10 AM',sub:true},
-      {time:'10:00 AM',text:'Return to hotel · collect luggage'},
-    ]},
-    {label:'Afternoon — Depart',items:[
-      {time:'12:30 PM',text:'Depart hotel for Haneda Airport · no later than 12:30 PM'},
-      {text:'Keikyu Line from Higashi-Ginza → HND Terminal 3 (~30 min · ¥300/~$2)',sub:true},
-      {text:'Allow 2.5–3 hours before departure for international check-in + security',sub:true},
-      {time:'6:10 PM',text:'United UA 38 departs HND',type:'booked'},
-      {text:'HND → LAX · 10 hrs 5 min · Seats 31J & 31L · Conf: F354LH',sub:true},
-      {text:'Arrives LAX Wednesday April 29, 12:15 PM (same day, crossing date line)',sub:true},
-    ]},
-  ],tip:'Golden Week begins today — you\'re flying out. Well timed. Allow 3 hours at the airport.'},
+  apr15: {
+    id:'apr15', date:'WED APR 15', title:'Depart Los Angeles', location:'LAX \u2192 HND Tokyo',
+    periods:[{ label:'Flight', items:[
+      { time:'11:20 AM', text:'United UA 39 departs LAX', type:'booked' },
+      { text:'Arrives HND Thursday April 16, 3:05 PM' },
+      { text:'Boeing 787-10 Dreamliner \u00b7 Economy (K) \u00b7 Seats 31L (Gwen) & 31J (Christina)', sub:true },
+      { text:'Confirmation: F354LH \u00b7 eTickets: 0162358617634 / 0162358617635', sub:true },
+    ]}],
+    tip:'Get to LAX by 8:30 AM. Check in online beforehand. Total flight cost: $2,196.86 \u00b7 $1,098/person including Economy Plus seats.'
+  },
+  apr16: {
+    id:'apr16', date:'THU APR 16', title:'Arrival Day', location:'Tokyo \u00b7 Shinjuku',
+    periods:[
+      { label:'Afternoon', items:[
+        { time:'3:05 PM',  text:'Arrive HND \u00b7 clear customs, collect bags' },
+        { text:'Tokyo Monorail or Keikyu Line \u2192 Shinjuku (~60\u201375 min)', sub:true },
+        { time:'~5:30 PM', text:'Check in Hotel Gracery Shinjuku', type:'booked' },
+        { text:'From 14:00 \u00b7 Conf: 5594.831.309 \u00b7 PIN: 6506', sub:true },
+      ]},
+      { label:'Evening \u2014 take it easy', items:[
+        { time:'7:00 PM', text:'Omoide Yokocho (Memory Lane) \u00b7 5 min walk from hotel' },
+        { text:'Tiny smoky yakitori stalls, beer \u2014 ease into Japan', sub:true },
+        { time:'9:00 PM', text:'Wander Kabukicho \u00b7 neon, arcades, vending machines' },
+      ]},
+    ],
+    tip:'Jet lag will hit in waves. Keep tonight very light \u2014 you have four full days ahead.'
+  },
+  apr17: {
+    id:'apr17', date:'FRI APR 17', title:'teamLab + Harajuku + Shibuya', location:'Tokyo \u00b7 Shinjuku',
+    periods:[
+      { label:'Morning \u2014 teamLab Borderless', items:[
+        { time:'8:15 AM',  text:'Depart hotel \u00b7 Metro Hibiya Line \u2192 Kamiyacho (Exit 5)' },
+        { time:'8:30 AM',  text:'teamLab Borderless \u00b7 Azabudai Hills', type:'booked' },
+        { text:'\u00a55,600/person (~$35) \u00b7 Conf: A7YRA4LXWCN3-0001 \u00b7 ~3 hrs \u00b7 no re-entry', sub:true },
+        { text:'Wear pants (mirrored floors) \u00b7 download teamLab app beforehand', sub:true },
+        { text:'Hit Bubble Universe + Infinite Crystal World first \u00b7 EN Tea House is extra', sub:true },
+        { time:'11:30 AM', text:'Exit teamLab \u00b7 explore Azabudai Hills complex' },
+      ]},
+      { label:'Afternoon \u2014 Harajuku', items:[
+        { time:'12:30 PM', text:'Metro Hibiya Line \u2192 Meiji-Jingumae (Harajuku)' },
+        { time:'1:00 PM',  text:'Meiji Shrine \u00b7 forested approach, very peaceful' },
+        { time:'2:30 PM',  text:'Takeshita-dori \u00b7 Harajuku street fashion, crepes' },
+        { time:'3:30 PM',  text:'Omotesando \u00b7 tree-lined boulevard, flagship architecture' },
+      ]},
+      { label:'Evening \u2014 Shibuya', items:[
+        { time:'5:30 PM', text:'Shibuya Scramble Crossing \u00b7 view from above first, then walk through' },
+        { time:'7:00 PM', text:'Dinner in Shibuya or Shimokitazawa \u00b7 izakayas, wine bars' },
+      ]},
+    ],
+    tip:'teamLab closes at 10 PM on Apr 17 (extended spring hours). 8:30 AM is the least crowded slot \u2014 crowds arrive after 11 AM.'
+  },
+  apr18: {
+    id:'apr18', date:'SAT APR 18', title:'Old Tokyo', location:'Asakusa \u00b7 Yanaka \u00b7 Akihabara',
+    periods:[
+      { label:'Morning \u2014 Asakusa', items:[
+        { time:'7:30 AM', text:'Arrive Asakusa \u00b7 Senso-ji before the crowds' },
+        { text:'Tour buses arrive by 10 AM \u2014 early light through incense smoke is worth it', sub:true },
+        { time:'8:30 AM', text:'Nakamise-dori \u00b7 ningyo-yaki, age-manju, melonpan' },
+        { time:'9:30 AM', text:'Kappabashi-dori \u00b7 restaurant supply street, plastic food models' },
+      ]},
+      { label:'Afternoon \u2014 Yanaka + Akihabara', items:[
+        { time:'11:00 AM', text:"Yanaka \u00b7 Tokyo's best-preserved traditional neighborhood" },
+        { text:'Yanaka Cemetery (cherry trees) \u00b7 Yanaka Ginza covered shopping street', sub:true },
+        { time:'1:00 PM',  text:'Lunch in Yanaka \u00b7 local tofu shops, small restaurants' },
+        { time:'2:30 PM',  text:'Akihabara \u00b7 15 min walk \u00b7 electronics, retro games, arcade floors' },
+      ]},
+      { label:'Evening \u2014 Shinjuku', items:[
+        { time:'7:00 PM', text:'Fuunji ramen \u00b7 exceptional tsukemen \u00b7 short queue likely' },
+        { time:'8:30 PM', text:'Golden Gai \u00b7 tiny themed bars (jazz, film, rock) \u00b7 just wander in' },
+      ]},
+    ],
+    tip:null
+  },
+  apr19: {
+    id:'apr19', date:'SUN APR 19', title:'Kamakura Day Trip', location:'Tokyo \u2192 Kamakura (~1 hr)',
+    periods:[
+      { label:'Morning \u2014 Kita-Kamakura', items:[
+        { time:'8:00 AM',  text:'Depart Shinjuku \u00b7 JR Shonan-Shinjuku Line \u2192 Kita-Kamakura (~1 hr \u00b7 \u00a5920/~$6)' },
+        { time:'9:15 AM',  text:'Engaku-ji Temple \u00b7 cedar forest, zen garden' },
+        { time:'10:00 AM', text:'Walk the trail south toward Kamakura (20\u201330 min)' },
+      ]},
+      { label:'Afternoon \u2014 Kamakura', items:[
+        { time:'11:00 AM', text:'Great Buddha \u00b7 Kotoku-in \u00b7 \u00a5300 (~$2) \u00b7 enter the hollow statue' },
+        { time:'12:00 PM', text:'Hase-dera Temple \u00b7 ocean views, cave system \u00b7 \u00a5400 (~$3)' },
+        { time:'1:00 PM',  text:'Lunch near Hase Station \u00b7 shirasu (whitebait) dishes' },
+        { time:'2:30 PM',  text:'Optional: Tsurugaoka Hachimangu Shrine' },
+      ]},
+      { label:'Evening \u2014 Return + Luggage Forwarding', items:[
+        { time:'4:00 PM', text:'Return to Shinjuku by 5:30 PM' },
+        { time:'6:00 PM', text:'Arrange takkyubin at hotel front desk tonight', type:'booked' },
+        { text:'Send luggage: Hotel Gracery Shinjuku \u2192 Hotel Granvia Kyoto', sub:true },
+        { text:'Sent Apr 19, arrives Apr 21 \u00b7 ~\u00a51,500\u20132,000/bag (~$10\u201313)', sub:true },
+        { time:'7:30 PM', text:'Last dinner in Shinjuku' },
+      ]},
+    ],
+    tip:'Weekends in Kamakura are busy \u2014 arriving before 10 AM puts you ahead of the tour groups.'
+  },
+  apr20: {
+    id:'apr20', date:'MON APR 20', title:'Fuji Excursion \u2192 Kawaguchiko \u2192 Hakone', location:'Shinjuku \u2192 Kawaguchiko \u2192 Gora',
+    periods:[
+      { label:'Morning \u2014 Fuji Excursion', items:[
+        { time:'8:30 AM',  text:'Fuji-Excursion 7 departs Shinjuku', type:'booked' },
+        { text:'\u00a58,400 total (~$53) \u00b7 Car 3, Seats 13-C & 13-D \u00b7 Res: E77821', sub:true },
+        { text:'Pickup code: 24492390994521288 \u00b7 Collect tickets first!', sub:true },
+        { time:'10:26 AM', text:'Arrive Kawaguchiko Station' },
+      ]},
+      { label:'Mid-Morning \u2014 Kawaguchiko', items:[
+        { time:'10:30 AM', text:'Oishi Park \u00b7 north shore \u00b7 best Fuji reflections + late cherry blossoms' },
+        { time:'12:00 PM', text:'Optional: Chureito Pagoda (30 min to Fujiyoshida \u00b7 ~400 steps)' },
+      ]},
+      { label:'Afternoon \u2014 Transit to Hakone', items:[
+        { time:'1:30 PM', text:'Bus via Gotemba \u2192 Gora (~2.5 hrs) \u00b7 day bags only' },
+        { time:'4:00 PM', text:'Check in Tensui Saryo \u00b7 Gora, Hakone', type:'booked' },
+        { text:'Res: IK1516984808 \u00b7 check-in 15:00\u201321:30', sub:true },
+      ]},
+      { label:'Evening', items:[
+        { time:'5:30 PM', text:'Ryokan \u00b7 change into yukata, private open-air onsen' },
+        { time:'7:45 PM', text:'Kaiseki dinner at Tensui Saryo \u2014 19:45', type:'booked' },
+        { text:'Dinner and breakfast included \u00b7 10-course traditional kaiseki', sub:true },
+      ]},
+    ],
+    tip:'Morning is the best window for Mt. Fuji views before clouds build.'
+  },
+  apr21: {
+    id:'apr21', date:'TUE APR 21', title:'The Hakone Loop', location:'Gora \u2192 Owakudani \u2192 Lake Ashi',
+    periods:[
+      { label:'Morning \u2014 Open Air Museum + Ropeway', items:[
+        { time:'9:00 AM',  text:'Hakone Open Air Museum \u00b7 opens 9 AM \u00b7 \u00a52,000 (~$13)' },
+        { text:'10 min walk from ryokan \u00b7 outdoor sculptures, Picasso Pavilion, foot onsen inside', sub:true },
+        { time:'11:00 AM', text:'Hakone Tozan Railway: Gora \u2192 Sounzan (10 min)' },
+        { time:'11:15 AM', text:'Ropeway: Sounzan \u2192 Owakudani (~25 min) \u00b7 Hakone Free Pass' },
+      ]},
+      { label:'Midday \u2014 Owakudani + Lake Ashi', items:[
+        { time:'12:00 PM', text:'Owakudani volcanic valley \u00b7 sulfur steam vents \u00b7 black eggs' },
+        { text:'\u00a5500 for 5 eggs (~$3) \u00b7 supposedly add 7 years per egg', sub:true },
+        { time:'1:00 PM',  text:'Ropeway \u2192 Togendai on Lake Ashi (~25 min)' },
+        { time:'1:30 PM',  text:'Lake Ashi sightseeing boat \u2192 Moto-Hakone (~30 min \u00b7 Free Pass)' },
+      ]},
+      { label:'Afternoon \u2014 Hakone Shrine + Return', items:[
+        { time:'2:30 PM', text:'Hakone Shrine \u00b7 torii gate rising from the lake' },
+        { time:'3:30 PM', text:'Lunch near Moto-Hakone \u00b7 tofu cuisine, soba' },
+        { time:'5:00 PM', text:'Back to Gora \u00b7 Hakone Tozan Railway from Hakone-Yumoto' },
+        { time:'5:30 PM', text:'Tensui Saryo \u00b7 private open-air onsen' },
+      ]},
+      { label:'Evening', items:[
+        { time:'7:45 PM', text:'Kaiseki dinner at Tensui Saryo \u2014 19:45', type:'booked' },
+        { text:'Dinner and breakfast included', sub:true },
+      ]},
+    ],
+    tip:'Buy the Hakone Free Pass at Gora Station \u2014 covers Tozan Railway, ropeway, and Lake Ashi boat. ~\u00a54,000 (~$25) for the 2-day version.'
+  },
+  apr22: {
+    id:'apr22', date:'WED APR 22', title:'Depart Hakone \u2192 Arrive Kyoto', location:'Gora \u2192 Odawara \u2192 Kyoto',
+    periods:[
+      { label:'Morning \u2014 Checkout + Shinkansen', items:[
+        { time:'7:00 AM',  text:'Breakfast at ryokan \u00b7 included' },
+        { time:'9:00 AM',  text:'Check out Tensui Saryo \u00b7 must leave by 9:00 AM' },
+        { text:'Hot Spring Tax \u00a5150/person payable at checkout', sub:true },
+        { time:'9:05 AM',  text:'Hakone Tozan Railway: Gora \u2192 Hakone-Yumoto (~35 min)' },
+        { time:'9:45 AM',  text:'Local train: Hakone-Yumoto \u2192 Odawara (~15 min)' },
+        { time:'10:11 AM', text:'HIKARI 637 departs Odawara', type:'booked' },
+        { text:'\u00a523,800 total (~$150) \u00b7 Res: 2002 \u00b7 Smart EX: 9007241665 \u00b7 Series N700 \u00b7 Ordinary', sub:true },
+        { time:'12:12 PM', text:'Arrive Kyoto Station' },
+      ]},
+      { label:'Afternoon \u2014 Arrive Kyoto', items:[
+        { time:'12:15 PM', text:'Check in Hotel Granvia Kyoto', type:'booked' },
+        { text:'Above Kyoto Station \u00b7 Conf: #23151SF060529 \u00b7 luggage arriving from takkyubin', sub:true },
+        { time:'2:30 PM',  text:'Fushimi Inari Taisha \u00b7 5 min by JR \u00b7 FREE \u00b7 open 24 hrs' },
+        { text:'Preview visit \u2014 lower gates only \u00b7 save energy for tomorrow 6 AM', sub:true },
+      ]},
+      { label:'Evening', items:[
+        { time:'5:30 PM', text:'Nishiki Market \u00b7 closes ~5:30 PM weekdays' },
+        { time:'7:30 PM', text:'Dinner in Gion or Pontocho alley' },
+      ]},
+    ],
+    tip:'Check out by 9 AM is essential. The full Fushimi Inari hike is tomorrow at 6 AM \u2014 the single most important timing decision of the Kyoto trip.'
+  },
+  apr23: {
+    id:'apr23', date:'THU APR 23', title:'Fushimi Inari + Higashiyama', location:'Kyoto \u00b7 Southern + Eastern Kyoto',
+    periods:[
+      { label:'Very Early Morning \u2014 Fushimi Inari', items:[
+        { time:'5:45 AM', text:'JR Nara Line \u2192 Inari Station (5 min \u00b7 \u00a5150/~$1)' },
+        { time:'6:00 AM', text:'Arrive Fushimi Inari Taisha \u00b7 FREE \u00b7 open 24 hrs' },
+        { text:"By 8 AM it's crowded \u00b7 by 10 AM shoulder-to-shoulder \u00b7 6 AM is transformative", sub:true },
+        { text:'Full hike to summit and back ~2 hrs \u00b7 Yotsutsuji crossroads has best city views', sub:true },
+        { time:'8:30 AM', text:'Descend \u00b7 grab breakfast from street stalls outside entrance' },
+      ]},
+      { label:'Late Morning \u2014 Higashiyama', items:[
+        { time:'10:00 AM', text:'Bus or taxi to Higashiyama district' },
+        { time:'10:30 AM', text:'Ninenzaka + Sannenzaka \u00b7 preserved stone-paved machiya streets' },
+        { time:'11:30 AM', text:'Kiyomizudera Temple \u00b7 \u00a5500 (~$3)' },
+      ]},
+      { label:"Afternoon \u2014 Gion + Philosopher's Path", items:[
+        { time:'1:00 PM',  text:'Lunch in Higashiyama' },
+        { time:'2:30 PM',  text:'Gion district \u00b7 Hanamikoji Street \u00b7 watch for geiko/maiko' },
+        { time:"4:00 PM",  text:"Philosopher's Path \u00b7 2 km canal walk lined with cherry trees" },
+        { time:'5:30 PM',  text:'Nanzenji Temple at the south end \u00b7 free grounds' },
+      ]},
+      { label:'Evening', items:[
+        { time:'7:00 PM', text:'Dinner in Gion or Pontocho \u00b7 book in advance' },
+      ]},
+    ],
+    tip:'6 AM at Fushimi Inari is the single best timing call of the Kyoto trip. The difference between 6 AM and 10 AM is the difference between serene and a crush of tourists.'
+  },
+  apr24: {
+    id:'apr24', date:'FRI APR 24', title:'Arashiyama + Nishiki Market', location:'Kyoto \u00b7 Western + Central',
+    periods:[
+      { label:'Early Morning \u2014 Arashiyama Bamboo Grove', items:[
+        { time:'7:00 AM', text:'JR Sagano Line \u2192 Saga-Arashiyama (~15 min \u00b7 \u00a5240/~$2)' },
+        { time:'7:30 AM', text:'Arashiyama Bamboo Grove \u00b7 FREE \u00b7 open 24 hrs' },
+        { text:'Tour groups arrive by 9 AM \u00b7 7:30 AM is dramatically quieter', sub:true },
+        { time:'8:30 AM', text:'Tenryu-ji Temple \u00b7 opens 8:30 AM \u00b7 \u00a5500 (~$3) for garden' },
+        { time:'9:30 AM', text:'Okochi-Sanso Villa \u00b7 \u00a51,000 (~$6) includes matcha + sweet' },
+      ]},
+      { label:'Midday \u2014 Arashiyama', items:[
+        { time:'11:00 AM', text:'Togetsukyo Bridge \u00b7 iconic bridge over the Oi River' },
+        { time:'11:30 AM', text:'Lunch \u00b7 yudofu (hot tofu), matcha soba, or riverside cafe' },
+      ]},
+      { label:'Afternoon \u2014 Central Kyoto', items:[
+        { time:'2:30 PM', text:'Nishiki Market \u00b7 go before 3 PM \u00b7 closes ~5:30 PM weekdays' },
+        { text:"Kyoto's Kitchen \u00b7 sakura-themed sweets in April \u00b7 pickles \u00b7 matcha soft serve", sub:true },
+        { time:'4:00 PM', text:'Teramachi + Shinkyogoku shopping arcades \u00b7 adjacent to Nishiki' },
+      ]},
+      { label:'Evening', items:[
+        { time:'6:30 PM', text:'Gion at dusk \u00b7 best light for wooden machiya architecture' },
+        { time:'7:30 PM', text:'Dinner in Pontocho or Gion' },
+      ]},
+    ],
+    tip:null
+  },
+  apr25: {
+    id:'apr25', date:'SAT APR 25', title:'Nara Day Trip + Kinkaku-ji', location:'Kyoto \u2192 Nara \u2192 Northern Kyoto',
+    periods:[
+      { label:'Morning \u2014 Nara', items:[
+        { time:'8:30 AM',  text:'JR Nara Line: Kyoto \u2192 Nara (45 min \u00b7 \u00a5760/~$5)' },
+        { time:'9:30 AM',  text:'Nara Park \u00b7 hundreds of freely roaming deer \u00b7 \u00a5200 deer crackers' },
+        { time:'10:00 AM', text:'Todai-ji Temple \u00b7 world\'s largest wooden building \u00b7 giant bronze Buddha' },
+        { text:'\u00a5600 (~$4) \u00b7 UNESCO \u00b7 genuinely awe-inspiring scale', sub:true },
+        { time:'11:30 AM', text:'Kasuga Taisha Shrine \u00b7 forest setting \u00b7 lantern-lined paths' },
+        { time:'12:30 PM', text:'Lunch in Nara \u00b7 kakinoha-zushi (persimmon-leaf sushi)' },
+        { time:'2:00 PM',  text:'Return to Kyoto \u00b7 JR Nara Line' },
+      ]},
+      { label:'Afternoon \u2014 Northern Kyoto', items:[
+        { time:'3:00 PM', text:'Kinkaku-ji (Golden Pavilion) \u00b7 \u00a5500 (~$3)' },
+        { text:'Worth seeing once despite crowds \u00b7 best on a clear afternoon', sub:true },
+        { time:'4:00 PM', text:'Ryoan-ji Temple \u00b7 world-famous rock garden \u00b7 \u00a5600 (~$4)' },
+      ]},
+      { label:'Evening \u2014 Last Night in Kyoto', items:[
+        { time:'7:00 PM', text:'Dinner \u00b7 Kawaramachi or Shijo area' },
+      ]},
+    ],
+    tip:'Saturdays in April are busy. Go to Nara before 10 AM and Kinkaku-ji after 3 PM when tour buses thin. Golden Week starts April 29 \u2014 you leave just in time.'
+  },
+  apr26: {
+    id:'apr26', date:'SUN APR 26', title:'Depart Kyoto \u2192 Kanazawa', location:'Kyoto \u2192 Kanazawa',
+    periods:[
+      { label:'Morning \u2014 Checkout', items:[
+        { time:'10:00 AM', text:'Check out Hotel Granvia Kyoto', type:'booked' },
+      ]},
+      { label:'Transit to Kanazawa', items:[
+        { text:'Thunderbird Limited Express: Kyoto \u2192 Kanazawa (~2 hrs \u00b7 ~\u00a56,000\u20137,000/~$38\u201344)' },
+        { text:'Book separately at Kyoto Station ticket counter', sub:true },
+      ]},
+      { label:'Afternoon \u2014 Arrive Kanazawa', items:[
+        { time:'3:00 PM',  text:'Check in Hotel Intergate Kanazawa', type:'booked' },
+        { text:'Conf: 20260125110822242 \u00b7 Expedia: 73356721260247 \u00b7 Breakfast buffet included', sub:true },
+        { time:'4:30 PM',  text:"Higashi Chaya District \u00b7 Japan's best-preserved geisha quarter outside Kyoto" },
+      ]},
+      { label:'Evening', items:[
+        { time:'7:00 PM', text:'Dinner \u00b7 Nodoguro (blackthroat seaperch), sweet shrimp' },
+      ]},
+    ],
+    tip:null
+  },
+  apr27: {
+    id:'apr27', date:'MON APR 27', title:'Kanazawa Full Day', location:'Kenroku-en \u00b7 21st Century Museum \u00b7 Omicho',
+    periods:[
+      { label:'Morning \u2014 Kenroku-en + Castle', items:[
+        { time:'7:00 AM', text:"Kenroku-en Garden \u00b7 opens 7 AM \u00b7 \u00a5320 (~$2) \u00b7 free early entry from 4 AM" },
+        { text:"One of Japan's three great gardens \u00b7 1.5\u20132 hrs \u00b7 Kasumigaike Pond + Kotojitoro lantern", sub:true },
+        { time:'8:30 AM', text:'Kanazawa Castle Park \u00b7 directly adjacent \u00b7 free grounds' },
+      ]},
+      { label:'Mid-Morning \u2014 21st Century Museum', items:[
+        { time:'10:00 AM', text:'21st Century Museum of Contemporary Art \u00b7 opens 10 AM' },
+        { text:'Free exchange zone \u00b7 ~\u00a51,400 (~$9) for exhibitions \u00b7 CLOSED MONDAYS \u2014 verify!', sub:true },
+        { text:'Swimming Pool (Leandro Erlich) + Blue Planet Sky (James Turrell)', sub:true },
+      ]},
+      { label:'Afternoon \u2014 Omicho + Nagamachi', items:[
+        { time:'12:00 PM', text:"Omicho Market \u00b7 Kanazawa's kitchen \u00b7 9 AM \u2013 5 PM" },
+        { text:'Kaisendon (seafood rice bowl) \u00b7 arrive by noon before lines grow', sub:true },
+        { time:'2:00 PM',  text:'Nagamachi Samurai District \u00b7 Nomura Clan House \u00b7 \u00a5550 (~$4)' },
+      ]},
+      { label:'Evening', items:[
+        { time:'6:30 PM', text:'Dinner \u00b7 Kanazawa seafood \u00b7 Nodoguro, crab, sweet shrimp' },
+      ]},
+    ],
+    tip:'Apr 27 is a Monday \u2014 the 21st Century Museum is typically closed Mondays. Verify on their website before the trip.'
+  },
+  apr28: {
+    id:'apr28', date:'TUE APR 28', title:'Depart Kanazawa \u2192 Tokyo Ginza', location:'Kanazawa \u2192 Tokyo \u00b7 Ginza',
+    periods:[
+      { label:'Morning \u2014 Checkout + Shinkansen', items:[
+        { time:'8:00 AM',  text:'Breakfast buffet at Hotel Intergate \u00b7 included' },
+        { time:'10:00 AM', text:'Check out \u00b7 by 11:00 AM' },
+        { text:'Hokuriku Shinkansen: Kanazawa \u2192 Tokyo ~2.5 hrs \u00b7 ~\u00a514,000 (~$88) \u00b7 Book separately', sub:true },
+      ]},
+      { label:'Afternoon \u2014 Arrive Tokyo Ginza', items:[
+        { time:'3:00 PM',  text:'Check in Quintessa Hotel Tokyo Ginza', type:'booked' },
+        { text:'Conf: 6519361226 \u00b7 PIN: 9235 \u00b7 Breakfast included', sub:true },
+        { time:'2:30 PM',  text:'Hamarikyu Gardens \u00b7 \u00a5300 (~$2) \u00b7 traditional garden on Tokyo Bay' },
+        { time:'4:00 PM',  text:'Ginza main streets \u00b7 Itoya stationery \u00b7 Ginza Six' },
+      ]},
+      { label:'Evening \u2014 Final Night', items:[
+        { time:'6:30 PM', text:'Tsukiji Outer Market area for dinner' },
+        { time:'8:00 PM', text:'Ginza evening stroll \u00b7 excellent last night in Japan' },
+      ]},
+    ],
+    tip:'Pack tonight and confirm you have everything. Flight departs HND at 6:10 PM tomorrow \u2014 leave the hotel by 12:30 PM.'
+  },
+  apr29: {
+    id:'apr29', date:'WED APR 29', title:'Final Morning + Depart', location:'Tokyo Ginza \u2192 HND \u2192 LAX',
+    periods:[
+      { label:'Morning \u2014 Tsukiji Farewell', items:[
+        { time:'7:30 AM',  text:'Tsukiji Outer Market \u00b7 classic Tokyo farewell breakfast' },
+        { text:'Fresh sushi, tamagoyaki, grilled scallops, matcha \u00b7 best before 10 AM', sub:true },
+        { time:'10:00 AM', text:'Return to hotel \u00b7 collect luggage' },
+      ]},
+      { label:'Afternoon \u2014 Depart', items:[
+        { time:'12:30 PM', text:'Depart hotel for Haneda Airport \u00b7 no later than 12:30 PM' },
+        { text:'Keikyu Line from Higashi-Ginza \u2192 HND Terminal 3 (~30 min \u00b7 \u00a5300/~$2)', sub:true },
+        { time:'6:10 PM',  text:'United UA 38 departs HND', type:'booked' },
+        { text:'HND \u2192 LAX \u00b7 10 hrs 5 min \u00b7 Seats 31J (Gwen) & 31L (Christina) \u00b7 Conf: F354LH', sub:true },
+        { text:'Arrives LAX Wednesday April 29, 12:15 PM (same day, crossing date line)', sub:true },
+      ]},
+    ],
+    tip:"Golden Week begins today \u2014 you're flying out. Well timed. Allow 3 hours at the airport."
+  }
 };
 
 const GROUPS = [
-  {label:'TOKYO',                dates:'APR 15–20', ids:['apr15','apr16','apr17','apr18','apr19'], color:'#4A90D9'},
-  {label:'KAWAGUCHIKO · HAKONE', dates:'APR 20–22', ids:['apr20','apr21'],                        color:'#27AE60'},
-  {label:'KYOTO',                dates:'APR 22–26', ids:['apr22','apr23','apr24','apr25'],         color:'#E91E8C'},
-  {label:'KANAZAWA',             dates:'APR 26–28', ids:['apr26','apr27'],                        color:'#F39C12'},
-  {label:'TOKYO · GINZA',        dates:'APR 28–29', ids:['apr28','apr29'],                        color:'#4A90D9'},
+  { label:'TOKYO',                dates:'APR 15\u201320', ids:['apr15','apr16','apr17','apr18','apr19'] },
+  { label:'KAWAGUCHIKO \u00b7 HAKONE', dates:'APR 20\u201322', ids:['apr20','apr21'] },
+  { label:'KYOTO',                dates:'APR 22\u201326', ids:['apr22','apr23','apr24','apr25'] },
+  { label:'KANAZAWA',             dates:'APR 26\u201328', ids:['apr26','apr27'] },
+  { label:'TOKYO \u00b7 GINZA',   dates:'APR 28\u201329', ids:['apr28','apr29'] },
 ];
 
-// ── Confirmations ─────────────────────────────────────────────────────────────
+// ── Confirmations ─────────────────────────────────────────────
 const CONFIRMATIONS = {
   flights:[
-    {name:'Outbound · LAX → Tokyo HND',
-     number:{label:'Confirmation',val:'F354LH'},
-     rows:[
-       {k:'Flight',   v:'United UA 39'},
-       {k:'Date',     v:'Wed April 15, 2026'},
-       {k:'Departs',  v:'LAX 11:20 AM'},
-       {k:'Arrives',  v:'HND Thu April 16, 3:05 PM'},
-       {k:'Duration', v:'11 hrs 45 min'},
-       {k:'Seats',    v:'31L (Gwendalynn)  ·  31J (Christina)'},
-       {k:'Aircraft', v:'Boeing 787-10 Dreamliner · Economy (K)'},
-     ]},
-    {name:'Return · Tokyo HND → LAX',
-     number:{label:'Confirmation',val:'F354LH'},
-     rows:[
-       {k:'Flight',   v:'United UA 38'},
-       {k:'Date',     v:'Wed April 29, 2026'},
-       {k:'Departs',  v:'HND 6:10 PM'},
-       {k:'Arrives',  v:'LAX 12:15 PM same day'},
-       {k:'Duration', v:'10 hrs 5 min'},
-       {k:'Seats',    v:'31J (Gwendalynn)  ·  31L (Christina)'},
-       {k:'Aircraft', v:'Boeing 787-10 Dreamliner · Economy (K)'},
-     ]},
+    { name:'Outbound \u00b7 LAX \u2192 Tokyo HND',
+      number:{ label:'Confirmation', val:'F354LH' },
+      rows:[
+        { k:'Flight',    v:'United UA 39' },
+        { k:'Date',      v:'Wed April 15, 2026' },
+        { k:'Departs',   v:'LAX 11:20 AM' },
+        { k:'Arrives',   v:'HND Thu April 16, 3:05 PM' },
+        { k:'Duration',  v:'11 hrs 45 min' },
+        { k:'Seats',     v:'31L (Gwendalynn) \u00b7 31J (Christina)' },
+        { k:'Aircraft',  v:'Boeing 787-10 Dreamliner \u00b7 Economy (K)' },
+        { k:'eTickets',  v:'0162358617634 (Gwen) \u00b7 0162358617635 (Christina)', mono:true },
+        { k:'Cost',      v:'$2,196.86 total \u00b7 $1,098.43/person (incl. Economy Plus seats)' },
+      ]
+    },
+    { name:'Return \u00b7 Tokyo HND \u2192 LAX',
+      number:{ label:'Confirmation', val:'F354LH' },
+      rows:[
+        { k:'Flight',   v:'United UA 38' },
+        { k:'Date',     v:'Wed April 29, 2026' },
+        { k:'Departs',  v:'HND 6:10 PM' },
+        { k:'Arrives',  v:'LAX 12:15 PM same day' },
+        { k:'Duration', v:'10 hrs 5 min' },
+        { k:'Seats',    v:'31J (Gwendalynn) \u00b7 31L (Christina)' },
+        { k:'Aircraft', v:'Boeing 787-10 Dreamliner \u00b7 Economy (K)' },
+      ]
+    }
   ],
   hotels:[
-    {name:'Hotel Gracery Shinjuku · Tokyo',
-     number:{label:'Confirmation',val:'5594.831.309'},
-     rows:[
-       {k:'Check-in',  v:'Thu Apr 16 from 14:00'},
-       {k:'Check-out', v:'Mon Apr 20 by 11:00  (4 nights)'},
-       {k:'Room',      v:'Standard Twin Room — Non-Smoking'},
-       {k:'PIN',       v:'6506',mono:true},
-       {k:'Address',   v:'Kabukicho 1-19-1, Shinjuku, Tokyo 160-0021',addr:'Hotel Gracery Shinjuku, Kabukicho 1-19-1, Shinjuku, Tokyo'},
-       {k:'Phone',     v:'+81 3 6833 1111'},
-       {k:'Price',     v:'~¥200,692 (~$1,261)'},
-       {k:'Cancel',    v:'Free 1 day before · no-show = full charge'},
-       {k:'Note',      v:'Godzilla Head terrace (8F) currently suspended'},
-     ]},
-    {name:'Tensui Saryo · Gora, Hakone',
-     number:{label:'Reservation',val:'IK1516984808'},
-     rows:[
-       {k:'Check-in',    v:'Mon Apr 20, 15:00–21:30  (est. arrival 17:30)'},
-       {k:'Check-out',   v:'Wed Apr 22 by 10:00  (2 nights)'},
-       {k:'Room',        v:'Detached Type-A · Onsen + Foot Bath · Japanese-Western'},
-       {k:'Plan',        v:'Early Bird 20 × Basic Kaiseki · Dinner 19:45 · Breakfast included'},
-       {k:'Verification',v:'0F35443D931C12B',mono:true},
-       {k:'Address',     v:'1320-276 Gora, Hakone-machi',addr:'Tensui Saryo, Gora, Hakone, Kanagawa'},
-       {k:'Phone',       v:'+81-570-062-302'},
-       {k:'Price',       v:'¥126,340 (~$794) incl. tax'},
-       {k:'Cancel',      v:'Free until 8 days before · 30% from 7 days · 50% from 2 · 80% same day'},
-       {k:'Access',      v:'2–3 min walk from Gora Station (Hakone Tozan Railway)'},
-     ]},
-    {name:'Hotel Granvia Kyoto',
-     number:{label:'Confirmation',val:'#23151SF060529'},
-     rows:[
-       {k:'Check-in',  v:'Wed Apr 22, 2026'},
-       {k:'Check-out', v:'Sun Apr 26, 2026  (4 nights)'},
-       {k:'Room',      v:'Granvia Deluxe Twin Room — Non-Smoking'},
-       {k:'Address',   v:'JR Kyoto Station (Karasuma), 600-8216 Kyoto',addr:'Hotel Granvia Kyoto, JR Kyoto Station, Kyoto'},
-       {k:'Phone',     v:'+81-75-344-8888'},
-       {k:'Price',     v:'¥268,256 (~$1,686) total incl. tax and service'},
-       {k:'Rates',     v:'Apr 22–23: ¥62,814/night · Apr 24: ¥67,064 · Apr 25: ¥75,564'},
-       {k:'Acc. tax',  v:'~¥4,000/person/night · not included · pay at hotel'},
-       {k:'Cancel',    v:'Notify by 16:00 JST day before or full night charge'},
-       {k:'Luggage',   v:'Takkyubin arriving from Gracery Shinjuku (sent Apr 19, arrives Apr 21)'},
-     ]},
-    {name:'Hotel Intergate Kanazawa',
-     number:{label:'Confirmation',val:'20260125110822242'},
-     rows:[
-       {k:'Check-in',  v:'Sun Apr 26 from 15:00'},
-       {k:'Check-out', v:'Tue Apr 28 by 11:00  (2 nights)'},
-       {k:'Room',      v:'Superior Twin Room — Non-Smoking'},
-       {k:'Amenities', v:'Breakfast Buffet included'},
-       {k:'Expedia',   v:'73356721260247',mono:true},
-       {k:'Address',   v:'2-5 Takaokamachi, Kanazawa, Ishikawa 920-0864',addr:'Hotel Intergate Kanazawa, 2-5 Takaokamachi, Kanazawa'},
-       {k:'Price',     v:'¥39,004 (~$245) total incl. taxes · pay at property'},
-       {k:'Cancel',    v:'Free until Apr 22, 11:59 PM · 100% charge after'},
-     ]},
-    {name:'Quintessa Hotel Tokyo Ginza',
-     number:{label:'Confirmation',val:'6519361226'},
-     rows:[
-       {k:'Check-in',  v:'Tue Apr 28 from 15:00'},
-       {k:'Check-out', v:'Wed Apr 29 by 11:00  (1 night)'},
-       {k:'Room',      v:'Hollywood Twin Room'},
-       {k:'Amenities', v:'Breakfast included'},
-       {k:'PIN',       v:'9235',mono:true},
-       {k:'Address',   v:'Chuo-ku Ginza 4-11-4, Tokyo',addr:'Quintessa Hotel Tokyo Ginza, 4-11-4 Ginza, Chuo, Tokyo'},
-       {k:'Phone',     v:'+81 3-6264-1351'},
-       {k:'Price',     v:'¥24,713 (~$155) · charged Apr 25 to card on file'},
-       {k:'Cancel',    v:'Free until Apr 26, 11:59 PM JST · 100% charge after'},
-     ]},
+    { name:'Hotel Gracery Shinjuku \u00b7 Tokyo',
+      number:{ label:'Confirmation', val:'5594.831.309' },
+      rows:[
+        { k:'Check-in',  v:'Thu Apr 16 from 14:00' },
+        { k:'Check-out', v:'Mon Apr 20 by 11:00 (4 nights)' },
+        { k:'Room',      v:'Standard Twin Room \u2014 Non-Smoking' },
+        { k:'PIN',       v:'6506', mono:true },
+        { k:'Address',   v:'Kabukicho 1-19-1, Shinjuku, Tokyo 160-0021' },
+        { k:'Phone',     v:'+81 3 6833 1111' },
+        { k:'Price',     v:'\u00a5200,692 (~$1,269)' },
+        { k:'Cancel',    v:'Free 1 day before \u00b7 no-show = full charge' },
+      ]
+    },
+    { name:'Tensui Saryo \u00b7 Gora, Hakone',
+      number:{ label:'Reservation', val:'IK1516984808' },
+      rows:[
+        { k:'Check-in',     v:'Mon Apr 20, 15:00\u201321:30 (est. arrival 17:30)' },
+        { k:'Check-out',    v:'Wed Apr 22 by 10:00 (2 nights)' },
+        { k:'Room',         v:'Detached Type-A \u00b7 Onsen + Foot Bath \u00b7 Japanese-Western' },
+        { k:'Plan',         v:'Early Bird 20 \u00d7 Basic Kaiseki \u00b7 Dinner 19:45 \u00b7 Breakfast included' },
+        { k:'Verification', v:'0F35443D931C12B', mono:true },
+        { k:'Address',      v:'1320-276 Gora, Hakone-machi, Ashigarashimo-gun' },
+        { k:'Phone',        v:'+81-570-062-302' },
+        { k:'Price',        v:'\u00a5126,340 (~$794) incl. tax' },
+        { k:'Cancel',       v:'Free until 8 days before \u00b7 30% from 7 days \u00b7 50% from 2 \u00b7 80% same day' },
+        { k:'Access',       v:'2\u20133 min walk from Gora Station (Hakone Tozan Railway)' },
+      ]
+    },
+    { name:'Hotel Granvia Kyoto',
+      number:{ label:'Confirmation', val:'#23151SF060529' },
+      rows:[
+        { k:'Check-in',  v:'Wed Apr 22, 2026' },
+        { k:'Check-out', v:'Sun Apr 26, 2026 (4 nights)' },
+        { k:'Room',      v:'Granvia Deluxe Twin Room \u2014 Non-Smoking' },
+        { k:'Address',   v:'JR Kyoto Station (Karasuma), 600-8216 Kyoto' },
+        { k:'Phone',     v:'+81-75-344-8888' },
+        { k:'Price',     v:'\u00a5268,256 (~$1,686) total incl. tax and service' },
+        { k:'Rates',     v:'Apr 22\u201323: \u00a562,814/night \u00b7 Apr 24: \u00a567,064 \u00b7 Apr 25: \u00a575,564' },
+        { k:'Cancel',    v:'Notify by 16:00 JST day before arrival or full night charge' },
+        { k:'Luggage',   v:'Takkyubin arriving from Gracery Shinjuku (sent Apr 19, arrives Apr 21)' },
+      ]
+    },
+    { name:'Hotel Intergate Kanazawa',
+      number:{ label:'Confirmation', val:'20260125110822242' },
+      rows:[
+        { k:'Check-in',  v:'Sun Apr 26 from 15:00' },
+        { k:'Check-out', v:'Tue Apr 28 by 11:00 (2 nights)' },
+        { k:'Room',      v:'Superior Twin Room \u2014 Non-Smoking' },
+        { k:'Amenities', v:'Breakfast Buffet included' },
+        { k:'Expedia',   v:'73356721260247', mono:true },
+        { k:'Address',   v:'2-5 Takaokamachi, Kanazawa, Ishikawa 920-0864' },
+        { k:'Price',     v:'\u00a539,004 (~$245) total incl. taxes \u00b7 pay at property' },
+        { k:'Cancel',    v:'Free until Apr 22, 11:59 PM \u00b7 100% charge after' },
+      ]
+    },
+    { name:'Quintessa Hotel Tokyo Ginza',
+      number:{ label:'Confirmation', val:'6519361226' },
+      rows:[
+        { k:'Check-in',  v:'Tue Apr 28 from 15:00' },
+        { k:'Check-out', v:'Wed Apr 29 by 11:00 (1 night)' },
+        { k:'Room',      v:'Hollywood Twin Room' },
+        { k:'Amenities', v:'Breakfast included' },
+        { k:'PIN',       v:'9235', mono:true },
+        { k:'Address',   v:'Chuo-ku Ginza 4-11-4, Tokyo' },
+        { k:'Phone',     v:'+81 3-6264-1351' },
+        { k:'Price',     v:'\u00a524,713 (~$155) \u00b7 charged Apr 25 to card on file' },
+        { k:'Cancel',    v:'Free until Apr 26, 11:59 PM JST \u00b7 100% charge after' },
+      ]
+    }
   ],
   trains:[
-    {name:'Fuji-Excursion 7 · Shinjuku → Kawaguchiko',
-     number:{label:'Reservation',val:'E77821'},
-     rows:[
-       {k:'Date',        v:'Monday April 20, 2026'},
-       {k:'Route',       v:'Shinjuku 8:30 AM → Kawaguchiko 10:26 AM'},
-       {k:'Seats',       v:'Car 3, Seat 13-C (Gwendalynn)  ·  Seat 13-D (Christina)'},
-       {k:'Pickup code', v:'24492390994521288',mono:true},
-       {k:'Fare',        v:'¥8,400 (~$53) total for 2 adults'},
-       {k:'Ticket',      v:'Pick up at ticket machine using QR code or pickup code before travel day'},
-     ]},
-    {name:'Shinkansen HIKARI 637 · Odawara → Kyoto',
-     number:{label:'Reservation',val:'2002'},
-     rows:[
-       {k:'Train',      v:'HIKARI 637 · Series N700 · 16 cars · Ordinary'},
-       {k:'Date',       v:'Wednesday April 22, 2026'},
-       {k:'Route',      v:'Odawara 10:11 AM → Kyoto 12:12 PM'},
-       {k:'Membership', v:'9007241665',mono:true},
-       {k:'Fare',       v:'¥23,800 (~$150) total · smart EX'},
-       {k:'Seats',      v:'TBD · email notification after Mar 22, 2026 at 8:00 AM'},
-       {k:'Note',       v:'Shinkansen only — cannot board conventional lines with this ticket'},
-     ]},
-  ],
+    { name:'teamLab Borderless \u00b7 Apr 17',
+      number:{ label:'Confirmation', val:'A7YRA4LXWCN3-0001' },
+      rows:[
+        { k:'Date',    v:'Friday April 17, 2026' },
+        { k:'Entry',   v:'08:30\u201309:00 window \u00b7 Azabudai Hills Garden Plaza B, B1' },
+        { k:'Tickets', v:'2 adults \u00b7 \u00a55,600/person \u00b7 \u00a511,200 total' },
+        { k:'Address', v:'5-9 Toranomon, Minato-ku, Tokyo' },
+        { k:'Note',    v:'Download teamLab app beforehand \u00b7 no re-entry' },
+      ]
+    },
+    { name:'Fuji-Excursion 7 \u00b7 Shinjuku \u2192 Kawaguchiko',
+      number:{ label:'Reservation', val:'E77821' },
+      rows:[
+        { k:'Date',         v:'Monday April 20, 2026' },
+        { k:'Route',        v:'Shinjuku 8:30 AM \u2192 Kawaguchiko 10:26 AM' },
+        { k:'Seats',        v:'Car 3, Seat 13-C (Gwendalynn) \u00b7 Seat 13-D (Christina)' },
+        { k:'Pickup code',  v:'24492390994521288', mono:true },
+        { k:'Fare',         v:'\u00a58,400 (~$53) total for 2 adults' },
+        { k:'Ticket',       v:'Pick up at ticket machine using QR code or pickup code before boarding' },
+      ]
+    },
+    { name:'Shinkansen HIKARI 637 \u00b7 Odawara \u2192 Kyoto',
+      number:{ label:'Reservation', val:'2002' },
+      rows:[
+        { k:'Train',      v:'HIKARI 637 \u00b7 Series N700 \u00b7 16 cars \u00b7 Ordinary' },
+        { k:'Date',       v:'Wednesday April 22, 2026' },
+        { k:'Route',      v:'Odawara 10:11 AM \u2192 Kyoto 12:12 PM' },
+        { k:'Smart EX',   v:'9007241665', mono:true },
+        { k:'Fare',       v:'\u00a523,800 (~$150) total \u00b7 Smart EX' },
+        { k:'Seats',      v:'TBD \u00b7 email notification after Mar 22, 2026 at 8:00 AM' },
+      ]
+    }
+  ]
 };
 
-// Cost totals for summary
-const COSTS = [
-  {label:'Flights (both)',                  jpy:null,   usd:null,  note:'Booked via United (F354LH)'},
-  {label:'Hotel Gracery Shinjuku',          jpy:200692, usd:1261},
-  {label:'teamLab Borderless (2 tickets)',  jpy:11200,  usd:70},
-  {label:'Fuji-Excursion 7 train',          jpy:8400,   usd:53},
-  {label:'Tensui Saryo, Hakone',            jpy:126340, usd:794},
-  {label:'Shinkansen (Odawara → Kyoto)',    jpy:23800,  usd:150},
-  {label:'Hotel Granvia Kyoto',             jpy:268256, usd:1686},
-  {label:'Hotel Intergate Kanazawa',        jpy:39004,  usd:245},
-  {label:'Quintessa Hotel Tokyo Ginza',     jpy:24713,  usd:155},
-];
-
-// ── Checklist ─────────────────────────────────────────────────────────────────
+// ── Pre-trip checklist ────────────────────────────────────────
 const CHECKLIST = [
-  {id:'booked', title:'BOOKED — all done', booked:true, items:[
-    {id:'c1', label:'United flights (UA 39 + UA 38)',             sub:'Conf: F354LH · seats 31L/31J'},
-    {id:'c2', label:'Hotel Gracery Shinjuku',                     sub:'4 nights · Apr 16–20'},
-    {id:'c3', label:'teamLab Borderless tickets',                 sub:'Apr 17 · 8:30 AM · ¥5,600/person'},
-    {id:'c4', label:'Fuji-Excursion 7 train tickets',             sub:'Apr 20 · Res: E77821'},
-    {id:'c5', label:'Tensui Saryo ryokan, Hakone',                sub:'2 nights · Apr 20–22 · IK1516984808'},
-    {id:'c6', label:'Shinkansen HIKARI 637 (Odawara → Kyoto)',   sub:'Apr 22 · Res: 2002'},
-    {id:'c7', label:'Hotel Granvia Kyoto',                        sub:'4 nights · Apr 22–26'},
-    {id:'c8', label:'Hotel Intergate Kanazawa',                   sub:'2 nights · Apr 26–28'},
-    {id:'c9', label:'Quintessa Hotel Tokyo Ginza',                sub:'1 night · Apr 28–29'},
-  ]},
-  {id:'before', title:'BEFORE YOU LEAVE', items:[
-    {id:'c10', label:'Check shinkansen seat email',               sub:'Expected after Mar 22 at 8:00 AM'},
-    {id:'c11', label:'Download teamLab app',                      sub:'Needed for Infinite Crystal World numbered tickets'},
-    {id:'c12', label:'Set up Suica on Apple Wallet',              sub:'iPhone: Wallet app → + → add transit card → Suica. Works at all gates.'},
-    {id:'c13', label:'Confirm 21st Century Museum hours',         sub:'Apr 27 is Monday — verify not closed · kanazawa21.jp'},
-    {id:'c14', label:'Download Google Maps offline',              sub:'Tokyo, Kyoto, Kanazawa, Hakone — essential for weak signal'},
-    {id:'c15', label:'Set up international data plan',            sub:'Or get pocket WiFi at HND · eSIM is another option'},
-    {id:'c16', label:'Notify credit card companies of travel',    sub:'Prevent card blocks abroad'},
-    {id:'c17', label:'Get yen cash',                              sub:'7-Eleven ATMs accept international cards · have ¥20,000–30,000 on hand at all times'},
-    {id:'c18', label:'Add this site to iPhone home screen',       sub:'Safari → Share → Add to Home Screen'},
-  ]},
-  {id:'ontrip', title:'ON-TRIP TASKS', items:[
-    {id:'c19', label:'Arrange takkyubin at Hotel Gracery',        sub:'Night of Apr 19 — send luggage to Hotel Granvia Kyoto'},
-    {id:'c20', label:'Buy Hakone Free Pass at Gora Station',      sub:'Apr 20 or 21 · covers ropeway, railway, Lake Ashi boat'},
-    {id:'c21', label:'Pick up Fuji-Excursion tickets before Apr 20', sub:'Pickup code: 24492390994521288'},
-    {id:'c22', label:'Confirm Tensui Saryo QR code for check-in', sub:'Via SMS from the ryokan before arrival'},
-  ]},
+  {
+    section:'BOOKED \u2014 nothing left to do',
+    items:[
+      { id:'c1',  label:'United flights (UA 39 + UA 38)',              sub:'Conf: F354LH \u00b7 seats 31L/31J' },
+      { id:'c2',  label:'Hotel Gracery Shinjuku',                      sub:'4 nights \u00b7 Apr 16\u201320' },
+      { id:'c3',  label:'teamLab Borderless tickets',                  sub:'Apr 17 \u00b7 8:30 AM \u00b7 \u00a55,600/person' },
+      { id:'c4',  label:'Fuji-Excursion 7 train tickets',              sub:'Apr 20 \u00b7 Res: E77821' },
+      { id:'c5',  label:'Tensui Saryo ryokan, Hakone',                 sub:'2 nights \u00b7 Apr 20\u201322 \u00b7 IK1516984808' },
+      { id:'c6',  label:'Shinkansen HIKARI 637 (Odawara \u2192 Kyoto)', sub:'Apr 22 \u00b7 Res: 2002' },
+      { id:'c7',  label:'Hotel Granvia Kyoto',                         sub:'4 nights \u00b7 Apr 22\u201326' },
+      { id:'c8',  label:'Hotel Intergate Kanazawa',                    sub:'2 nights \u00b7 Apr 26\u201328' },
+      { id:'c9',  label:'Quintessa Hotel Tokyo Ginza',                 sub:'1 night \u00b7 Apr 28\u201329' },
+    ]
+  },
+  {
+    section:'BEFORE YOU LEAVE',
+    items:[
+      { id:'c10', label:'Check shinkansen seat email',                sub:'Email expected after Mar 22 at 8:00 AM' },
+      { id:'c11', label:'Download teamLab app',                       sub:'Needed for Infinite Crystal World numbered tickets' },
+      { id:'c12', label:'Get IC card sorted (Suica or Pasmo)',        sub:'Add to Apple Wallet beforehand or buy at HND on arrival' },
+      { id:'c13', label:'Confirm 21st Century Museum hours',          sub:'Apr 27 is Monday \u2014 verify not closed \u00b7 kanazawa21.jp' },
+      { id:'c14', label:'Download Google Maps offline for each city', sub:'Tokyo, Kyoto, Kanazawa, Hakone' },
+      { id:'c15', label:'Set up international data plan',             sub:'Or get pocket WiFi at HND' },
+      { id:'c16', label:'Notify credit card companies of travel',     sub:'Prevent card blocks abroad' },
+      { id:'c17', label:'Buy yen or plan for airport ATM',            sub:'Many places cash-only \u00b7 have \u00a520,000\u201330,000 on hand' },
+      { id:'c18', label:'Add this site to iPhone home screen',        sub:'Open in Safari \u2192 Share \u2192 Add to Home Screen' },
+    ]
+  },
+  {
+    section:'ON-TRIP TASKS',
+    items:[
+      { id:'c19', label:'Arrange takkyubin at Hotel Gracery Shinjuku', sub:'Night of Apr 19 \u2014 send luggage to Hotel Granvia Kyoto' },
+      { id:'c20', label:'Buy Hakone Free Pass at Gora Station',        sub:'Apr 20 or 21 \u00b7 covers ropeway, railway, Lake Ashi boat' },
+      { id:'c21', label:'Pick up Fuji-Excursion tickets at machine',   sub:'Use QR code or pickup code: 24492390994521288' },
+      { id:'c22', label:'Book Thunderbird: Kyoto \u2192 Kanazawa',      sub:'Apr 26 \u00b7 ~2 hrs \u00b7 buy at Kyoto Station ticket counter' },
+      { id:'c23', label:'Book Hokuriku Shinkansen: Kanazawa \u2192 Tokyo', sub:'Apr 28 \u00b7 ~2.5 hrs \u00b7 ~\u00a514,000/person' },
+    ]
+  }
 ];
 
-// ── Japan Tips data ───────────────────────────────────────────────────────────
-const TIPS_DATA = [
-  {title:'Money & Cash',items:[
-    {title:'Always carry cash',body:'Japan is still largely cash-based. <strong>Carry ¥15,000–20,000 on you at all times</strong>. Small restaurants, temples, shrine entry fees, vending machines, and neighborhood shops are often cash-only. Coin purses are useful — you\'ll accumulate ¥100 and ¥500 coins quickly.'},
-    {title:'7-Eleven ATMs',body:'<strong>7-Eleven ATMs are the most reliable for international cards</strong>, with clear English menus. FamilyMart and post office ATMs also work. Banks may not. Expect a ¥220 withdrawal fee plus your bank\'s foreign transaction fee.'},
-    {title:'Suica IC card',body:'<strong>Add Suica to your Apple Wallet</strong> before you leave (Wallet app → + → Transit Card → Suica). Top it up with Apple Pay. Tap in and out at every train and bus gate — fares are automatically calculated. Also works at 7-Eleven, FamilyMart, vending machines, and lockers. Carrying ¥3,000–5,000 loaded on your Suica is plenty.'},
-    {title:'No tipping — ever',body:'Tipping is not just unusual in Japan, it can be considered <strong>confusing or even offensive</strong>. Do not tip at restaurants, hotels, taxis, or anywhere else. Service is always included in the price. Excellent service is standard and expected — no gratuity required or wanted.'},
-    {title:'When paying cash',body:'There will be a small tray at every register. <strong>Place your cash on the tray</strong>, not directly in the cashier\'s hand. Receive change the same way. This is standard etiquette.'},
-  ]},
-  {title:'Getting Around',items:[
-    {title:'Trains are always on time',body:'Japanese trains are famous for punctuality — delays of more than a few minutes are genuinely rare. <strong>Google Maps gives you exact platform numbers and exit information</strong> — always check which exit to use at a station before heading up.'},
-    {title:'Quiet on trains',body:'<strong>No phone calls on trains</strong>. Keep your voice low. Eating is generally not done on local trains (it\'s fine on Shinkansen). Earphones are expected for music or video. Phone on silent mode. This is taken seriously by locals.'},
-    {title:'Shinkansen boarding',body:'<strong>Board at exactly the right car number</strong> — marked on the platform floor. Doors close precisely on time. Reserved seats mean exactly that — someone else will have that seat if you\'re late. Eating and drinking are fine on the Shinkansen.'},
-    {title:'Takkyubin (luggage forwarding)',body:'<strong>Japan\'s takkyubin service is one of the best things about traveling here</strong>. Drop your bags at any hotel, convenience store, or Yamato counter and they arrive at your next hotel the following day, typically for ¥1,500–2,500 per bag. Highly recommended between cities.'},
-  ]},
-  {title:'Etiquette & Culture',items:[
-    {title:'Bowing',body:'A gentle <strong>head nod or small bow</strong> is appropriate for most interactions — entering a hotel, thanking a shopkeeper, acknowledging a greeting. You don\'t need to do deep formal bows; a respectful nod goes a long way and is always appreciated.'},
-    {title:'Shoes at temples and ryokan',body:'<strong>Remove shoes whenever you see a step up at an entrance</strong>, or when you see a row of shoes near the door. At the ryokan, wear the provided slippers indoors. Never wear outdoor shoes on tatami. Separate toilet slippers may be provided near bathrooms — swap into them and back.'},
-    {title:'Eating while walking',body:'<strong>Eating while walking is generally frowned upon</strong> in Japan (though Nishiki Market and street food areas are exceptions). Find a spot to stop and eat, or eat at the stall. Drink from bottles while walking is fine.'},
-    {title:'Queuing',body:'<strong>Always queue</strong>. Lines form on the left side of escalators (stand, don\'t walk) in Tokyo; the right in Osaka and Kyoto. Board trains in order. Don\'t cut, push, or rush. Even in crowds, people are patient and orderly.'},
-    {title:'Quiet voices',body:'<strong>Japanese public spaces are quiet</strong>. Speak in conversational tones, not loudly. Laughing and chatting is fine but shouting or being boisterous is jarring. In temples and shrines, even quieter is better.'},
-    {title:'"Itadakimasu" and "Gochisosama"',body:'Say <strong>"itadakimasu"</strong> (ee-tah-dah-kee-mahs) before eating — it\'s an expression of gratitude for the food. Say <strong>"gochisosama deshita"</strong> (go-chee-so-sama desh-ta) when you\'re done, especially when leaving a restaurant. Locals will appreciate the effort.'},
-  ]},
-  {title:'Onsen (Hot Springs) at Tensui Saryo',items:[
-    {title:'Your ryokan has private onsen',body:'Tensui Saryo\'s Type-A room includes a <strong>private outdoor onsen bath (rotenburo) on your deck</strong> plus a foot bath — so any tattoo questions are completely irrelevant. You have your own bath that you can use any time, day or night.'},
-    {title:'Onsen etiquette',body:'<strong>Shower and rinse thoroughly before entering any bath</strong>. Use the small stool and shower station provided — this is essential, not optional. Keep your small towel out of the water (rest it on your head or at the side). No swimwear in traditional onsen.'},
-    {title:'Temperature & time',body:'Onsen water is hot — often <strong>40–42°C (104–108°F)</strong>. Ease in slowly. Limit each soak to about 15–20 minutes. Hydrate before and after. Don\'t drink alcohol just before soaking.'},
-    {title:'Yukata robe',body:'Your ryokan will provide a <strong>yukata</strong> (light cotton robe) and slippers. Wear it to meals, to the onsen, and to wander the ryokan. It\'s perfectly normal to wear it in common areas and even to step outside briefly in ryokan towns like Gora.'},
-  ]},
-  {title:'Useful Japanese Phrases',phrases:[
-    {jp:'ありがとうございます',rom:'Arigatou gozaimasu',en:'Thank you (polite)'},
-    {jp:'すみません',rom:'Sumimasen',en:'Excuse me / Sorry'},
-    {jp:'いただきます',rom:'Itadakimasu',en:'Before eating (like "bon appétit")'},
-    {jp:'ごちそうさまでした',rom:'Gochisosama deshita',en:'After eating (thank you for the meal)'},
-    {jp:'これをください',rom:'Kore wo kudasai',en:'I\'ll have this one, please'},
-    {jp:'いくらですか',rom:'Ikura desu ka',en:'How much is this?'},
-    {jp:'英語のメニューはありますか',rom:'Eigo no menyu wa arimasu ka',en:'Do you have an English menu?'},
-    {jp:'トイレはどこですか',rom:'Toire wa doko desu ka',en:'Where is the bathroom?'},
-    {jp:'助けてください',rom:'Tasukete kudasai',en:'Please help me'},
-    {jp:'写真を撮ってもいいですか',rom:'Shashin wo totte mo ii desu ka',en:'May I take a photo?'},
-  ]},
-  {title:'Emergency Info',items:[
-    {title:'Emergency numbers',body:'<strong>Police: 110 · Ambulance/Fire: 119</strong>. The Japan Tourism Agency operates an English-language emergency line at <strong>050-3816-2787</strong> (24/7). US Embassy Tokyo: +81-3-3224-5000.'},
-    {title:'Japan is extremely safe',body:'Japan consistently ranks among the world\'s safest countries. Violent crime is rare. <strong>Lost items are almost always turned in</strong> — if you lose something, check with the nearest koban (police box) or the train station lost and found. Return rates for wallets and phones are remarkably high.'},
-    {title:'Earthquakes',body:'Japan is seismically active. If shaking occurs: <strong>drop, cover, hold on</strong>. Move away from windows. Do not run outside. After the shaking stops, check for gas leaks. The "Yurekuru Call" app gives earthquake early warnings.'},
-    {title:'Apps to download',body:'<strong>Google Maps</strong> (offline maps), <strong>Google Translate</strong> (camera translation for menus and signs), <strong>Hyperdia or Navitime</strong> (train route planning), <strong>teamLab app</strong> (for Borderless visit). Optionally: Yurekuru Call for earthquake alerts.'},
-  ]},
+// ── Budget seed (used only if Firestore has no data) ─────────
+const BUDGET_SEED = [
+  { name:'United Flights (UA39 + UA38)', dates:'Apr 15 + 29', amt:2196.86, currency:'USD', cat:'transport' },
+  { name:'Hotel Gracery Shinjuku',        dates:'Apr 16\u201320', amt:200692, currency:'JPY', cat:'accommodation' },
+  { name:'teamLab Borderless',            dates:'Apr 17',       amt:11200,  currency:'JPY', cat:'activities' },
+  { name:'Fuji-Excursion 7 Train',        dates:'Apr 20',       amt:8400,   currency:'JPY', cat:'transport' },
+  { name:'Tensui Saryo Ryokan',           dates:'Apr 20\u201322', amt:126340, currency:'JPY', cat:'accommodation' },
+  { name:'Shinkansen HIKARI 637',         dates:'Apr 22',       amt:23800,  currency:'JPY', cat:'transport' },
+  { name:'Hotel Granvia Kyoto',           dates:'Apr 22\u201326', amt:268256, currency:'JPY', cat:'accommodation' },
+  { name:'Hotel Intergate Kanazawa',      dates:'Apr 26\u201328', amt:39004,  currency:'JPY', cat:'accommodation' },
+  { name:'Quintessa Hotel Tokyo Ginza',   dates:'Apr 28\u201329', amt:24713,  currency:'JPY', cat:'accommodation' },
 ];
 
-// ── DOM refs ──────────────────────────────────────────────────────────────────
-const landingEl     = document.getElementById('landing');
-const appEl         = document.getElementById('app');
-const itineraryEl   = document.getElementById('itinerary');
-const confirmEl     = document.getElementById('confirmations');
-const checklistEl   = document.getElementById('checklist');
-const tipsEl        = document.getElementById('tips');
-const editBtn       = document.getElementById('editBtn');
-const editBtnLabel  = document.getElementById('editBtnLabel');
-const userAvatar    = document.getElementById('userAvatar');
-const overlay       = document.getElementById('overlay');
-const authClose     = document.getElementById('authClose');
-const googleSignIn  = document.getElementById('googleSignInBtn');
-const authErr       = document.getElementById('authErr');
-const tripStatus    = document.getElementById('tripStatus');
-const jstClock      = document.getElementById('jstClock');
-const destPillsWrap = document.getElementById('destPillsWrap');
-const destPillsEl   = document.getElementById('destPills');
-const darkToggle    = document.getElementById('darkToggle');
-const currencyFab   = document.getElementById('currencyFab');
-const currencyWidget= document.getElementById('currencyWidget');
-const currencyClose = document.getElementById('currencyClose');
-const jpyInput      = document.getElementById('jpyInput');
-const usdInput      = document.getElementById('usdInput');
-const currRate      = document.getElementById('currRate');
-const backTop       = document.getElementById('backTop');
-const landingSignIn = document.getElementById('landingSignInBtn');
-const themeColor    = document.getElementById('theme-color-meta');
-
-// ── Landing / App toggle ──────────────────────────────────────────────────────
-window.enterApp = function () {
-  landingEl.classList.add('hidden');
-  appEl.classList.remove('hidden');
+const BUDGET_CAT_COLORS = {
+  accommodation: '#C0392B',
+  transport:     '#2980B9',
+  activities:    '#27AE60',
 };
 
-window.showLanding = function () {
-  appEl.classList.add('hidden');
-  landingEl.classList.remove('hidden');
+// ── Packing seed data ─────────────────────────────────────────
+const PACKING_SEED = {
+  items:[
+    { id:'pk1',  text:'Passport + copy', category:'Documents', done:false },
+    { id:'pk2',  text:'Travel insurance documents', category:'Documents', done:false },
+    { id:'pk3',  text:'Hotel confirmation printouts / PDFs', category:'Documents', done:false },
+    { id:'pk4',  text:'IC card (Suica/Pasmo) or plan to get at HND', category:'Documents', done:false },
+    { id:'pk5',  text:'iPhone + charger', category:'Tech', done:false },
+    { id:'pk6',  text:'Portable battery pack', category:'Tech', done:false },
+    { id:'pk7',  text:'Universal adapter (Japan is Type A)', category:'Tech', done:false },
+    { id:'pk8',  text:'AirPods / headphones', category:'Tech', done:false },
+    { id:'pk9',  text:'Comfortable walking shoes', category:'Clothes', done:false },
+    { id:'pk10', text:'Slip-on shoes (easy on/off for shrines)', category:'Clothes', done:false },
+    { id:'pk11', text:'Layers for cool April mornings', category:'Clothes', done:false },
+    { id:'pk12', text:'Rain jacket / compact umbrella', category:'Clothes', done:false },
+    { id:'pk13', text:'Sunscreen', category:'Toiletries', done:false },
+    { id:'pk14', text:'Small day bag / backpack', category:'Toiletries', done:false },
+    { id:'pk15', text:'Motion sickness medication', category:'Health', done:false },
+    { id:'pk16', text:'Blister bandages', category:'Health', done:false },
+    { id:'pk17', text:'Yen cash (~\u00a530,000)', category:'Documents', done:false },
+  ]
 };
 
-// ── Cherry blossom canvas ─────────────────────────────────────────────────────
-(function initBlossoms() {
-  const canvas = document.getElementById('blossom-canvas');
-  const ctx    = canvas.getContext('2d');
-  let petals   = [];
-  const PETAL_COUNT = 40;
+// ── DOM refs ──────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const tripStatusEl   = $('tripStatus');
+const jstClockEl     = $('jstClock');
+const searchInputEl  = $('searchInput');
+const destPillsWrap  = $('destPillsWrap');
+const destPillsEl    = $('destPills');
+const darkToggleBtn  = $('darkToggle');
+const authBtn        = $('authBtn');
+const authBtnLabel   = $('authBtnLabel');
+const userAvatarSm   = $('userAvatarSm');
+const overlay        = $('overlay');
+const authClose      = $('authClose');
+const googleSignInBtn= $('googleSignInBtn');
+const authErrEl      = $('authErr');
+const currencyFab    = $('currencyFab');
+const currencyWidget = $('currencyWidget');
+const currencyClose  = $('currencyClose');
+const jpyInput       = $('jpyInput');
+const usdInput       = $('usdInput');
+const currRateEl     = $('currRate');
+const themeColorMeta = $('theme-color-meta');
 
-  function resize() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-
-  function createPetal() {
-    return {
-      x:      Math.random() * canvas.width,
-      y:      -20 - Math.random() * 100,
-      r:      3 + Math.random() * 4,
-      rot:    Math.random() * Math.PI * 2,
-      rotV:   (Math.random() - 0.5) * 0.04,
-      vx:     (Math.random() - 0.5) * 0.8,
-      vy:     0.4 + Math.random() * 0.8,
-      sway:   Math.random() * Math.PI * 2,
-      swayR:  0.01 + Math.random() * 0.02,
-      alpha:  0.6 + Math.random() * 0.4,
-      color:  Math.random() > 0.5 ? '#FFB7C5' : '#FFCDD8',
-    };
-  }
-
-  function drawPetal(p) {
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rot);
-    ctx.globalAlpha = p.alpha;
-    ctx.fillStyle   = p.color;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, p.r * 1.4, p.r * 0.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function tick() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    petals.forEach((p, i) => {
-      p.sway += p.swayR;
-      p.x  += p.vx + Math.sin(p.sway) * 0.5;
-      p.y  += p.vy;
-      p.rot += p.rotV;
-      drawPetal(p);
-      if (p.y > canvas.height + 20) petals[i] = createPetal();
-    });
-    requestAnimationFrame(tick);
-  }
-
-  resize();
-  window.addEventListener('resize', resize);
-  for (let i = 0; i < PETAL_COUNT; i++) {
-    const p = createPetal();
-    p.y = Math.random() * window.innerHeight;
-    petals.push(p);
-  }
-  tick();
-})();
-
-// ── Dark mode ─────────────────────────────────────────────────────────────────
+// ── Dark mode ─────────────────────────────────────────────────
 function applyDark(on) {
   document.body.classList.toggle('dark', on);
-  darkToggle.textContent = on ? '☀' : '☽';
-  themeColor.content = on ? '#111111' : '#F8F6F1';
+  darkToggleBtn.textContent = on ? '\u2600' : '\u263D';
+  themeColorMeta.content = on ? '#111111' : '#F8F6F1';
   try { localStorage.setItem('japan-dark', on ? '1' : '0'); } catch {}
 }
-
-darkToggle.addEventListener('click', () => applyDark(!document.body.classList.contains('dark')));
+darkToggleBtn.addEventListener('click', () => applyDark(!document.body.classList.contains('dark')));
 try { if (localStorage.getItem('japan-dark') === '1') applyDark(true); } catch {}
 
-// ── Currency ──────────────────────────────────────────────────────────────────
+// ── Currency converter ────────────────────────────────────────
 async function fetchRate() {
   try {
-    const r = await fetch('https://open.er-api.com/v6/latest/USD');
-    const d = await r.json();
-    if (d.rates?.JPY) {
-      exchRate = d.rates.JPY;
-      currRate.textContent = `1 USD = ¥${exchRate.toFixed(0)} JPY (live rate)`;
+    const res  = await fetch('https://open.er-api.com/v6/latest/USD');
+    const data = await res.json();
+    if (data.rates && data.rates.JPY) {
+      exchRate   = data.rates.JPY;
+      rateIsLive = true;
+      localStorage.setItem('japan-rate', exchRate);
+      currRateEl.textContent = '1 USD = \u00a5' + exchRate.toFixed(0) + ' JPY (live)';
+      // Refresh budget if open
+      if ($('budget').classList.contains('active')) renderBudget();
     }
-  } catch {
-    currRate.textContent = `1 USD ≈ ¥${exchRate} JPY (estimated)`;
-  }
+  } catch { currRateEl.textContent = '1 USD \u2248 \u00a5' + exchRate + ' JPY (estimated)'; }
 }
-
 currencyFab.addEventListener('click', () => currencyWidget.classList.toggle('hidden'));
 currencyClose.addEventListener('click', () => currencyWidget.classList.add('hidden'));
-// Do NOT close on outside click — widget stays open
 jpyInput.addEventListener('input', () => {
   const v = parseFloat(jpyInput.value);
   usdInput.value = isNaN(v) ? '' : (v / exchRate).toFixed(2);
@@ -708,130 +670,97 @@ usdInput.addEventListener('input', () => {
   jpyInput.value = isNaN(v) ? '' : (v * exchRate).toFixed(0);
 });
 
-// ── Back to top ───────────────────────────────────────────────────────────────
-window.addEventListener('scroll', () => {
-  backTop.classList.toggle('visible', window.scrollY > 400);
-}, {passive:true});
-backTop.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
-
-// ── Dates ─────────────────────────────────────────────────────────────────────
+// ── JST clock + trip status ───────────────────────────────────
 function getTodayJST() {
-  return new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Tokyo'}));
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
 }
 function getTodayDayId() {
   const t = getTodayJST().toDateString();
-  return Object.entries(DAY_DATES).find(([,d]) => d.toDateString() === t)?.[0] || null;
+  return Object.entries(DAY_DATES).find(([, d]) => d.toDateString() === t)?.[0] || null;
 }
 function getDayClass(id) {
-  const today = getTodayJST(), day = DAY_DATES[id];
-  if (!day) return '';
-  if (today.toDateString() === day.toDateString()) return 'today';
-  return today > day ? 'past' : '';
+  const today   = getTodayJST();
+  const dayDate = DAY_DATES[id];
+  if (!dayDate) return '';
+  const t = today.toDateString(), d = dayDate.toDateString();
+  if (t === d) return 'today';
+  return today > dayDate ? 'past' : '';
 }
-
 function updateClock() {
   const jst = getTodayJST();
-  jstClock.textContent = `JST ${String(jst.getHours()).padStart(2,'0')}:${String(jst.getMinutes()).padStart(2,'0')}`;
+  const h = String(jst.getHours()).padStart(2, '0');
+  const m = String(jst.getMinutes()).padStart(2, '0');
+  jstClockEl.textContent = 'JST ' + h + ':' + m;
 }
-
 function updateTripStatus() {
-  const now = new Date(), todayId = getTodayDayId();
+  const now     = new Date();
+  const todayId = getTodayDayId();
   if (now < TRIP_START) {
-    const d = Math.ceil((TRIP_START - now) / 86400000);
-    tripStatus.innerHTML = `Trip starts in <strong>${d} day${d===1?'':'s'}</strong>`;
+    const days = Math.ceil((TRIP_START - now) / 86400000);
+    tripStatusEl.innerHTML = 'Trip starts in <strong>' + days + ' day' + (days === 1 ? '' : 's') + '</strong>';
   } else if (now > TRIP_END) {
-    tripStatus.innerHTML = 'Trip complete &nbsp;·&nbsp; Apr 15–29, 2026';
+    tripStatusEl.innerHTML = 'Trip complete &nbsp;&middot;&nbsp; Apr 15\u201329, 2026';
   } else {
-    const dayNum = Math.floor((now - TRIP_START) / 86400000) + 1;
-    const dest = GROUPS.find(g => g.ids.includes(todayId))?.label.split('·')[0].trim() || '';
-    tripStatus.innerHTML = `<strong>Day ${dayNum} of 15</strong> &nbsp;·&nbsp; ${dest}`;
+    const dayNum  = Math.floor((now - TRIP_START) / 86400000) + 1;
+    const destName= (GROUPS.find(g => g.ids.includes(todayId))?.label || '').split('\u00b7')[0].trim();
+    tripStatusEl.innerHTML = '<strong>Day ' + dayNum + ' of 15</strong> &nbsp;&middot;&nbsp; ' + destName;
   }
 }
 
-// ── Destination pills ─────────────────────────────────────────────────────────
+// ── Destination pills ─────────────────────────────────────────
 function buildDestPills() {
-  destPillsWrap.style.display = '';
-  destPillsEl.innerHTML = GROUPS.map((g,i) =>
-    `<button class="dest-pill${i===0?' active':''}" data-group="${i}">${g.label}</button>`
+  destPillsWrap.classList.remove('hidden');
+  destPillsEl.innerHTML = GROUPS.map((g, i) =>
+    '<button class="dest-pill' + (i === 0 ? ' active' : '') + '" data-group="' + i + '">' + g.label + '</button>'
   ).join('');
   destPillsEl.querySelectorAll('.dest-pill').forEach(pill => {
     pill.addEventListener('click', () => {
-      destPillsEl.querySelectorAll('.dest-pill').forEach(p=>p.classList.remove('active'));
+      destPillsEl.querySelectorAll('.dest-pill').forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
-      const sec = document.getElementById('section-'+pill.dataset.group);
+      const sec = document.getElementById('section-' + pill.dataset.group);
       if (sec) {
         const hH = document.querySelector('header').offsetHeight;
         const pH = destPillsWrap.offsetHeight;
-        window.scrollTo({top: sec.getBoundingClientRect().top + window.scrollY - hH - pH - 10, behavior:'smooth'});
+        window.scrollTo({ top: sec.getBoundingClientRect().top + window.scrollY - hH - pH - 10, behavior: 'smooth' });
       }
     });
   });
 }
-
 function updateActivePill() {
   const hH = document.querySelector('header').offsetHeight;
-  const pH = destPillsWrap.offsetHeight;
-  const off = hH + pH + 20;
+  const pH = destPillsWrap.classList.contains('hidden') ? 0 : destPillsWrap.offsetHeight;
+  const offset = hH + pH + 20;
   let active = 0;
-  GROUPS.forEach((_,i) => {
-    const el = document.getElementById('section-'+i);
-    if (el && el.getBoundingClientRect().top < off) active = i;
+  GROUPS.forEach((_, i) => {
+    const el = document.getElementById('section-' + i);
+    if (el && el.getBoundingClientRect().top < offset) active = i;
   });
-  destPillsEl.querySelectorAll('.dest-pill').forEach((p,i) => p.classList.toggle('active', i===active));
-  // Scroll active pill into view horizontally
-  const activePill = destPillsEl.querySelector('.dest-pill.active');
-  if (activePill) activePill.scrollIntoView({inline:'nearest', block:'nearest'});
+  destPillsEl.querySelectorAll('.dest-pill').forEach((p, i) => p.classList.toggle('active', i === active));
 }
 
-// ── Render: Itinerary ─────────────────────────────────────────────────────────
+// ── Render: Itinerary ─────────────────────────────────────────
 function renderItinerary() {
-  // Summary bar
-  const segFlexes = [5,2,4,2,1];
-  const summaryBar = `
-    <div class="trip-summary-bar">
-      <div class="tsb-top">
-        <span class="tsb-title">JAPAN 2026 · ROUTE</span>
-        <span class="tsb-dates">APR 15 – 29 · 15 DAYS</span>
-      </div>
-      <div class="tsb-bar">
-        ${GROUPS.map((g,i) => `<div class="tl-seg" style="flex:${segFlexes[i]};background:${g.color}"></div>`).join('')}
-      </div>
-      <div class="tsb-labels">
-        ${GROUPS.map((g,i) => `
-          <div class="tsb-label-item">
-            <div class="tsb-dot" style="background:${g.color}"></div>
-            ${g.label} <span style="color:var(--light)">${g.dates}</span>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
-
-  const sections = GROUPS.map((g,i) => `
-    <div class="dest-section" id="section-${i}">
-      <div class="dest-header">
-        <span class="dest-name">${g.label}</span>
-        <span class="dest-dates-label">${g.dates}</span>
-      </div>
-      ${g.ids.map(id => renderDay(DAYS[id])).join('')}
-    </div>
-  `).join('');
-
-  itineraryEl.innerHTML = summaryBar + sections;
+  $('itinerary').innerHTML = GROUPS.map((g, i) =>
+    '<div class="dest-section" id="section-' + i + '">' +
+      '<div class="dest-header"><span class="dest-name">' + g.label + '</span><span class="dest-dates">' + g.dates + '</span></div>' +
+      g.ids.map(id => renderDay(DAYS[id])).join('') +
+    '</div>'
+  ).join('');
 
   document.querySelectorAll('.day-header').forEach(h => {
     h.addEventListener('click', () => h.parentElement.classList.toggle('expanded'));
   });
 
+  // Auto-expand today's card
   const todayId = getTodayDayId();
   if (todayId) {
-    const card = document.getElementById('card-'+todayId);
+    const card = document.getElementById('card-' + todayId);
     if (card) {
       card.classList.add('expanded');
       setTimeout(() => {
         const hH = document.querySelector('header').offsetHeight;
         const pH = destPillsWrap.offsetHeight;
-        window.scrollTo({top: card.getBoundingClientRect().top + window.scrollY - hH - pH - 12, behavior:'smooth'});
+        window.scrollTo({ top: card.getBoundingClientRect().top + window.scrollY - hH - pH - 12, behavior: 'smooth' });
       }, 300);
     }
   }
@@ -842,651 +771,480 @@ function renderDay(d) {
   const isToday = cls === 'today';
   const noteText = notes[d.id] || '';
   const noteRead = noteText
-    ? noteText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')
-    : '<em>No notes yet — sign in to add notes.</em>';
+    ? noteText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>')
+    : '<em>No notes yet \u2014 sign in to add notes.</em>';
 
-  const periods = d.periods.map(p => `
-    <div class="period">
-      <div class="period-label">${p.label}</div>
-      ${p.items.map(renderItem).join('')}
-    </div>
-  `).join('');
+  const periodsHtml = d.periods.map(p =>
+    '<div class="period">' +
+    '<div class="period-label">' + p.label + '</div>' +
+    p.items.map(renderItem).join('') +
+    '</div>'
+  ).join('');
 
-  return `
-    <div class="day-card ${cls}" id="card-${d.id}">
-      <div class="day-header">
-        <div class="day-header-left">
-          <span class="day-date">${d.date}</span>
-          <div class="day-title-wrap">
-            <div class="day-title">${d.title}${isToday?'<span class="today-badge">TODAY</span>':''}</div>
-            <div class="day-location">${d.location}</div>
-          </div>
-        </div>
-        <div class="day-header-right">
-          <span class="notes-dot${noteText?' has-notes':''}"></span>
-          <span class="day-toggle">&#9660;</span>
-        </div>
-      </div>
-      <div class="day-body">
-        ${periods}
-        ${d.tip?`<div class="tip-block"><span class="tip-label">Tip  </span>${d.tip}</div>`:''}
-        <div class="notes-section">
-          <div class="notes-label">Notes</div>
-          <div class="notes-read">${noteRead}</div>
-          <textarea class="notes-edit" data-day="${d.id}" placeholder="Add notes, restaurant picks, reminders…">${esc(noteText)}</textarea>
-          <div class="save-indicator" id="save-${d.id}"></div>
-        </div>
-      </div>
-    </div>
-  `;
+  const tipHtml = d.tip
+    ? '<div class="tip-block"><span class="tip-label">Tip &nbsp;&nbsp;</span>' + esc(d.tip) + '</div>'
+    : '';
+
+  const notesHtml =
+    '<div class="notes-section">' +
+    '<div class="notes-label">Notes</div>' +
+    '<div class="notes-read">' + noteRead + '</div>' +
+    '<textarea class="notes-edit" data-day="' + d.id + '" placeholder="Add notes, restaurant picks, reminders\u2026">' + esc(noteText) + '</textarea>' +
+    '<div class="save-indicator" id="save-' + d.id + '"></div>' +
+    '</div>';
+
+  return '<div class="day-card ' + cls + '" id="card-' + d.id + '">' +
+    '<div class="day-header">' +
+      '<div class="day-header-left">' +
+        '<span class="day-date">' + d.date + '</span>' +
+        '<div class="day-title-wrap">' +
+          '<div class="day-title">' + esc(d.title) + (isToday ? '<span class="today-badge">TODAY</span>' : '') + '</div>' +
+          '<div class="day-location">' + d.location + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="day-header-right">' +
+        '<span class="notes-dot' + (noteText ? ' has-notes' : '') + '"></span>' +
+        '<span class="day-toggle">&#9660;</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="day-body">' + periodsHtml + tipHtml + notesHtml + '</div>' +
+    '</div>';
 }
 
 function renderItem(item) {
-  const cls  = item.type==='booked'?' booked':'';
-  const tag  = item.type==='booked'?'<span class="tag tag-booked">BOOKED</span>':'';
-  const time = item.time?`<div class="act-time">${item.time}</div>`:'<div class="act-time"></div>';
-  const sub  = item.sub?`<div class="act-sub">${item.sub}</div>`:'';
-  const dur  = item.dur?`<div class="act-duration">${item.dur}</div>`:'';
-  const text = item.addr
-    ? `<a href="https://maps.google.com/?q=${encodeURIComponent(item.addr)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-decoration-color:var(--border)">${item.text}</a>${tag}`
-    : `${item.text}${tag}`;
-  return `
-    <div class="act${cls}">
-      ${time}
-      <div class="act-body">
-        <div class="act-text">${text}</div>
-        ${sub}${dur}
-      </div>
-    </div>
-  `;
+  const cls  = item.type === 'booked' ? ' booked' : '';
+  const tag  = item.type === 'booked' ? '<span class="tag tag-booked">BOOKED</span>' : '';
+  const time = item.time ? '<div class="act-time">' + item.time + '</div>' : '<div class="act-time"></div>';
+  const sub  = item.sub  ? '<div class="act-sub">' + item.text + '</div>' : '';
+  const main = item.sub  ? '' : '<div class="act-text">' + item.text + tag + '</div>';
+  return '<div class="act' + cls + '">' + time + '<div class="act-body">' + main + sub + '</div></div>';
 }
 
-// ── Render: Confirmations ─────────────────────────────────────────────────────
+// ── Render: Confirmations ─────────────────────────────────────
 function renderConfirmations() {
-  // Cost summary
-  const total = COSTS.reduce((s,c) => s + (c.jpy||0), 0);
-  const totalUSD = COSTS.reduce((s,c) => s + (c.usd||0), 0);
-
-  const costHTML = `
-    <div class="cost-summary-card">
-      <div class="cost-summary-title">Booked Cost Summary</div>
-      ${COSTS.map(c => `
-        <div class="cost-row">
-          <span class="cost-label">${c.label}${c.note?` <span style="font-size:10px;color:var(--light)">(${c.note})</span>`:''}</span>
-          <div class="cost-vals">
-            ${c.jpy?`<div class="cost-jpy">¥${c.jpy.toLocaleString()}</div><div class="cost-usd">~$${c.usd.toLocaleString()}</div>`:'<div class="cost-usd" style="font-size:12px">See confirmation</div>'}
-          </div>
-        </div>
-      `).join('')}
-      <div class="cost-total-row">
-        <span class="cost-total-label">Total (excl. flights)</span>
-        <div>
-          <div class="cost-total-jpy">¥${total.toLocaleString()}</div>
-          <div class="cost-total-usd">~$${totalUSD.toLocaleString()} USD</div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const confs = [{key:'flights',title:'FLIGHTS'},{key:'hotels',title:'HOTELS'},{key:'trains',title:'TRAINS'}].map(s => `
-    <div class="conf-group">
-      <div class="conf-group-title">${s.title}</div>
-      ${CONFIRMATIONS[s.key].map(card => `
-        <div class="conf-card">
-          <div class="conf-name">${card.name}</div>
-          <div class="conf-number-row">
-            <span class="conf-number-label">${card.number.label}</span>
-            <span class="conf-number-val">${card.number.val}</span>
-          </div>
-          ${card.rows.map(r => `
-            <div class="conf-row">
-              <span class="conf-key">${r.k}</span>
-              <span class="conf-val${r.mono?' mono':''}">
-                ${r.addr?`<a href="https://maps.google.com/?q=${encodeURIComponent(r.addr)}" target="_blank" rel="noopener">${r.v}</a>`:r.v}
-              </span>
-            </div>
-          `).join('')}
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
-
-  confirmEl.innerHTML = costHTML + confs;
+  $('confirmations').innerHTML = [
+    { key:'flights', title:'FLIGHTS' },
+    { key:'hotels',  title:'HOTELS'  },
+    { key:'trains',  title:'TRAINS & ACTIVITIES' },
+  ].map(s =>
+    '<div class="conf-group">' +
+    '<div class="conf-group-title">' + s.title + '</div>' +
+    (CONFIRMATIONS[s.key] || []).map(card =>
+      '<div class="conf-card">' +
+      '<div class="conf-name">' + card.name + '</div>' +
+      '<div class="conf-number-row">' +
+        '<span class="conf-number-label">' + card.number.label + '</span>' +
+        '<span class="conf-number-val">' + card.number.val + '</span>' +
+        '<button class="conf-copy-btn" onclick="copyConf(\'' + card.number.val.replace(/'/g,"\\'") + '\',this)">Copy</button>' +
+      '</div>' +
+      card.rows.map(r =>
+        '<div class="conf-row"><span class="conf-key">' + r.k + '</span><span class="conf-val' + (r.mono ? ' mono' : '') + '">' + esc(r.v) + '</span></div>'
+      ).join('') +
+      '</div>'
+    ).join('') +
+    '</div>'
+  ).join('');
 }
 
-// ── Render: Checklist ─────────────────────────────────────────────────────────
+async function copyConf(text, btn) {
+  try {
+    await navigator.clipboard.writeText(text);
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
+  } catch {}
+}
+
+// ── Render: Checklist ─────────────────────────────────────────
 function renderChecklist() {
-  checklistEl.innerHTML = CHECKLIST.map(section => {
+  $('pretrip').innerHTML = CHECKLIST.map(section => {
     const total = section.items.length;
     const done  = section.items.filter(i => checks[i.id]).length;
-    const isBooked = !!section.booked;
-    return `
-      <div class="checklist-section${isBooked?' booked-section':''}" id="cl-${section.id}">
-        <div class="checklist-section-hd" onclick="toggleChecklistSection('${section.id}')">
-          <span class="checklist-title">${section.title}</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="checklist-progress"><span>${done}</span> / ${total}</span>
-            <span class="checklist-toggle">&#9660;</span>
-          </div>
-        </div>
-        <div class="checklist-items">
-          ${section.items.map(item => `
-            <div class="check-item${checks[item.id]?' done':''}" data-check="${item.id}">
-              <div class="check-box${checks[item.id]?' checked':''}"></div>
-              <div>
-                <div class="check-label">${item.label}</div>
-                ${item.sub?`<div class="check-sub">${item.sub}</div>`:''}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
+    return '<div class="checklist-section">' +
+      '<div class="checklist-title">' + section.section + '</div>' +
+      '<div class="checklist-progress"><span>' + done + '</span> / ' + total + ' complete</div>' +
+      section.items.map(item =>
+        '<div class="check-item' + (checks[item.id] ? ' done' : '') + '" data-check="' + item.id + '">' +
+          '<div class="check-box' + (checks[item.id] ? ' checked' : '') + '"></div>' +
+          '<div><div class="check-label">' + esc(item.label) + '</div>' +
+          (item.sub ? '<div class="check-sub">' + esc(item.sub) + '</div>' : '') +
+          '</div></div>'
+      ).join('') +
+      '</div>';
   }).join('');
-
-  // Booked section collapsed by default
-  const bookedSec = document.getElementById('cl-booked');
-  if (bookedSec) bookedSec.classList.remove('expanded');
-  // Others expanded by default
-  document.querySelectorAll('.checklist-section:not(.booked-section)').forEach(s => s.classList.add('expanded'));
 
   document.querySelectorAll('.check-item').forEach(item => {
     item.addEventListener('click', () => toggleCheck(item.dataset.check));
   });
 }
 
-window.toggleChecklistSection = function(id) {
-  const sec = document.getElementById('cl-'+id);
-  if (sec) sec.classList.toggle('expanded');
-};
-
 async function toggleCheck(id) {
   checks[id] = !checks[id];
   renderChecklist();
   if (currentUser) {
-    try { await setDoc(doc(db,'checks','all'), checks); } catch {}
+    try { await db.collection('checks').doc('all').set(checks); } catch {}
   } else {
     try { localStorage.setItem('japan-checks', JSON.stringify(checks)); } catch {}
   }
 }
 
-// ── Render: Japan Tips ────────────────────────────────────────────────────────
-function renderTips() {
-  tipsEl.innerHTML = TIPS_DATA.map(section => `
-    <div class="tips-section">
-      <div class="tips-section-title">${section.title}</div>
-      ${section.phrases ? `
-        <div class="tip-card">
-          <div class="tip-card-body">
-            ${section.phrases.map(p => `
-              <div class="tip-phrase-row">
-                <span class="tip-phrase-jp">${p.jp}</span>
-                <span class="tip-phrase-rom">${p.rom}</span>
-                <span class="tip-phrase-en">${p.en}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : section.items.map(tip => `
-        <div class="tip-card">
-          <div class="tip-card-title">${tip.title}</div>
-          <div class="tip-card-body">${tip.body}</div>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
+// ── Render: Budget ────────────────────────────────────────────
+function renderBudget() {
+  const bookings = bookingsData || [];
+  let totalJPY = 0, totalUSD = 0;
+  const byCat = {};
+  bookings.forEach(b => {
+    if (b.currency === 'JPY') { totalJPY += b.amt; byCat[b.cat] = (byCat[b.cat] || 0) + b.amt; }
+    else totalUSD += b.amt;
+  });
+  const usdEst    = totalJPY / exchRate + totalUSD;
+  const perPerson = usdEst / 2;
+  const maxCat    = Math.max(...Object.values(byCat), 1);
+  const liveBadge = rateIsLive ? '<span class="rate-live">Live</span>' : '';
+  const canEdit   = !!currentUser;
+
+  const bookingRows = bookings.map(b => {
+    const amt = b.currency === 'JPY'
+      ? '\u00a5' + Math.round(b.amt).toLocaleString()
+      : '$' + Number(b.amt).toFixed(2);
+    const editBtns = canEdit
+      ? '<span class="booking-actions">' +
+          '<button class="booking-edit-btn" onclick="openBookingModal(\'' + b.id + '\')">Edit</button>' +
+          '<button class="booking-del-btn" onclick="deleteBooking(\'' + b.id + '\')">Del</button>' +
+        '</span>'
+      : '';
+    return '<div class="booking-row">' +
+      '<span class="booking-name">' + esc(b.name) + '</span>' +
+      '<span class="booking-dates">' + esc(b.dates) + '</span>' +
+      '<span class="booking-amt">' + amt + '</span>' +
+      editBtns +
+    '</div>';
+  }).join('');
+
+  const addBtn = canEdit
+    ? '<button class="booking-add-btn" onclick="openBookingModal(null)">+ Add booking</button>'
+    : '';
+
+  const catBarsFixed = Object.entries(byCat).map(([cat, amt]) => {
+    const pct   = Math.round((amt / maxCat) * 100);
+    const color = BUDGET_CAT_COLORS[cat] || '#888';
+    return '<div class="cat-bar-row">' +
+      '<span class="cat-bar-label">' + cat + '</span>' +
+      '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+      '<span class="cat-bar-amt">\u00a5' + Math.round(amt).toLocaleString() + '</span>' +
+    '</div>';
+  }).join('');
+
+  $('budget').innerHTML =
+    '<div class="view-header"><div class="view-title">Budget</div><div class="view-subtitle">Confirmed bookings \u00b7 edit any entry when signed in</div></div>' +
+    '<div class="rate-row"><span>1 USD =</span>' +
+      '<input type="number" class="rate-input" id="rateInput" value="' + Math.round(exchRate) + '" min="50" max="300">' +
+      '<span>JPY</span>' + liveBadge +
+    '</div>' +
+    '<div class="budget-cards">' +
+      '<div class="budget-card"><div class="budget-card-num">\u00a5' + Math.round(totalJPY).toLocaleString() + '</div><div class="budget-card-lbl">Total JPY</div></div>' +
+      '<div class="budget-card primary"><div class="budget-card-num">~$' + Math.round(usdEst).toLocaleString() + '</div><div class="budget-card-lbl">USD Estimate</div></div>' +
+      '<div class="budget-card muted"><div class="budget-card-num">~$' + Math.round(perPerson).toLocaleString() + '</div><div class="budget-card-lbl">Per Person</div></div>' +
+    '</div>' +
+    '<div class="budget-section-hd">All Bookings</div>' +
+    '<div class="booking-table">' + bookingRows + '</div>' +
+    addBtn +
+    (Object.keys(byCat).length
+      ? '<div class="budget-section-hd" style="margin-top:24px">By Category (JPY)</div><div class="cat-bars">' + catBarsFixed + '</div>'
+      : '');
+
+  document.getElementById('rateInput').addEventListener('change', e => {
+    const v = parseFloat(e.target.value);
+    if (v > 0) { exchRate = v; rateIsLive = false; localStorage.setItem('japan-rate', v); renderBudget(); }
+  });
 }
 
-// ── Tab switching ─────────────────────────────────────────────────────────────
-const addExpFab = document.getElementById('addExpFab');
+// ── Bookings: load / save ─────────────────────────────────────
+async function loadBookingsData() {
+  try {
+    const snap = await db.collection('meta').doc('bookings').get();
+    bookingsData = snap.exists ? (snap.data().list || BUDGET_SEED) : BUDGET_SEED;
+  } catch {
+    bookingsData = BUDGET_SEED;
+  }
+  renderBudget();
+}
 
+async function saveBookingsData() {
+  renderBudget();
+  if (!currentUser) return;
+  try { await db.collection('meta').doc('bookings').set({ list: bookingsData }); } catch {}
+}
+
+// ── Booking modal ─────────────────────────────────────────────
+let editingBookingId = null;
+
+function openBookingModal(id) {
+  editingBookingId = id;
+  const modal = $('bookingModal');
+  const b = id ? bookingsData.find(x => x.id === id) : null;
+  $('bm-name').value     = b ? b.name    : '';
+  $('bm-dates').value    = b ? b.dates   : '';
+  $('bm-amt').value      = b ? b.amt     : '';
+  $('bm-currency').value = b ? b.currency: 'JPY';
+  $('bm-cat').value      = b ? b.cat     : 'accommodation';
+  $('bm-title').textContent = id ? 'Edit Booking' : 'Add Booking';
+  modal.classList.add('open');
+  setTimeout(() => $('bm-name').focus(), 60);
+}
+
+function closeBookingModal() {
+  $('bookingModal').classList.remove('open');
+  editingBookingId = null;
+}
+
+async function saveBooking() {
+  const name = $('bm-name').value.trim();
+  if (!name) { $('bm-name').style.outline = '2px solid var(--verm)'; return; }
+  $('bm-name').style.outline = '';
+  const entry = {
+    id:       editingBookingId || ('bk-' + Date.now()),
+    name,
+    dates:    $('bm-dates').value.trim(),
+    amt:      parseFloat($('bm-amt').value) || 0,
+    currency: $('bm-currency').value,
+    cat:      $('bm-cat').value,
+  };
+  if (editingBookingId) {
+    bookingsData = bookingsData.map(b => b.id === editingBookingId ? entry : b);
+  } else {
+    bookingsData = [...bookingsData, entry];
+  }
+  closeBookingModal();
+  await saveBookingsData();
+}
+
+async function deleteBooking(id) {
+  if (!confirm('Remove this booking?')) return;
+  bookingsData = bookingsData.filter(b => b.id !== id);
+  await saveBookingsData();
+}
+
+// ── Render: Packing ───────────────────────────────────────────
+function renderPacking() {
+  const items = packingData ? packingData.items || [] : [];
+  const done  = items.filter(i => i.done).length;
+  const cats  = [...new Set(items.map(i => i.category))];
+  const pct   = items.length ? Math.round((done / items.length) * 100) : 0;
+
+  const signinNote = !currentUser
+    ? '<div class="pack-signin-note">Sign in to save packing progress across devices.</div>'
+    : '';
+
+  const groupsHtml = cats.map(cat => {
+    const ci   = items.filter(i => i.category === cat);
+    const cd   = ci.filter(i => i.done).length;
+    const cpct = ci.length ? Math.round((cd / ci.length) * 100) : 0;
+    return '<div class="pack-group">' +
+      '<div class="pack-group-hd">' +
+        '<span class="pack-group-name">' + cat + '</span>' +
+        '<div class="pack-group-meta">' +
+          '<div class="pack-group-bar"><div class="pack-group-bar-fill" style="width:' + cpct + '%"></div></div>' +
+          '<span class="pack-group-count">' + cd + '/' + ci.length + '</span>' +
+        '</div>' +
+      '</div>' +
+      ci.map(item =>
+        '<div class="pack-item' + (item.done ? ' done' : '') + '" data-id="' + item.id + '">' +
+          '<input type="checkbox" class="pack-check" ' + (item.done ? 'checked' : '') + ' onchange="togglePackItem(\'' + item.id + '\')">' +
+          '<span class="pack-text">' + esc(item.text) + '</span>' +
+          '<button class="pack-del" onclick="deletePackItem(\'' + item.id + '\')">&#x2715;</button>' +
+        '</div>'
+      ).join('') +
+      '<div class="pack-add-row">' +
+        '<input type="text" class="pack-add-input" placeholder="Add to ' + cat + '\u2026" data-cat="' + cat + '" onkeydown="if(event.key===\'Enter\')addPackItem(this)">' +
+        '<button class="pack-add-btn" onclick="addPackItem(this.previousElementSibling)">Add</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  const newCatHtml =
+    '<div class="new-cat-row">' +
+      '<input type="text" id="newCatInput" class="pack-add-input" style="flex:1" placeholder="New category name\u2026" onkeydown="if(event.key===\'Enter\')addPackCat()">' +
+      '<button class="pack-add-btn" onclick="addPackCat()">+ Category</button>' +
+    '</div>';
+
+  $('packing').innerHTML =
+    '<div class="view-header"><div class="view-title">Packing List</div><div class="view-subtitle">Check items off as you pack.</div></div>' +
+    signinNote +
+    '<div class="pack-overall"><div class="pack-overall-track"><div class="pack-overall-fill" style="width:' + pct + '%"></div></div><span class="pack-overall-text">' + done + ' / ' + items.length + ' packed</span></div>' +
+    groupsHtml +
+    newCatHtml;
+}
+
+async function togglePackItem(id) {
+  if (!packingData) return;
+  packingData.items = packingData.items.map(i => i.id === id ? { ...i, done: !i.done } : i);
+  renderPacking();
+  await savePackingData();
+}
+
+async function addPackItem(input) {
+  const text = input.value.trim();
+  const cat  = input.dataset.cat;
+  if (!text || !packingData) return;
+  packingData.items.push({ id: 'pk-' + Date.now(), text, category: cat, done: false });
+  await savePackingData();
+  input.value = '';
+}
+
+async function deletePackItem(id) {
+  if (!packingData) return;
+  packingData.items = packingData.items.filter(i => i.id !== id);
+  await savePackingData();
+}
+
+async function addPackCat() {
+  const input = document.getElementById('newCatInput');
+  const cat   = input?.value?.trim();
+  if (!cat || !packingData) return;
+  packingData.items.push({ id: 'pk-' + Date.now(), text: '(add items here)', category: cat, done: false });
+  await savePackingData();
+  if (input) input.value = '';
+}
+
+async function savePackingData() {
+  renderPacking();
+  if (currentUser) {
+    try { await db.collection('meta').doc('packing').set(packingData); } catch {}
+  } else {
+    try { localStorage.setItem('japan-packing', JSON.stringify(packingData)); } catch {}
+  }
+}
+
+async function loadPackingData() {
+  if (currentUser) {
+    try {
+      const snap = await db.collection('meta').doc('packing').get();
+      packingData = snap.exists ? snap.data() : PACKING_SEED;
+      if (!packingData.items) packingData = PACKING_SEED;
+    } catch { packingData = PACKING_SEED; }
+  } else {
+    try {
+      const saved = localStorage.getItem('japan-packing');
+      packingData = saved ? JSON.parse(saved) : PACKING_SEED;
+    } catch { packingData = PACKING_SEED; }
+  }
+  renderPacking();
+}
+
+// ── Search ────────────────────────────────────────────────────
+searchInputEl.addEventListener('input', () => {
+  const q = searchInputEl.value.trim().toLowerCase();
+  let anyVisible = false;
+  document.querySelectorAll('.day-card').forEach(card => {
+    if (!q) { card.classList.remove('search-hidden'); anyVisible = true; return; }
+    if (card.textContent.toLowerCase().includes(q)) {
+      card.classList.remove('search-hidden');
+      if (!card.classList.contains('expanded')) card.classList.add('expanded');
+      anyVisible = true;
+    } else {
+      card.classList.add('search-hidden');
+    }
+  });
+  document.querySelectorAll('.dest-section').forEach(sec => {
+    const vis = [...sec.querySelectorAll('.day-card')].some(c => !c.classList.contains('search-hidden'));
+    sec.style.display = vis || !q ? '' : 'none';
+  });
+  let noRes = document.getElementById('no-results');
+  if (!anyVisible && q) {
+    if (!noRes) {
+      noRes = document.createElement('div');
+      noRes.id = 'no-results'; noRes.className = 'no-results';
+      noRes.textContent = 'No results found.';
+      $('itinerary').appendChild(noRes);
+    }
+  } else if (noRes) noRes.remove();
+});
+
+// ── Tab switching ─────────────────────────────────────────────
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(btn.dataset.tab).classList.add('active');
-    destPillsWrap.style.display = btn.dataset.tab === 'itinerary' ? '' : 'none';
-    addExpFab.classList.toggle('hidden', btn.dataset.tab !== 'budget');
-    if (btn.dataset.tab === 'budget') renderBudget();
+    const showPills = btn.dataset.tab === 'itinerary';
+    destPillsWrap.classList.toggle('hidden', !showPills);
+    window.scrollTo(0, 0);
   });
 });
 
-// ── Category config ───────────────────────────────────────────────────────────
-const CAT_COLORS = {
-  food:       '#E91E8C',
-  drinks:     '#C0392B',
-  transport:  '#4A90D9',
-  souvenirs:  '#F39C12',
-  activities: '#27AE60',
-  other:      '#8E8E8E',
-};
-
-// Booked costs for reference
-const BOOKED_COSTS = [
-  {label:'Flights (both)',                  jpy:null},
-  {label:'Hotel Gracery Shinjuku',          jpy:200692},
-  {label:'teamLab Borderless (2 tickets)',  jpy:11200},
-  {label:'Fuji-Excursion 7 train',          jpy:8400},
-  {label:'Tensui Saryo, Hakone',            jpy:126340},
-  {label:'Shinkansen (Odawara→Kyoto)',      jpy:23800},
-  {label:'Hotel Granvia Kyoto',             jpy:268256},
-  {label:'Hotel Intergate Kanazawa',        jpy:39004},
-  {label:'Quintessa Hotel Ginza',           jpy:24713},
-];
-
-// ── Expense Firestore ─────────────────────────────────────────────────────────
-function subscribeExpenses() {
-  if (expUnsub) expUnsub();
-  const q = query(collection(db, 'expenses'), orderBy('createdAt', 'desc'));
-  expUnsub = onSnapshot(q, snap => {
-    expenses = snap.docs.map(d => ({id: d.id, ...d.data()}));
-    renderBudget();
-  }, () => {
-    // fallback to local on error
-    expenses = [...localExpenses].sort((a,b) => b.createdAt - a.createdAt);
-    renderBudget();
-  });
-}
-
-function unsubscribeExpenses() {
-  if (expUnsub) { expUnsub(); expUnsub = null; }
-}
-
-function loadLocalExpenses() {
-  try {
-    localExpenses = JSON.parse(localStorage.getItem('japan-expenses') || '[]');
-    expenses = [...localExpenses].sort((a,b) => b.createdAt - a.createdAt);
-  } catch { localExpenses = []; expenses = []; }
-}
-
-function saveLocalExpenses() {
-  try { localStorage.setItem('japan-expenses', JSON.stringify(localExpenses)); } catch {}
-}
-
-async function addExpense(exp) {
+// ── Auth ──────────────────────────────────────────────────────
+authBtn.addEventListener('click', () => {
   if (currentUser) {
-    try {
-      await addDoc(collection(db, 'expenses'), {
-        ...exp,
-        createdAt: serverTimestamp(),
-      });
-      // onSnapshot will update expenses list automatically
-    } catch (e) {
-      console.error('Failed to save expense', e);
-      throw e;
-    }
+    auth.signOut();
   } else {
-    const newExp = {...exp, id: Date.now() + '-' + Math.random(), createdAt: Date.now()};
-    localExpenses.unshift(newExp);
-    saveLocalExpenses();
-    expenses = [...localExpenses];
-    renderBudget();
-  }
-}
-
-async function deleteExpense(id) {
-  if (currentUser) {
-    try { await deleteDoc(doc(db, 'expenses', id)); } catch {}
-  } else {
-    localExpenses = localExpenses.filter(e => e.id !== id);
-    saveLocalExpenses();
-    expenses = [...localExpenses];
-    renderBudget();
-  }
-}
-
-// ── Budget calculations ───────────────────────────────────────────────────────
-function calcBudget() {
-  const total = expenses.reduce((s, e) => s + (e.amount || 0), 0);
-
-  // Per-person net spend (what each person actually spent / their share)
-  let gwenNet = 0, christinaNet = 0;
-  // Settlement: positive = christina owes gwen, negative = gwen owes christina
-  let settlement = 0;
-
-  expenses.forEach(e => {
-    const amt = e.amount || 0;
-    if (e.split) {
-      if (e.paidBy === 'gwen') {
-        gwenNet      += amt;
-        settlement   += amt / 2; // christina owes gwen half
-      } else {
-        christinaNet += amt;
-        settlement   -= amt / 2; // gwen owes christina half
-      }
-    } else {
-      if (e.paidBy === 'gwen') gwenNet += amt;
-      else christinaNet += amt;
-    }
-  });
-
-  // Category totals
-  const byCat = {};
-  Object.keys(CAT_COLORS).forEach(c => byCat[c] = 0);
-  expenses.forEach(e => { if (byCat[e.category] !== undefined) byCat[e.category] += e.amount || 0; });
-
-  // By date
-  const byDate = {};
-  expenses.forEach(e => {
-    if (!byDate[e.date]) byDate[e.date] = 0;
-    byDate[e.date] += e.amount || 0;
-  });
-
-  return { total, gwenNet, christinaNet, settlement, byCat, byDate };
-}
-
-// ── Render: Budget ────────────────────────────────────────────────────────────
-function renderBudget() {
-  const budgetEl = document.getElementById('budget');
-  if (!budgetEl) return;
-
-  const { total, gwenNet, christinaNet, settlement, byCat, byDate } = calcBudget();
-  const maxCat = Math.max(...Object.values(byCat), 1);
-
-  // Settlement card style
-  const settled = Math.abs(settlement) < 1;
-  let settlementText = '', settleClass = '';
-  if (settled) {
-    settlementText = 'All settled up';
-    settleClass = 'settlement';
-  } else if (settlement > 0) {
-    settlementText = `Christina owes Gwen ¥${Math.round(settlement).toLocaleString()}`;
-    settleClass = 'settlement owed';
-  } else {
-    settlementText = `Gwen owes Christina ¥${Math.round(Math.abs(settlement)).toLocaleString()}`;
-    settleClass = 'settlement owed';
-  }
-
-  // Filter expenses
-  const displayed = expFilter === 'all' ? expenses : expenses.filter(e => e.category === expFilter);
-
-  // Booked costs total
-  const bookedTotal = BOOKED_COSTS.reduce((s,c) => s + (c.jpy||0), 0);
-
-  budgetEl.innerHTML = `
-    <div class="budget-header">
-      <div class="budget-title">Trip Expenses</div>
-      <div class="budget-sub">${currentUser ? 'Real-time sync active' : 'Sign in to sync with Christina'}</div>
-    </div>
-
-    <!-- Stats -->
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total On-Trip Spent</div>
-        <div class="stat-jpy">¥${total.toLocaleString()}</div>
-        <div class="stat-usd">~$${Math.round(total / exchRate).toLocaleString()} USD</div>
-      </div>
-      <div class="stat-card ${settleClass}">
-        <div class="stat-label">Settlement</div>
-        <div class="stat-jpy">${settlementText}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Gwen Paid</div>
-        <div class="stat-jpy">¥${gwenNet.toLocaleString()}</div>
-        <div class="stat-usd">~$${Math.round(gwenNet / exchRate).toLocaleString()}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Christina Paid</div>
-        <div class="stat-jpy">¥${christinaNet.toLocaleString()}</div>
-        <div class="stat-usd">~$${Math.round(christinaNet / exchRate).toLocaleString()}</div>
-      </div>
-    </div>
-
-    <!-- Category breakdown -->
-    <div class="cat-breakdown">
-      <div class="cat-breakdown-title">By Category</div>
-      ${Object.entries(byCat).map(([cat, amt]) => `
-        <div class="cat-row">
-          <span class="cat-name">${cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
-          <div class="cat-bar-wrap">
-            <div class="cat-bar" style="width:${(amt/maxCat)*100}%;background:${CAT_COLORS[cat]}"></div>
-          </div>
-          <span class="cat-amt">¥${amt.toLocaleString()}</span>
-        </div>
-      `).join('')}
-    </div>
-
-    <!-- Booked reference -->
-    <div class="booked-ref-card">
-      <div class="booked-ref-title">Pre-booked Reference (excl. flights)</div>
-      ${BOOKED_COSTS.filter(c=>c.jpy).map(c=>`
-        <div class="booked-ref-row">
-          <span class="booked-ref-label">${c.label}</span>
-          <span class="booked-ref-val">¥${c.jpy.toLocaleString()}</span>
-        </div>
-      `).join('')}
-      <div class="booked-ref-total">
-        <span class="booked-ref-total-label">Booked total</span>
-        <span class="booked-ref-total-val">¥${bookedTotal.toLocaleString()}</span>
-      </div>
-      <div style="font-size:11px;color:var(--light);margin-top:8px">
-        Combined (booked + on-trip): ¥${(bookedTotal + total).toLocaleString()} &nbsp;·&nbsp; ~$${Math.round((bookedTotal + total)/exchRate).toLocaleString()}
-      </div>
-    </div>
-
-    <!-- Expense list -->
-    <div class="expense-list-hd">
-      <span class="expense-list-title">Expenses (${expenses.length})</span>
-      <div class="exp-filter-row">
-        <button class="exp-filter-btn${expFilter==='all'?' active':''}" data-filter="all">All</button>
-        ${Object.keys(CAT_COLORS).map(cat =>
-          `<button class="exp-filter-btn${expFilter===cat?' active':''}" data-filter="${cat}">${cat.charAt(0).toUpperCase()+cat.slice(1)}</button>`
-        ).join('')}
-      </div>
-    </div>
-
-    ${displayed.length === 0 ? `
-      <div class="exp-empty">
-        <strong>${expenses.length === 0 ? 'No expenses yet' : 'No expenses in this category'}</strong>
-        ${expenses.length === 0 ? 'Tap "+ Add" to log your first expense in Japan.' : 'Try a different filter above.'}
-      </div>
-    ` : displayed.map(e => `
-      <div class="expense-item">
-        <div class="exp-cat-stripe" style="background:${CAT_COLORS[e.category]||'#ccc'}"></div>
-        <div class="exp-body">
-          <div class="exp-top">
-            <span class="exp-desc">${e.description || e.category}</span>
-            <span class="exp-amount">¥${(e.amount||0).toLocaleString()}</span>
-          </div>
-          <div class="exp-meta">
-            <span>${e.date || ''}</span>
-            <span>${e.paidBy === 'gwen' ? 'Gwen' : 'Christina'} paid</span>
-            ${e.split ? `<span class="exp-tag split">Split 50/50</span>` : ''}
-            <span class="exp-tag">${e.category}</span>
-          </div>
-        </div>
-        <button class="exp-delete" data-id="${e.id}" title="Delete expense">&times;</button>
-      </div>
-    `).join('')}
-    <div style="height:80px"></div>
-  `;
-
-  // Filter buttons
-  budgetEl.querySelectorAll('.exp-filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      expFilter = btn.dataset.filter;
-      renderBudget();
-    });
-  });
-
-  // Delete buttons
-  budgetEl.querySelectorAll('.exp-delete').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      if (confirm('Delete this expense?')) await deleteExpense(btn.dataset.id);
-    });
-  });
-}
-
-// ── Expense Modal ─────────────────────────────────────────────────────────────
-const expOverlay  = document.getElementById('expenseOverlay');
-const expModalClose = document.getElementById('expModalClose');
-const expAmount   = document.getElementById('expAmount');
-const expNote     = document.getElementById('expNote');
-const expDate     = document.getElementById('expDate');
-const expSubmit   = document.getElementById('expSubmit');
-const expErr      = document.getElementById('expErr');
-const expSplit    = document.getElementById('expSplit');
-const expSplitHint = document.getElementById('expSplitHint');
-
-let selectedCat   = 'food';
-let selectedPayer = 'gwen';
-
-function openExpenseModal() {
-  expErr.textContent = '';
-  expAmount.value = '';
-  expNote.value = '';
-  // Default date to today within trip, or first trip day
-  const today = getTodayJST();
-  const tripStart = new Date('2026-04-15');
-  const tripEnd   = new Date('2026-04-29');
-  const useDate = today >= tripStart && today <= tripEnd ? today : tripStart;
-  expDate.value = useDate.toISOString().split('T')[0];
-  expOverlay.classList.add('open');
-  setTimeout(() => expAmount.focus(), 100);
-}
-
-addExpFab.addEventListener('click', openExpenseModal);
-expModalClose.addEventListener('click', () => expOverlay.classList.remove('open'));
-expOverlay.addEventListener('click', e => { if (e.target === expOverlay) expOverlay.classList.remove('open'); });
-
-// Category buttons
-document.getElementById('expCats').addEventListener('click', e => {
-  const btn = e.target.closest('.exp-cat');
-  if (!btn) return;
-  document.querySelectorAll('.exp-cat').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  selectedCat = btn.dataset.cat;
-});
-
-// Payer buttons
-document.getElementById('expPayers').addEventListener('click', e => {
-  const btn = e.target.closest('.exp-payer');
-  if (!btn) return;
-  document.querySelectorAll('.exp-payer').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  selectedPayer = btn.dataset.payer;
-  updateSplitHint();
-});
-
-function updateSplitHint() {
-  if (!expSplit.checked) { expSplitHint.textContent = ''; return; }
-  const amt = parseFloat(expAmount.value) || 0;
-  const half = Math.round(amt / 2);
-  const other = selectedPayer === 'gwen' ? 'Christina' : 'Gwen';
-  expSplitHint.textContent = half > 0 ? `${other} owes ¥${half.toLocaleString()}` : '';
-}
-
-expAmount.addEventListener('input', updateSplitHint);
-expSplit.addEventListener('change', updateSplitHint);
-
-expSubmit.addEventListener('click', async () => {
-  const amount = parseInt(expAmount.value, 10);
-  if (!amount || amount <= 0) { expErr.textContent = 'Enter an amount.'; return; }
-  if (!expDate.value) { expErr.textContent = 'Enter a date.'; return; }
-
-  expSubmit.textContent = 'Adding…';
-  expSubmit.disabled = true;
-  expErr.textContent = '';
-
-  try {
-    await addExpense({
-      amount,
-      category:    selectedCat,
-      description: expNote.value.trim() || selectedCat.charAt(0).toUpperCase() + selectedCat.slice(1),
-      paidBy:      selectedPayer,
-      split:       expSplit.checked,
-      date:        expDate.value,
-    });
-    expOverlay.classList.remove('open');
-  } catch {
-    expErr.textContent = 'Could not save. Check connection.';
-  } finally {
-    expSubmit.textContent = 'Add Expense';
-    expSubmit.disabled = false;
+    authErrEl.textContent = '';
+    overlay.classList.add('open');
   }
 });
-
-// ── Google Auth ───────────────────────────────────────────────────────────────
-function openAuthModal() {
-  authErr.textContent = '';
-  overlay.classList.add('open');
-}
-
-editBtn.addEventListener('click', () => {
-  if (currentUser) fbSignOut(auth);
-  else openAuthModal();
-});
-
-landingSignIn.addEventListener('click', () => {
-  enterApp();
-  setTimeout(openAuthModal, 100);
-});
-
 overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
 authClose.addEventListener('click', () => overlay.classList.remove('open'));
 
-googleSignIn.addEventListener('click', async () => {
-  authErr.textContent = '';
-  googleSignIn.textContent = 'Signing in…';
+googleSignInBtn.addEventListener('click', async () => {
+  authErrEl.textContent = '';
+  googleSignInBtn.textContent = 'Signing in\u2026';
+  const provider = new firebase.auth.GoogleAuthProvider();
   try {
-    const result = await signInWithPopup(auth, provider);
-    if (!ALLOWED.includes(result.user.email)) {
-      await fbSignOut(auth);
-      authErr.textContent = 'Access restricted to Gwen & Christina.';
-      googleSignIn.textContent = 'Sign in with Google';
+    const result = await auth.signInWithPopup(provider);
+    const email  = result.user.email;
+    if (!ALLOWED_EMAILS.includes(email)) {
+      await auth.signOut();
+      authErrEl.textContent = 'Access restricted to Gwen & Christina.';
+      googleSignInBtn.textContent = 'Sign in with Google';
       return;
     }
     overlay.classList.remove('open');
   } catch (err) {
     if (err.code !== 'auth/popup-closed-by-user') {
-      authErr.textContent = 'Sign-in failed. Please try again.';
+      authErrEl.textContent = 'Sign-in failed. Please try again.';
     }
-    googleSignIn.textContent = 'Sign in with Google';
+    googleSignInBtn.textContent = 'Sign in with Google';
   }
 });
 
-onAuthStateChanged(auth, async user => {
+auth.onAuthStateChanged(async user => {
   currentUser = user;
   if (user) {
     document.body.classList.add('edit-mode');
-    editBtn.classList.add('active');
-    editBtnLabel.textContent = '✓ Editing';
-    if (user.photoURL) userAvatar.src = user.photoURL;
+    authBtn.classList.add('signed-in');
+    const firstName = (user.displayName || '').split(' ')[0] || 'Signed in';
+    authBtnLabel.textContent = firstName;
+    if (user.photoURL) userAvatarSm.src = user.photoURL;
     await loadAllNotes();
-    await loadChecks();
+    await loadChecksFromDB();
+    renderChecklist();
     refreshNoteDisplays();
     setupEditors();
-    subscribeExpenses(); // real-time expense sync
+    loadPackingData();
+    loadBookingsData();
   } else {
     document.body.classList.remove('edit-mode');
-    editBtn.classList.remove('active');
-    editBtnLabel.textContent = '✎ Edit';
-    userAvatar.src = '';
-    unsubscribeExpenses();
-    loadLocalExpenses();
+    authBtn.classList.remove('signed-in');
+    authBtnLabel.textContent = 'Sign in';
+    userAvatarSm.src = '';
     refreshNoteDisplays();
-    renderBudget();
+    loadPackingData();
+    // Use seed data for unsigned users
+    if (!bookingsData) { bookingsData = BUDGET_SEED; renderBudget(); }
+    else renderBudget(); // re-render to hide edit controls
   }
 });
 
-// ── Firestore ─────────────────────────────────────────────────────────────────
+// ── Firestore: Notes ──────────────────────────────────────────
 async function loadAllNotes() {
   await Promise.all(Object.keys(DAYS).map(async id => {
     try {
-      const snap = await getDoc(doc(db,'notes',id));
-      if (snap.exists()) notes[id] = snap.data().text || '';
+      const snap = await db.collection('notes').doc(id).get();
+      if (snap.exists) notes[id] = snap.data().text || '';
     } catch {}
   }));
-}
-
-async function loadChecks() {
-  try {
-    const snap = await getDoc(doc(db,'checks','all'));
-    if (snap.exists()) Object.assign(checks, snap.data());
-  } catch {}
-  renderChecklist();
 }
 
 function refreshNoteDisplays() {
@@ -1496,14 +1254,12 @@ function refreshNoteDisplays() {
     const dayId = ta.dataset.day;
     const text  = notes[dayId] || '';
     el.innerHTML = text
-      ? text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')
-      : '<em>No notes yet — sign in to add notes.</em>';
-    const dot = document.querySelector(`#card-${dayId} .notes-dot`);
+      ? text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>')
+      : '<em>No notes yet \u2014 sign in to add notes.</em>';
+    const dot = document.querySelector('#card-' + dayId + ' .notes-dot');
     if (dot) dot.classList.toggle('has-notes', !!text);
   });
-  document.querySelectorAll('.notes-edit').forEach(ta => {
-    ta.value = notes[ta.dataset.day] || '';
-  });
+  document.querySelectorAll('.notes-edit').forEach(ta => { ta.value = notes[ta.dataset.day] || ''; });
 }
 
 function setupEditors() {
@@ -1514,42 +1270,49 @@ function setupEditors() {
     let timer;
     ta.addEventListener('input', () => {
       clearTimeout(timer);
-      const ind = document.getElementById('save-'+ta.dataset.day);
-      if (ind) ind.textContent = 'Saving…';
+      const ind = document.getElementById('save-' + ta.dataset.day);
+      if (ind) ind.textContent = 'Saving\u2026';
       timer = setTimeout(async () => {
         const dayId = ta.dataset.day;
         const text  = ta.value;
         notes[dayId] = text;
-        const dot = document.querySelector(`#card-${dayId} .notes-dot`);
+        const dot = document.querySelector('#card-' + dayId + ' .notes-dot');
         if (dot) dot.classList.toggle('has-notes', !!text);
         const readEl = ta.previousElementSibling;
         if (readEl) readEl.innerHTML = text
-          ? text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')
-          : '<em>No notes yet — sign in to add notes.</em>';
+          ? text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>')
+          : '<em>No notes yet \u2014 sign in to add notes.</em>';
         try {
-          await setDoc(doc(db,'notes',dayId), {text, updatedAt:new Date()});
-          if (ind) { ind.textContent = 'Saved'; setTimeout(()=>{if(ind)ind.textContent='';}, 1800); }
-        } catch {
-          if (ind) ind.textContent = 'Could not save.';
-        }
+          await db.collection('notes').doc(dayId).set({ text, updatedAt: new Date() });
+          if (ind) { ind.textContent = 'Saved'; setTimeout(() => { if (ind) ind.textContent = ''; }, 1800); }
+        } catch { if (ind) ind.textContent = 'Could not save.'; }
       }, 900);
     });
   });
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+// ── Firestore: Checks ─────────────────────────────────────────
+async function loadChecksFromDB() {
+  try {
+    const snap = await db.collection('checks').doc('all').get();
+    if (snap.exists) Object.assign(checks, snap.data());
+  } catch {}
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-try { Object.assign(checks, JSON.parse(localStorage.getItem('japan-checks')||'{}')); } catch {}
-loadLocalExpenses();
+// ── Helpers ───────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
+// ── Load local state ──────────────────────────────────────────
+try { Object.assign(checks, JSON.parse(localStorage.getItem('japan-checks') || '{}')); } catch {}
+bookingsData = BUDGET_SEED; // will be replaced by Firestore on sign-in
+
+// ── Init ──────────────────────────────────────────────────────
 renderItinerary();
 renderConfirmations();
 renderChecklist();
-renderTips();
 renderBudget();
 buildDestPills();
 updateTripStatus();
@@ -1558,4 +1321,4 @@ fetchRate();
 
 setInterval(updateClock, 30000);
 setInterval(updateTripStatus, 60000);
-window.addEventListener('scroll', updateActivePill, {passive:true});
+window.addEventListener('scroll', updateActivePill, { passive: true });

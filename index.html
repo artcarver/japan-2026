@@ -10,974 +10,52 @@
   <title>Japan 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:           #F8F6F1;
-      --card:         #FFFFFF;
-      --text:         #1a1a1a;
-      --muted:        #6B6B6B;
-      --light:        #A8A8A8;
-      --border:       #E2DDD5;
-      --border-light: #EDE9E1;
-      --verm:         #C0392B;
-      --verm-dark:    #A93226;
-      --green-bg:     #ECF5EC;
-      --green-text:   #1B5E20;
-      --green-border: #C8E6C9;
-      --amber-bg:     #FEF8EC;
-      --amber-text:   #7A5500;
-      --amber-border: #F9E5A0;
-      --today-border: #C0392B;
-      --today-bg:     #FFF9F9;
-      --past-bg:      #FAFAF8;
-      --mono:         'SF Mono','Fira Code','Courier New',monospace;
-      --serif:        'Shippori Mincho',Georgia,serif;
-      --shadow:       0 2px 16px rgba(0,0,0,0.08);
-    }
-
-    body.dark {
-      --bg:           #111111;
-      --card:         #1C1C1E;
-      --text:         #E8E8E8;
-      --muted:        #9A9A9A;
-      --light:        #555555;
-      --border:       #2C2C2E;
-      --border-light: #242426;
-      --green-bg:     #0D2B0D;
-      --green-text:   #81C784;
-      --green-border: #1B4A1B;
-      --amber-bg:     #1C1500;
-      --amber-text:   #FFD54F;
-      --amber-border: #3D2E00;
-      --today-bg:     #1A0000;
-      --past-bg:      #161614;
-      --shadow:       0 2px 16px rgba(0,0,0,0.4);
-    }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 14px;
-      line-height: 1.65;
-      -webkit-font-smoothing: antialiased;
-      transition: background 0.25s, color 0.25s;
-    }
-
-    .hidden { display: none !important; }
-
-    /* ═══════════════════════════════════════════════
-       CANVAS — Cherry blossoms (always behind)
-    ═══════════════════════════════════════════════ */
-    #blossom-canvas {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.55;
-    }
-
-    body.dark #blossom-canvas { opacity: 0.18; }
-
-    /* ═══════════════════════════════════════════════
-       LANDING PAGE
-    ═══════════════════════════════════════════════ */
-    #landing {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: linear-gradient(160deg, rgba(248,246,241,0.97) 0%, rgba(255,240,238,0.97) 100%);
-      overflow-y: auto;
-    }
-
-    body.dark #landing {
-      background: linear-gradient(160deg, rgba(17,17,17,0.97) 0%, rgba(26,0,0,0.97) 100%);
-    }
-
-    .landing-inner {
-      max-width: 560px;
-      width: 100%;
-      text-align: center;
-    }
-
-    .landing-eyebrow {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.22em;
-      color: var(--verm);
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-
-    .landing-title {
-      font-family: var(--serif);
-      font-size: clamp(36px, 8vw, 58px);
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      color: var(--text);
-      line-height: 1.1;
-      margin-bottom: 10px;
-    }
-
-    .landing-sub {
-      font-size: 14px;
-      color: var(--muted);
-      letter-spacing: 0.04em;
-      margin-bottom: 36px;
-    }
-
-    /* Trip route visual */
-    .route-strip {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      margin-bottom: 32px;
-      flex-wrap: wrap;
-      gap: 0;
-    }
-
-    .route-dest {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-    }
-
-    .route-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--verm);
-      border: 2px solid var(--card);
-      box-shadow: 0 0 0 1.5px var(--verm);
-    }
-
-    .route-name {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      color: var(--text);
-      text-transform: uppercase;
-    }
-
-    .route-nights {
-      font-family: var(--mono);
-      font-size: 9px;
-      color: var(--light);
-    }
-
-    .route-line {
-      flex: 1;
-      min-width: 16px;
-      height: 1px;
-      background: var(--border);
-      margin: 0 4px;
-      margin-bottom: 14px;
-    }
-
-    /* Destination cards */
-    .dest-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      margin-bottom: 32px;
-      text-align: left;
-    }
-
-    .dest-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 14px;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-
-    .dest-card:hover { border-color: var(--verm); box-shadow: 0 2px 10px rgba(192,57,43,0.08); }
-
-    .dest-card-name {
-      font-family: var(--serif);
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-
-    .dest-card-dates { font-size: 10px; color: var(--light); font-family: var(--mono); margin-bottom: 6px; }
-
-    .dest-card-desc { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
-
-    /* Timeline bar */
-    .trip-timeline {
-      margin-bottom: 32px;
-    }
-
-    .timeline-label {
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      color: var(--light);
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    .timeline-bar {
-      display: flex;
-      height: 6px;
-      border-radius: 3px;
-      overflow: hidden;
-      gap: 1px;
-      margin-bottom: 6px;
-    }
-
-    .tl-seg {
-      border-radius: 2px;
-      height: 100%;
-    }
-
-    .tl-seg-0 { background: #4A90D9; }
-    .tl-seg-1 { background: #27AE60; }
-    .tl-seg-2 { background: #E91E8C; }
-    .tl-seg-3 { background: #F39C12; }
-    .tl-seg-4 { background: #4A90D9; }
-
-    .timeline-legend {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .tl-legend-item {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .tl-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    /* CTA */
-    .landing-cta-row {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn-primary {
-      background: var(--verm);
-      color: #fff;
-      border: none;
-      padding: 12px 28px;
-      border-radius: 3px;
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
-    }
-
-    .btn-primary:hover { background: var(--verm-dark); }
-    .btn-primary:active { transform: scale(0.98); }
-
-    .btn-secondary {
-      background: none;
-      color: var(--muted);
-      border: 1px solid var(--border);
-      padding: 12px 22px;
-      border-radius: 3px;
-      font-size: 12px;
-      letter-spacing: 0.07em;
-      cursor: pointer;
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn-secondary:hover { border-color: var(--verm); color: var(--verm); }
-
-    .landing-note {
-      font-size: 11px;
-      color: var(--light);
-      margin-top: 14px;
-      letter-spacing: 0.02em;
-    }
-
-    /* ═══════════════════════════════════════════════
-       MAIN APP
-    ═══════════════════════════════════════════════ */
-    #app { position: relative; z-index: 1; }
-
-    /* HEADER */
-    header {
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 200;
-      transition: background 0.25s, border-color 0.25s;
-    }
-
-    .header-main {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      padding: 14px 20px 10px;
-      gap: 12px;
-    }
-
-    .header-left { flex: 1; min-width: 0; }
-
-    .site-title {
-      font-family: var(--serif);
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: 0.16em;
-      color: var(--text);
-      line-height: 1.2;
-      cursor: pointer;
-    }
-
-    .header-meta { display: flex; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
-    .trip-status { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
-    .trip-status strong { color: var(--verm); font-weight: 600; }
-    .jst-clock { font-family: var(--mono); font-size: 11px; color: var(--light); border-left: 1px solid var(--border); padding-left: 10px; }
-
-    .header-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-
-    .icon-btn {
-      background: none;
-      border: 1px solid var(--border);
-      width: 32px;
-      height: 32px;
-      border-radius: 2px;
-      cursor: pointer;
-      color: var(--muted);
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: border-color 0.15s, color 0.15s;
-      flex-shrink: 0;
-    }
-
-    .icon-btn:hover { border-color: var(--verm); color: var(--verm); }
-
-    .edit-btn {
-      background: none;
-      border: 1px solid var(--border);
-      padding: 6px 12px;
-      border-radius: 2px;
-      font-size: 11px;
-      cursor: pointer;
-      color: var(--muted);
-      letter-spacing: 0.07em;
-      white-space: nowrap;
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .edit-btn:hover { border-color: var(--verm); color: var(--verm); }
-    .edit-btn.active { background: var(--verm); border-color: var(--verm); color: #fff; }
-    .user-avatar { width: 20px; height: 20px; border-radius: 50%; display: none; }
-    .edit-btn.active .user-avatar { display: block; }
-
-    .viewonly-hint { font-size: 10px; color: var(--light); letter-spacing: 0.04em; }
-    body.edit-mode .viewonly-hint { display: none; }
-
-    /* TABS */
-    .tabs-row { display: flex; padding: 0 20px; border-top: 1px solid var(--border-light); }
-
-    nav { display: flex; }
-
-    .tab-btn {
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      padding: 8px 16px 8px 0;
-      font-size: 12px;
-      cursor: pointer;
-      color: var(--light);
-      letter-spacing: 0.08em;
-      margin-bottom: -1px;
-      transition: color 0.15s, border-color 0.15s;
-    }
-
-    .tab-btn.active { color: var(--text); border-bottom-color: var(--verm); }
-    .tab-btn:hover:not(.active) { color: var(--muted); }
-
-    /* DEST PILLS */
-    .dest-pills-wrap {
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 107px;
-      z-index: 190;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-      transition: background 0.25s;
-    }
-
-    .dest-pills-wrap::-webkit-scrollbar { display: none; }
-    .dest-pills { display: flex; gap: 6px; padding: 8px 20px; min-width: max-content; }
-
-    .dest-pill {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.09em;
-      padding: 4px 13px;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      cursor: pointer;
-      color: var(--muted);
-      background: none;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-
-    .dest-pill:hover { border-color: var(--verm); color: var(--verm); }
-    .dest-pill.active { background: var(--verm); border-color: var(--verm); color: #fff; }
-
-    /* MAIN */
-    main { max-width: 700px; margin: 0 auto; padding: 28px 16px 120px; }
-
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    /* TRIP SUMMARY BAR (top of itinerary) */
-    .trip-summary-bar {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 14px 16px;
-      margin-bottom: 24px;
-    }
-
-    .tsb-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 4px; }
-    .tsb-title { font-family: var(--serif); font-size: 14px; font-weight: 600; letter-spacing: 0.1em; color: var(--text); }
-    .tsb-dates { font-size: 11px; color: var(--light); font-family: var(--mono); }
-
-    .tsb-bar { display: flex; height: 5px; border-radius: 3px; overflow: hidden; gap: 1px; margin-bottom: 8px; }
-
-    .tsb-labels {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-
-    .tsb-label-item { display: flex; align-items: center; gap: 4px; font-size: 9.5px; color: var(--muted); }
-    .tsb-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-
-    /* DEST SECTIONS */
-    .dest-section { margin-bottom: 36px; }
-
-    .dest-header { display: flex; align-items: baseline; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
-    .dest-name { font-family: var(--serif); font-size: 13px; font-weight: 600; letter-spacing: 0.18em; color: var(--muted); }
-    .dest-dates-label { font-size: 10px; color: var(--light); letter-spacing: 0.06em; }
-
-    /* DAY CARDS */
-    .day-card { background: var(--card); border: 1px solid var(--border); border-radius: 2px; margin-bottom: 6px; overflow: hidden; transition: border-color 0.15s, background 0.25s; }
-    .day-card.past { background: var(--past-bg); border-color: var(--border-light); }
-    .day-card.past .day-title { color: var(--light); }
-    .day-card.past .day-date, .day-card.past .day-location { color: var(--border); }
-    .day-card.today { border-color: var(--today-border); border-width: 1.5px; }
-    .day-card.today .day-header { background: var(--today-bg); }
-
-    .today-badge {
-      display: inline-block;
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      padding: 2px 6px;
-      border-radius: 10px;
-      background: var(--verm);
-      color: #fff;
-      margin-left: 8px;
-      vertical-align: middle;
-    }
-
-    /* DAY HEADER */
-    .day-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 11px 16px;
-      cursor: pointer;
-      user-select: none;
-      gap: 10px;
-      transition: background 0.15s;
-    }
-
-    .day-header:hover { background: var(--bg); }
-    .day-card.today .day-header:hover { background: var(--today-bg); }
-
-    .day-header-left { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; flex: 1; min-width: 0; }
-    .day-date { font-family: var(--mono); font-size: 10px; color: var(--light); white-space: nowrap; letter-spacing: 0.04em; flex-shrink: 0; }
-    .day-title-wrap { min-width: 0; }
-    .day-title { font-size: 13.5px; font-weight: 500; }
-    .day-location { font-size: 11px; color: var(--light); margin-top: 1px; }
-    .day-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .notes-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--verm); display: none; }
-    body.edit-mode .notes-dot.has-notes { display: block; }
-    .day-toggle { font-size: 10px; color: var(--light); transition: transform 0.18s; }
-    .day-card.expanded .day-toggle { transform: rotate(180deg); }
-
-    /* DAY BODY */
-    .day-body { display: none; padding: 2px 16px 16px; border-top: 1px solid var(--border-light); }
-    .day-card.expanded .day-body { display: block; }
-    .day-card.past .day-body { opacity: 0.7; }
-
-    /* PERIOD */
-    .period { margin-top: 14px; }
-    .period-label { font-size: 9.5px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--light); margin-bottom: 6px; }
-
-    /* ACTIVITY ROWS */
-    .act { display: grid; grid-template-columns: 62px 1fr; gap: 8px; padding: 3px 0; align-items: start; }
-    .act-time { font-family: var(--mono); font-size: 10.5px; color: var(--light); padding-top: 3px; line-height: 1.4; }
-    .act-body { min-width: 0; }
-    .act-text { font-size: 13px; color: var(--text); line-height: 1.5; }
-    .act.booked .act-text { color: var(--green-text); }
-    .act-sub { font-size: 11.5px; color: var(--muted); margin-top: 1px; line-height: 1.45; }
-    .act-duration { font-size: 10.5px; color: var(--light); font-family: var(--mono); margin-top: 2px; }
-
-    .tag { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 2px; vertical-align: middle; margin-left: 6px; }
-    .tag-booked { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green-border); }
-
-    /* TIP */
-    .tip-block { margin-top: 12px; padding: 8px 12px; background: var(--amber-bg); border: 1px solid var(--amber-border); border-left: 3px solid #F0B429; font-size: 12px; color: var(--amber-text); line-height: 1.5; }
-    .tip-label { font-weight: 700; letter-spacing: 0.05em; }
-
-    /* NOTES */
-    .notes-section { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-light); }
-    .notes-label { font-size: 9.5px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--light); margin-bottom: 6px; }
-    .notes-read { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
-    .notes-read em { font-style: italic; color: var(--light); }
-    .notes-edit { width: 100%; min-height: 64px; padding: 8px 10px; font-size: 12.5px; font-family: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 2px; resize: vertical; line-height: 1.5; transition: background 0.25s, border-color 0.15s; }
-    .notes-edit:focus { outline: none; border-color: var(--verm); }
-    body.edit-mode .notes-read { display: none; }
-    body:not(.edit-mode) .notes-edit { display: none; }
-    body:not(.edit-mode) .save-indicator { display: none; }
-    .save-indicator { font-size: 11px; color: var(--light); margin-top: 3px; min-height: 14px; }
-
-    /* CONFIRMATIONS */
-    .conf-group { margin-bottom: 36px; }
-    .conf-group-title { font-family: var(--serif); font-size: 13px; letter-spacing: 0.18em; color: var(--muted); font-weight: 600; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
-    .conf-card { background: var(--card); border: 1px solid var(--border); border-radius: 2px; padding: 14px 16px; margin-bottom: 8px; transition: background 0.25s; }
-    .conf-name { font-size: 13.5px; font-weight: 500; margin-bottom: 12px; }
-    .conf-number-row { display: flex; align-items: baseline; gap: 10px; background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 2px; padding: 8px 12px; margin-bottom: 10px; }
-    .conf-number-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: var(--green-text); text-transform: uppercase; flex-shrink: 0; }
-    .conf-number-val { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--green-text); letter-spacing: 0.04em; word-break: break-all; }
-    .conf-row { display: flex; gap: 10px; padding: 4px 0; font-size: 12.5px; border-bottom: 1px solid var(--border-light); }
-    .conf-row:last-child { border-bottom: none; }
-    .conf-key { color: var(--light); font-size: 11px; min-width: 100px; flex-shrink: 0; padding-top: 1px; }
-    .conf-val { flex: 1; color: var(--text); }
-    .conf-val.mono { font-family: var(--mono); font-size: 12px; }
-    .conf-val a { color: var(--verm); text-decoration: none; }
-    .conf-val a:hover { text-decoration: underline; }
-
-    /* COST SUMMARY */
-    .cost-summary-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      padding: 16px;
-      margin-bottom: 28px;
-    }
-
-    .cost-summary-title {
-      font-family: var(--serif);
-      font-size: 13px;
-      letter-spacing: 0.14em;
-      color: var(--muted);
-      font-weight: 600;
-      margin-bottom: 14px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-light);
-    }
-
-    .cost-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12.5px; border-bottom: 1px solid var(--border-light); }
-    .cost-row:last-of-type { border-bottom: none; }
-    .cost-label { color: var(--muted); }
-    .cost-vals { text-align: right; }
-    .cost-jpy { font-family: var(--mono); font-size: 12px; color: var(--text); }
-    .cost-usd { font-size: 10.5px; color: var(--light); }
-
-    .cost-total-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0 4px;
-      margin-top: 8px;
-      border-top: 1px solid var(--border);
-      font-weight: 500;
-    }
-
-    .cost-total-label { font-size: 13px; color: var(--text); }
-    .cost-total-jpy { font-family: var(--mono); font-size: 15px; color: var(--verm); font-weight: 600; }
-    .cost-total-usd { font-size: 11px; color: var(--muted); }
-
-    /* CHECKLIST */
-    .checklist-section { margin-bottom: 28px; }
-
-    .checklist-section-hd {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 10px;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .checklist-title { font-family: var(--serif); font-size: 13px; letter-spacing: 0.14em; color: var(--muted); font-weight: 600; }
-    .checklist-progress { font-size: 11px; color: var(--light); display: flex; align-items: center; gap: 8px; }
-    .checklist-progress span { color: var(--green-text); font-weight: 600; }
-    .checklist-toggle { font-size: 10px; color: var(--light); transition: transform 0.18s; }
-    .checklist-section.expanded .checklist-toggle { transform: rotate(180deg); }
-    .checklist-items { display: none; }
-    .checklist-section.expanded .checklist-items { display: block; }
-    .checklist-section.booked-section .checklist-items { opacity: 0.65; }
-
-    .check-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border-light); cursor: pointer; user-select: none; }
-    .check-item:last-child { border-bottom: none; }
-    .check-box { margin-top: 2px; width: 15px; height: 15px; border: 1.5px solid var(--border); border-radius: 3px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-    .check-box.checked { background: var(--verm); border-color: var(--verm); }
-    .check-box.checked::after { content: '✓'; font-size: 10px; color: #fff; font-weight: 700; }
-    .check-label { font-size: 13px; color: var(--text); line-height: 1.45; flex: 1; }
-    .check-sub { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
-    .check-item.done .check-label { color: var(--light); text-decoration: line-through; }
-    .check-item.done .check-sub { color: var(--border); }
-
-    /* JAPAN TIPS */
-    .tips-section { margin-bottom: 32px; }
-    .tips-section-title { font-family: var(--serif); font-size: 13px; letter-spacing: 0.14em; color: var(--muted); font-weight: 600; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
-
-    .tip-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      padding: 14px 16px;
-      margin-bottom: 8px;
-    }
-
-    .tip-card-title { font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--text); }
-    .tip-card-body { font-size: 12.5px; color: var(--muted); line-height: 1.6; }
-    .tip-card-body strong { color: var(--text); font-weight: 500; }
-
-    .tip-phrase-row { display: flex; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border-light); font-size: 12.5px; }
-    .tip-phrase-row:last-child { border-bottom: none; }
-    .tip-phrase-jp { font-weight: 500; color: var(--text); min-width: 110px; }
-    .tip-phrase-en { color: var(--muted); }
-    .tip-phrase-rom { font-family: var(--mono); font-size: 11px; color: var(--light); min-width: 120px; }
-
-    /* CURRENCY */
-    .currency-fab {
-      position: fixed;
-      bottom: 76px;
-      right: 20px;
-      width: 46px;
-      height: 46px;
-      border-radius: 50%;
-      background: var(--verm);
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      box-shadow: 0 3px 14px rgba(192,57,43,0.35);
-      z-index: 300;
-      transition: transform 0.15s, box-shadow 0.15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .currency-fab:hover { transform: scale(1.08); }
-
-    .currency-widget {
-      position: fixed;
-      bottom: 132px;
-      right: 20px;
-      width: 238px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      z-index: 301;
-      overflow: hidden;
-      transition: background 0.25s;
-    }
-
-    .currency-widget.hidden { display: none; }
-
-    .currency-hd { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border-light); }
-    .currency-hd-title { font-size: 12px; font-weight: 600; color: var(--text); letter-spacing: 0.04em; }
-    .currency-close { background: none; border: none; cursor: pointer; color: var(--light); font-size: 16px; line-height: 1; padding: 0; }
-    .currency-body { padding: 14px; }
-    .curr-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .curr-flag { font-size: 14px; font-weight: 600; color: var(--muted); min-width: 16px; }
-    .curr-input { flex: 1; padding: 8px 10px; font-size: 15px; font-family: var(--mono); font-weight: 500; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; width: 0; transition: border-color 0.15s, background 0.25s; }
-    .curr-input:focus { outline: none; border-color: var(--verm); }
-    .curr-code { font-size: 11px; color: var(--light); min-width: 28px; font-weight: 600; letter-spacing: 0.05em; }
-    .curr-swap { text-align: center; margin-bottom: 8px; color: var(--light); font-size: 16px; }
-    .curr-rate { font-size: 11px; color: var(--light); text-align: center; margin-top: 10px; }
-
-    /* BACK TO TOP */
-    .back-top {
-      position: fixed;
-      bottom: 24px;
-      right: 20px;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: var(--card);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 14px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 299;
-      box-shadow: var(--shadow);
-      transition: all 0.15s;
-    }
-
-    .back-top.visible { display: flex; }
-    .back-top:hover { border-color: var(--verm); color: var(--verm); }
-
-    /* AUTH MODAL */
-    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 400; align-items: center; justify-content: center; }
-    .overlay.open { display: flex; }
-
-    .auth-modal {
-      background: var(--card);
-      border-radius: 8px;
-      padding: 32px 28px;
-      width: 320px;
-      max-width: 92vw;
-      text-align: center;
-      box-shadow: var(--shadow);
-      position: relative;
-    }
-
-    .auth-modal-close { position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 18px; cursor: pointer; color: var(--light); line-height: 1; }
-    .auth-logo { font-family: var(--serif); font-size: 22px; letter-spacing: 0.14em; color: var(--text); margin-bottom: 6px; }
-    .auth-subtitle { font-size: 12px; color: var(--light); margin-bottom: 24px; }
-
-    .google-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      padding: 11px 16px;
-      border: 1.5px solid var(--border);
-      border-radius: 4px;
-      background: var(--card);
-      color: var(--text);
-      font-size: 13.5px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-
-    .google-btn:hover { border-color: #4285F4; box-shadow: 0 1px 6px rgba(66,133,244,0.2); }
-    .auth-note { font-size: 11px; color: var(--light); margin-top: 14px; }
-    .auth-err { font-size: 12px; color: var(--verm); margin-top: 10px; min-height: 14px; }
-
-    /* MOBILE */
-    @media (max-width: 600px) {
-      .header-main { padding: 12px 14px 8px; }
-      .tabs-row { padding: 0 14px; }
-      main { padding: 20px 12px 110px; }
-      .dest-pills { padding: 8px 14px; }
-      .act { grid-template-columns: 1fr; gap: 1px; }
-      .act-time { font-size: 9.5px; color: var(--verm); opacity: 0.7; padding-top: 0; }
-      .act-time:empty { display: none; }
-      .conf-key { min-width: 86px; }
-      .currency-widget { right: 12px; }
-      .currency-fab { right: 16px; bottom: 72px; }
-      .back-top { right: 16px; }
-      .dest-cards { grid-template-columns: 1fr 1fr; }
-      .route-strip { gap: 0; }
-      .landing-title { font-size: clamp(30px, 10vw, 46px); }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<!-- Cherry blossom canvas — always present -->
-<canvas id="blossom-canvas"></canvas>
-
-<!-- ═══ LANDING PAGE ═══ -->
-<div id="landing">
-  <div class="landing-inner">
-    <div class="landing-eyebrow">April 15 – 29, 2026</div>
-    <h1 class="landing-title">Japan 2026</h1>
-    <p class="landing-sub">Gwendalynn &amp; Christina &nbsp;·&nbsp; 15 days</p>
-
-    <!-- Route -->
-    <div class="route-strip">
-      <div class="route-dest">
-        <div class="route-dot"></div>
-        <div class="route-name">Tokyo</div>
-        <div class="route-nights">4 nights</div>
-      </div>
-      <div class="route-line"></div>
-      <div class="route-dest">
-        <div class="route-dot"></div>
-        <div class="route-name">Hakone</div>
-        <div class="route-nights">2 nights</div>
-      </div>
-      <div class="route-line"></div>
-      <div class="route-dest">
-        <div class="route-dot"></div>
-        <div class="route-name">Kyoto</div>
-        <div class="route-nights">4 nights</div>
-      </div>
-      <div class="route-line"></div>
-      <div class="route-dest">
-        <div class="route-dot"></div>
-        <div class="route-name">Kanazawa</div>
-        <div class="route-nights">2 nights</div>
-      </div>
-      <div class="route-line"></div>
-      <div class="route-dest">
-        <div class="route-dot"></div>
-        <div class="route-name">Ginza</div>
-        <div class="route-nights">1 night</div>
+<header>
+  <div class="header-main">
+    <div class="header-left">
+      <div class="site-title">JAPAN 2026</div>
+      <div class="header-meta">
+        <span class="trip-status" id="tripStatus">Loading&hellip;</span>
+        <span class="jst-clock" id="jstClock"></span>
       </div>
     </div>
-
-    <!-- Timeline bar -->
-    <div class="trip-timeline">
-      <div class="timeline-bar">
-        <div class="tl-seg tl-seg-0" style="flex:5"></div>
-        <div class="tl-seg tl-seg-1" style="flex:2"></div>
-        <div class="tl-seg tl-seg-2" style="flex:4"></div>
-        <div class="tl-seg tl-seg-3" style="flex:2"></div>
-        <div class="tl-seg tl-seg-4" style="flex:1"></div>
-      </div>
-      <div class="timeline-legend">
-        <div class="tl-legend-item"><div class="tl-dot" style="background:#4A90D9"></div>Tokyo</div>
-        <div class="tl-legend-item"><div class="tl-dot" style="background:#27AE60"></div>Hakone</div>
-        <div class="tl-legend-item"><div class="tl-dot" style="background:#E91E8C"></div>Kyoto</div>
-        <div class="tl-legend-item"><div class="tl-dot" style="background:#F39C12"></div>Kanazawa</div>
-        <div class="tl-legend-item"><div class="tl-dot" style="background:#4A90D9"></div>Tokyo · Ginza</div>
-      </div>
-    </div>
-
-    <!-- Destination cards -->
-    <div class="dest-cards">
-      <div class="dest-card">
-        <div class="dest-card-name">Tokyo</div>
-        <div class="dest-card-dates">APR 16–20 · 4 nights</div>
-        <div class="dest-card-desc">teamLab Borderless, Harajuku, Asakusa, Shibuya, Kamakura day trip</div>
-      </div>
-      <div class="dest-card">
-        <div class="dest-card-name">Hakone</div>
-        <div class="dest-card-dates">APR 20–22 · 2 nights</div>
-        <div class="dest-card-desc">Mt. Fuji views, Tensui Saryo ryokan, Owakudani, Lake Ashi, Open Air Museum</div>
-      </div>
-      <div class="dest-card">
-        <div class="dest-card-name">Kyoto</div>
-        <div class="dest-card-dates">APR 22–26 · 4 nights</div>
-        <div class="dest-card-desc">Fushimi Inari at dawn, Arashiyama bamboo, Gion, Nara, Kinkaku-ji</div>
-      </div>
-      <div class="dest-card">
-        <div class="dest-card-name">Kanazawa</div>
-        <div class="dest-card-dates">APR 26–28 · 2 nights</div>
-        <div class="dest-card-desc">Kenroku-en garden, 21st Century Museum, Omicho seafood market</div>
-      </div>
-      <div class="dest-card">
-        <div class="dest-card-name">Ginza</div>
-        <div class="dest-card-dates">APR 28–29 · 1 night</div>
-        <div class="dest-card-desc">Tsukiji farewell breakfast, Hamarikyu Gardens, depart HND</div>
-      </div>
-    </div>
-
-    <div class="landing-cta-row">
-      <button class="btn-primary" onclick="enterApp()">View Full Itinerary</button>
-      <button class="btn-secondary" id="landingSignInBtn">
-        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Sign in to edit
+    <div class="header-right">
+      <input type="search" class="search-input" id="searchInput" placeholder="Search&hellip;" autocomplete="off">
+      <button class="icon-btn" id="darkToggle" title="Toggle dark mode" aria-label="Toggle dark mode">&#9790;</button>
+      <button class="auth-btn" id="authBtn">
+        <img class="user-avatar-sm" id="userAvatarSm" src="" alt="">
+        <span id="authBtnLabel">Sign in</span>
       </button>
     </div>
-    <p class="landing-note">Full itinerary is publicly visible · sign in to add notes</p>
   </div>
+  <div class="tabs-row">
+    <button class="tab-btn active" data-tab="itinerary">Itinerary</button>
+    <button class="tab-btn" data-tab="confirmations">Confirmations</button>
+    <button class="tab-btn" data-tab="pretrip">Pre-trip</button>
+    <button class="tab-btn" data-tab="budget">Budget</button>
+    <button class="tab-btn" data-tab="packing">Packing</button>
+  </div>
+</header>
+
+<div class="dest-pills-wrap hidden" id="destPillsWrap">
+  <div class="dest-pills" id="destPills"></div>
 </div>
 
-<!-- ═══ MAIN APP ═══ -->
-<div id="app" class="hidden">
-
-  <header>
-    <div class="header-main">
-      <div class="header-left">
-        <div class="site-title" onclick="showLanding()">JAPAN 2026</div>
-        <div class="header-meta">
-          <span class="trip-status" id="tripStatus">Loading…</span>
-          <span class="jst-clock" id="jstClock"></span>
-        </div>
-      </div>
-      <div class="header-right">
-        <span class="viewonly-hint">View only</span>
-        <button class="icon-btn" id="darkToggle" title="Toggle dark mode" aria-label="Toggle dark mode">☽</button>
-        <button class="edit-btn" id="editBtn">
-          <img class="user-avatar" id="userAvatar" src="" alt="">
-          <span id="editBtnLabel">✎ Edit</span>
-        </button>
-      </div>
-    </div>
-    <div class="tabs-row">
-      <nav>
-        <button class="tab-btn active" data-tab="itinerary">Itinerary</button>
-        <button class="tab-btn" data-tab="confirmations">Confirmations</button>
-        <button class="tab-btn" data-tab="checklist">Pre-trip</button>
-        <button class="tab-btn" data-tab="tips">Japan Tips</button>
-        <button class="tab-btn" data-tab="budget">Budget</button>
-      </nav>
-    </div>
-  </header>
-
-  <div class="dest-pills-wrap" id="destPillsWrap" style="display:none">
-    <div class="dest-pills" id="destPills"></div>
-  </div>
-
-  <main>
-    <div id="itinerary"     class="tab-panel active"></div>
-    <div id="confirmations" class="tab-panel"></div>
-    <div id="checklist"     class="tab-panel"></div>
-    <div id="tips"          class="tab-panel"></div>
-    <div id="budget"        class="tab-panel"></div>
-  </main>
-
-</div>
+<main>
+  <div id="itinerary"     class="tab-panel active"></div>
+  <div id="confirmations" class="tab-panel"></div>
+  <div id="pretrip"       class="tab-panel"></div>
+  <div id="budget"        class="tab-panel"></div>
+  <div id="packing"       class="tab-panel"></div>
+</main>
 
 <!-- Currency FAB -->
-<button class="currency-fab" id="currencyFab" title="Currency converter">¥/$</button>
+<button class="currency-fab" id="currencyFab" title="Currency converter">&#165;/$</button>
 
 <!-- Currency Widget -->
 <div class="currency-widget hidden" id="currencyWidget">
@@ -987,31 +65,33 @@
   </div>
   <div class="currency-body">
     <div class="curr-row">
-      <span class="curr-flag">¥</span>
+      <span class="curr-flag">&#165;</span>
       <input type="number" class="curr-input" id="jpyInput" placeholder="0">
       <span class="curr-code">JPY</span>
     </div>
-    <div class="curr-swap">⇅</div>
+    <div class="curr-swap">&#8645;</div>
     <div class="curr-row">
       <span class="curr-flag">$</span>
       <input type="number" class="curr-input" id="usdInput" placeholder="0">
       <span class="curr-code">USD</span>
     </div>
-    <div class="curr-rate" id="currRate">Loading rate…</div>
+    <div class="curr-rate" id="currRate">Loading rate&hellip;</div>
   </div>
 </div>
-
-<!-- Back to top -->
-<button class="back-top" id="backTop" title="Back to top" aria-label="Back to top">↑</button>
 
 <!-- Auth Modal -->
 <div class="overlay" id="overlay">
   <div class="auth-modal">
     <button class="auth-modal-close" id="authClose">&times;</button>
     <div class="auth-logo">JAPAN 2026</div>
-    <div class="auth-subtitle">Gwen &amp; Christina · Apr 15–29</div>
+    <div class="auth-subtitle">Gwen &amp; Christina &middot; Apr 15&ndash;29</div>
     <button class="google-btn" id="googleSignInBtn">
-      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      <svg width="18" height="18" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
       Sign in with Google
     </button>
     <div class="auth-note">Only accessible to Gwen &amp; Christina</div>
@@ -1019,168 +99,55 @@
   </div>
 </div>
 
-<!-- Expense Modal -->
-<div class="overlay" id="expenseOverlay">
-  <div class="expense-modal">
-    <div class="exp-modal-hd">
-      <span class="exp-modal-title">Add Expense</span>
-      <button class="auth-modal-close" id="expModalClose">&times;</button>
-    </div>
-
-    <!-- Amount -->
-    <div class="exp-field">
-      <div class="exp-amount-row">
-        <span class="exp-currency-sym">¥</span>
-        <input type="number" id="expAmount" class="exp-amount-input" placeholder="0" inputmode="numeric" min="0">
+<!-- Booking Modal -->
+<div class="overlay" id="bookingModal">
+  <div class="auth-modal" style="text-align:left;width:380px">
+    <button class="auth-modal-close" onclick="closeBookingModal()">&times;</button>
+    <div class="bm-title" id="bm-title">Add Booking</div>
+    <div class="bm-fields">
+      <div class="bm-group">
+        <label class="bm-label">Name *</label>
+        <input class="bm-input" id="bm-name" type="text" placeholder="e.g. Hokuriku Shinkansen">
+      </div>
+      <div class="bm-row">
+        <div class="bm-group">
+          <label class="bm-label">Amount *</label>
+          <input class="bm-input" id="bm-amt" type="number" min="0" placeholder="0">
+        </div>
+        <div class="bm-group bm-group-sm">
+          <label class="bm-label">Currency</label>
+          <select class="bm-input" id="bm-currency">
+            <option value="JPY">JPY</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+      </div>
+      <div class="bm-row">
+        <div class="bm-group">
+          <label class="bm-label">Dates</label>
+          <input class="bm-input" id="bm-dates" type="text" placeholder="e.g. Apr 26">
+        </div>
+        <div class="bm-group">
+          <label class="bm-label">Category</label>
+          <select class="bm-input" id="bm-cat">
+            <option value="accommodation">Accommodation</option>
+            <option value="transport">Transport</option>
+            <option value="activities">Activities</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
       </div>
     </div>
-
-    <!-- Category -->
-    <div class="exp-field-label">Category</div>
-    <div class="exp-cats" id="expCats">
-      <button class="exp-cat active" data-cat="food">Food</button>
-      <button class="exp-cat" data-cat="drinks">Drinks</button>
-      <button class="exp-cat" data-cat="transport">Transport</button>
-      <button class="exp-cat" data-cat="souvenirs">Souvenirs</button>
-      <button class="exp-cat" data-cat="activities">Activities</button>
-      <button class="exp-cat" data-cat="other">Other</button>
+    <div class="bm-footer">
+      <button class="bm-cancel" onclick="closeBookingModal()">Cancel</button>
+      <button class="bm-save" onclick="saveBooking()">Save</button>
     </div>
-
-    <!-- Who paid -->
-    <div class="exp-field-label">Who paid?</div>
-    <div class="exp-payers" id="expPayers">
-      <button class="exp-payer active" data-payer="gwen">Gwen</button>
-      <button class="exp-payer" data-payer="christina">Christina</button>
-    </div>
-
-    <!-- Split toggle -->
-    <div class="exp-split-row" id="expSplitRow">
-      <label class="exp-split-label">
-        <input type="checkbox" id="expSplit" checked>
-        <span class="exp-split-toggle"></span>
-        Split 50 / 50
-      </label>
-      <span class="exp-split-hint" id="expSplitHint"></span>
-    </div>
-
-    <!-- Description -->
-    <div class="exp-field-label">Note (optional)</div>
-    <input type="text" id="expNote" class="exp-note-input" placeholder="e.g. Ramen at Fuunji, Nishiki Market" maxlength="80">
-
-    <!-- Date -->
-    <div class="exp-field-label">Date</div>
-    <input type="date" id="expDate" class="exp-note-input" min="2026-04-15" max="2026-04-29">
-
-    <button class="exp-submit" id="expSubmit">Add Expense</button>
-    <div class="exp-err" id="expErr"></div>
   </div>
 </div>
 
-<!-- Add expense FAB (shown only on budget tab) -->
-<button class="add-exp-fab hidden" id="addExpFab">+ Add</button>
-
-<style>
-/* ═══ BUDGET TAB ═══ */
-.budget-header { margin-bottom: 24px; }
-.budget-title { font-family: var(--serif); font-size: 18px; font-weight: 600; letter-spacing: 0.12em; color: var(--text); }
-.budget-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
-
-.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
-.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; transition: background 0.25s; }
-.stat-card.wide { grid-column: 1 / -1; }
-.stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--light); margin-bottom: 6px; }
-.stat-jpy { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text); line-height: 1; }
-.stat-usd { font-size: 11px; color: var(--light); margin-top: 3px; }
-.stat-card.settlement { border-color: var(--green-border); background: var(--green-bg); }
-.stat-card.settlement .stat-jpy { font-size: 14px; color: var(--green-text); }
-.stat-card.settlement .stat-label { color: var(--green-text); }
-.stat-card.settlement.owed { border-color: var(--amber-border); background: var(--amber-bg); }
-.stat-card.settlement.owed .stat-jpy { color: var(--amber-text); }
-.stat-card.settlement.owed .stat-label { color: var(--amber-text); }
-
-.cat-breakdown { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 16px; margin-bottom: 20px; }
-.cat-breakdown-title { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--light); margin-bottom: 14px; }
-.cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.cat-row:last-child { margin-bottom: 0; }
-.cat-name { font-size: 11px; color: var(--muted); min-width: 64px; }
-.cat-bar-wrap { flex: 1; background: var(--border-light); border-radius: 2px; height: 5px; overflow: hidden; }
-.cat-bar { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
-.cat-amt { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 60px; text-align: right; }
-
-.expense-list-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
-.expense-list-title { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--light); }
-.exp-filter-row { display: flex; gap: 5px; flex-wrap: wrap; }
-.exp-filter-btn { font-size: 10px; padding: 3px 10px; border: 1px solid var(--border); border-radius: 12px; background: none; color: var(--muted); cursor: pointer; transition: all 0.12s; }
-.exp-filter-btn.active { background: var(--verm); border-color: var(--verm); color: #fff; }
-
-.exp-empty { text-align: center; padding: 40px 20px; color: var(--light); font-size: 13px; line-height: 1.7; background: var(--card); border: 1px solid var(--border); border-radius: 4px; }
-.exp-empty strong { display: block; font-size: 15px; color: var(--muted); margin-bottom: 6px; }
-
-.expense-item { background: var(--card); border: 1px solid var(--border); border-radius: 2px; margin-bottom: 6px; display: flex; align-items: stretch; overflow: hidden; transition: background 0.25s; }
-.exp-cat-stripe { width: 4px; flex-shrink: 0; }
-.exp-body { flex: 1; padding: 10px 14px; min-width: 0; }
-.exp-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.exp-desc { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.exp-amount { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--text); flex-shrink: 0; }
-.exp-meta { font-size: 11px; color: var(--light); margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; }
-.exp-tag { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 1px 5px; border-radius: 2px; background: var(--border-light); color: var(--muted); }
-.exp-tag.split { background: var(--green-bg); color: var(--green-text); }
-.exp-delete { background: none; border: none; border-left: 1px solid var(--border-light); padding: 0 12px; cursor: pointer; color: var(--light); font-size: 14px; flex-shrink: 0; transition: background 0.12s, color 0.12s; }
-.exp-delete:hover { background: #FEE2E2; color: var(--verm); }
-
-/* Add FAB */
-.add-exp-fab { position: fixed; bottom: 130px; left: 20px; background: var(--verm); color: #fff; border: none; padding: 11px 20px; border-radius: 24px; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; box-shadow: 0 3px 14px rgba(192,57,43,0.35); z-index: 300; transition: transform 0.15s, background 0.15s; }
-.add-exp-fab:hover { transform: scale(1.05); background: var(--verm-dark); }
-
-/* Expense modal */
-.expense-modal { background: var(--card); border-radius: 12px; padding: 24px 22px 20px; width: 360px; max-width: 94vw; max-height: 92vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,0.18); }
-.exp-modal-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.exp-modal-title { font-family: var(--serif); font-size: 17px; font-weight: 600; letter-spacing: 0.08em; color: var(--text); }
-.exp-field { margin-bottom: 16px; }
-.exp-field-label { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--light); margin-bottom: 8px; margin-top: 14px; }
-.exp-amount-row { display: flex; align-items: center; background: var(--bg); border: 1.5px solid var(--verm); border-radius: 6px; padding: 0 14px; }
-.exp-currency-sym { font-family: var(--mono); font-size: 22px; font-weight: 600; color: var(--verm); margin-right: 6px; }
-.exp-amount-input { flex: 1; border: none; background: transparent; font-family: var(--mono); font-size: 28px; font-weight: 600; color: var(--text); padding: 14px 0; outline: none; width: 0; }
-.exp-cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 4px; }
-.exp-cat { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 9px 6px; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.12s; text-align: center; }
-.exp-cat.active { background: var(--verm); border-color: var(--verm); color: #fff; }
-.exp-payers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 4px; }
-.exp-payer { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.12s; }
-.exp-payer.active { background: var(--text); border-color: var(--text); color: var(--card); }
-.exp-split-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-light); margin-bottom: 4px; }
-.exp-split-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: var(--text); user-select: none; }
-.exp-split-label input[type=checkbox] { display: none; }
-.exp-split-toggle { width: 38px; height: 22px; border-radius: 11px; background: var(--border); display: inline-block; position: relative; transition: background 0.18s; flex-shrink: 0; }
-.exp-split-toggle::after { content:''; position:absolute; width:16px; height:16px; background:#fff; border-radius:50%; top:3px; left:3px; transition:transform 0.18s; }
-.exp-split-label input:checked + .exp-split-toggle { background: var(--verm); }
-.exp-split-label input:checked + .exp-split-toggle::after { transform: translateX(16px); }
-.exp-split-hint { font-size: 11px; color: var(--green-text); font-weight: 500; }
-.exp-note-input { width: 100%; padding: 10px 12px; font-size: 13.5px; font-family: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; outline: none; transition: border-color 0.15s, background 0.25s; }
-.exp-note-input:focus { border-color: var(--verm); }
-.exp-submit { width: 100%; background: var(--verm); color: #fff; border: none; padding: 14px; border-radius: 6px; font-size: 14px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; margin-top: 18px; transition: background 0.15s; }
-.exp-submit:hover { background: var(--verm-dark); }
-.exp-err { font-size: 12px; color: var(--verm); margin-top: 8px; min-height: 14px; text-align: center; }
-
-/* Booked reference card */
-.booked-ref-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; margin-bottom: 20px; }
-.booked-ref-title { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--light); margin-bottom: 10px; }
-.booked-ref-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--border-light); }
-.booked-ref-row:last-of-type { border-bottom: none; }
-.booked-ref-label { color: var(--muted); }
-.booked-ref-val { font-family: var(--mono); font-size: 11.5px; color: var(--text); }
-.booked-ref-total { display: flex; justify-content: space-between; padding: 10px 0 2px; border-top: 1px solid var(--border); margin-top: 6px; }
-.booked-ref-total-label { font-size: 12px; font-weight: 500; color: var(--text); }
-.booked-ref-total-val { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--verm); }
-
-@media (max-width: 600px) {
-  .stat-grid { gap: 6px; }
-  .stat-jpy { font-size: 17px; }
-  .add-exp-fab { left: 16px; bottom: 120px; }
-  .expense-modal { padding: 20px 16px 16px; }
-  .exp-amount-input { font-size: 24px; }
-}
-</style>
-
-<script type="module" src="app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
