@@ -30,26 +30,29 @@
   <div id="app" class="app hidden">
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="trip-title">日本</div>
-        <div class="trip-subtitle">Japan 2026</div>
-        <div class="trip-dates">Apr 15 – 29</div>
+        <div class="sidebar-header-top">
+          <div>
+            <div class="trip-title">日本</div>
+            <div class="trip-subtitle">Japan 2026</div>
+            <div class="trip-dates">Apr 15 – 29</div>
+          </div>
+          <div class="sidebar-header-btns">
+            <button class="icon-btn" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">&#9790;</button>
+            <button class="icon-btn" onclick="triggerPrint()" title="Print itinerary">&#9113;</button>
+          </div>
+        </div>
       </div>
-
-      <!-- Nav -->
       <div class="sidebar-nav">
         <button class="nav-btn active" data-view="overview">Overview</button>
         <button class="nav-btn" data-view="budget">Budget</button>
         <button class="nav-btn" data-view="packing">Packing</button>
         <button class="nav-btn" data-view="info">Info</button>
       </div>
-
-      <!-- Day list -->
       <div class="day-list-header">
         <span>Itinerary</span>
         <button class="today-btn" onclick="jumpToToday()">Today</button>
       </div>
       <div class="day-list" id="day-list"></div>
-
       <div class="sidebar-footer">
         <div class="budget-label-text">Total Booked</div>
         <div id="budget-summary" class="budget-summary"></div>
@@ -61,7 +64,7 @@
       </div>
     </aside>
 
-    <main class="main-content">
+    <main class="main-content" id="main-content">
       <div id="main-view" class="main-view"></div>
     </main>
   </div>
@@ -75,12 +78,8 @@
       </div>
       <div class="modal-body">
         <div class="form-row">
-          <div class="form-group half">
-            <label>Time</label>
-            <input type="time" id="form-time">
-          </div>
-          <div class="form-group half">
-            <label>Category</label>
+          <div class="form-group half"><label>Time</label><input type="time" id="form-time"></div>
+          <div class="form-group half"><label>Category</label>
             <select id="form-category">
               <option value="activity">Activity</option>
               <option value="transport">Transport</option>
@@ -92,41 +91,18 @@
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Title *</label>
-            <input type="text" id="form-title" placeholder="e.g. Fushimi Inari Shrine">
-          </div>
-          <div class="form-group half">
-            <label>Status</label>
-            <select id="form-status">
-              <option value="booked">Booked</option>
-              <option value="idea">Idea</option>
-            </select>
+          <div class="form-group"><label>Title *</label><input type="text" id="form-title" placeholder="e.g. Fushimi Inari Shrine"></div>
+          <div class="form-group half"><label>Status</label>
+            <select id="form-status"><option value="booked">Booked</option><option value="idea">Idea</option></select>
           </div>
         </div>
-        <div class="form-group">
-          <label>Confirmation Number</label>
-          <input type="text" id="form-confirmation" placeholder="e.g. F354LH, IK1516984808">
-        </div>
-        <div class="form-group">
-          <label>Address</label>
-          <input type="text" id="form-address" placeholder="Street address or place name">
-        </div>
-        <div class="form-group">
-          <label>Notes</label>
-          <textarea id="form-notes" rows="3" placeholder="Tips, reminders, links..."></textarea>
-        </div>
+        <div class="form-group"><label>Confirmation Number</label><input type="text" id="form-confirmation" placeholder="e.g. F354LH"></div>
+        <div class="form-group"><label>Address</label><input type="text" id="form-address" placeholder="Street address or place name"></div>
+        <div class="form-group"><label>Notes</label><textarea id="form-notes" rows="3" placeholder="Tips, reminders, links..."></textarea></div>
         <div class="form-row">
-          <div class="form-group half">
-            <label>Cost</label>
-            <input type="number" id="form-cost" placeholder="0" min="0">
-          </div>
-          <div class="form-group half">
-            <label>Currency</label>
-            <select id="form-currency">
-              <option value="JPY">JPY</option>
-              <option value="USD">USD</option>
-            </select>
+          <div class="form-group half"><label>Cost</label><input type="number" id="form-cost" placeholder="0" min="0"></div>
+          <div class="form-group half"><label>Currency</label>
+            <select id="form-currency"><option value="JPY">JPY</option><option value="USD">USD</option></select>
           </div>
         </div>
         <div class="form-group">
@@ -142,7 +118,7 @@
     </div>
   </div>
 
-  <!-- INFO SECTION MODAL -->
+  <!-- INFO MODAL -->
   <div id="info-modal" class="modal-overlay hidden" onclick="handleInfoModalOverlayClick(event)">
     <div class="modal-card">
       <div class="modal-header">
@@ -150,14 +126,8 @@
         <button class="modal-close" onclick="closeInfoModal()">&#x2715;</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label>Title *</label>
-          <input type="text" id="info-form-title" placeholder="e.g. Emergency Numbers">
-        </div>
-        <div class="form-group">
-          <label>Content</label>
-          <textarea id="info-form-content" rows="5" placeholder="Notes, links, details..."></textarea>
-        </div>
+        <div class="form-group"><label>Title *</label><input type="text" id="info-form-title" placeholder="e.g. Emergency Numbers"></div>
+        <div class="form-group"><label>Content</label><textarea id="info-form-content" rows="5" placeholder="Notes, links, details..."></textarea></div>
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" onclick="closeInfoModal()">Cancel</button>
@@ -176,6 +146,32 @@
       </div>
     </div>
   </div>
+
+  <!-- CURRENCY CONVERTER -->
+  <div id="currency-widget" class="currency-widget hidden">
+    <div class="currency-widget-header">
+      <span>Currency Converter</span>
+      <button onclick="toggleCurrencyWidget()" class="currency-close">&#x2715;</button>
+    </div>
+    <div class="currency-widget-body">
+      <div class="currency-row">
+        <span class="currency-flag">&#165;</span>
+        <input type="number" id="jpy-input" class="currency-input" placeholder="0" oninput="convertJPY()">
+        <span class="currency-code">JPY</span>
+      </div>
+      <div class="currency-divider">&#8645;</div>
+      <div class="currency-row">
+        <span class="currency-flag">$</span>
+        <input type="number" id="usd-input" class="currency-input" placeholder="0" oninput="convertUSD()">
+        <span class="currency-code">USD</span>
+      </div>
+      <div class="currency-rate-note" id="currency-rate-note">Rate: 1 USD = 149 JPY</div>
+    </div>
+  </div>
+  <button class="currency-fab" onclick="toggleCurrencyWidget()" title="Currency converter">&#165; / $</button>
+
+  <!-- PRINT VIEW -->
+  <div id="print-view" class="print-view hidden"></div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
