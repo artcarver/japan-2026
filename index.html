@@ -10,10 +10,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
 </head>
 <body>
-
   <canvas id="blossom-canvas"></canvas>
 
-  <!-- LOGIN SCREEN -->
+  <!-- LOGIN -->
   <div id="login-screen" class="login-screen">
     <div class="login-card">
       <div class="login-kana">日本</div>
@@ -27,7 +26,7 @@
     </div>
   </div>
 
-  <!-- MAIN APP -->
+  <!-- APP -->
   <div id="app" class="app hidden">
     <aside class="sidebar">
       <div class="sidebar-header">
@@ -35,9 +34,24 @@
         <div class="trip-subtitle">Japan 2026</div>
         <div class="trip-dates">Apr 15 – 29</div>
       </div>
+
+      <!-- Nav -->
+      <div class="sidebar-nav">
+        <button class="nav-btn active" data-view="overview">Overview</button>
+        <button class="nav-btn" data-view="budget">Budget</button>
+        <button class="nav-btn" data-view="packing">Packing</button>
+        <button class="nav-btn" data-view="info">Info</button>
+      </div>
+
+      <!-- Day list -->
+      <div class="day-list-header">
+        <span>Itinerary</span>
+        <button class="today-btn" onclick="jumpToToday()">Today</button>
+      </div>
       <div class="day-list" id="day-list"></div>
+
       <div class="sidebar-footer">
-        <div class="budget-label-text">Trip Budget</div>
+        <div class="budget-label-text">Total Booked</div>
         <div id="budget-summary" class="budget-summary"></div>
         <div class="user-row">
           <img id="user-avatar" class="user-avatar" src="" alt="">
@@ -48,7 +62,7 @@
     </aside>
 
     <main class="main-content">
-      <div id="day-content" class="day-content"></div>
+      <div id="main-view" class="main-view"></div>
     </main>
   </div>
 
@@ -77,13 +91,30 @@
             </select>
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" id="form-title" placeholder="e.g. Fushimi Inari Shrine">
+          </div>
+          <div class="form-group half">
+            <label>Status</label>
+            <select id="form-status">
+              <option value="booked">Booked</option>
+              <option value="idea">Idea</option>
+            </select>
+          </div>
+        </div>
         <div class="form-group">
-          <label>Title *</label>
-          <input type="text" id="form-title" placeholder="e.g. Fushimi Inari Shrine">
+          <label>Confirmation Number</label>
+          <input type="text" id="form-confirmation" placeholder="e.g. F354LH, IK1516984808">
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <input type="text" id="form-address" placeholder="Street address or place name">
         </div>
         <div class="form-group">
           <label>Notes</label>
-          <textarea id="form-notes" rows="3" placeholder="Confirmation numbers, tips, addresses..."></textarea>
+          <textarea id="form-notes" rows="3" placeholder="Tips, reminders, links..."></textarea>
         </div>
         <div class="form-row">
           <div class="form-group half">
@@ -101,12 +132,36 @@
         <div class="form-group">
           <label>Google Drive Photo Link</label>
           <input type="url" id="form-photo-url" placeholder="Paste a Google Drive share link...">
-          <span class="field-hint">In Drive: right-click photo → Share → Copy link → paste here</span>
+          <span class="field-hint">Drive: right-click photo → Share → Copy link → paste here</span>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" onclick="closeModal()">Cancel</button>
         <button class="btn-save" onclick="saveActivity()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFO SECTION MODAL -->
+  <div id="info-modal" class="modal-overlay hidden" onclick="handleInfoModalOverlayClick(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="info-modal-title">Add Section</h3>
+        <button class="modal-close" onclick="closeInfoModal()">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" id="info-form-title" placeholder="e.g. Emergency Numbers">
+        </div>
+        <div class="form-group">
+          <label>Content</label>
+          <textarea id="info-form-content" rows="5" placeholder="Notes, links, details..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeInfoModal()">Cancel</button>
+        <button class="btn-save" onclick="saveInfoSection()">Save</button>
       </div>
     </div>
   </div>
