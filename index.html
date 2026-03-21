@@ -72,17 +72,19 @@
     .hidden { display: none !important; }
 
     /* ═══════════════════════════════════════════════
-       CANVAS — Cherry blossoms (always behind)
+       CANVAS — subtle blossoms on landing only
     ═══════════════════════════════════════════════ */
     #blossom-canvas {
       position: fixed;
       inset: 0;
       pointer-events: none;
-      z-index: 0;
-      opacity: 0.55;
+      z-index: 101; /* above landing bg, below landing content */
+      opacity: 0.22;
+      transition: opacity 0.6s;
     }
 
-    body.dark #blossom-canvas { opacity: 0.18; }
+    #blossom-canvas.hidden-canvas { opacity: 0; }
+    body.dark #blossom-canvas { opacity: 0.09; }
 
     /* ═══════════════════════════════════════════════
        LANDING PAGE
@@ -405,10 +407,18 @@
     .viewonly-hint { font-size: 10px; color: var(--light); letter-spacing: 0.04em; }
     body.edit-mode .viewonly-hint { display: none; }
 
-    /* TABS */
-    .tabs-row { display: flex; padding: 0 20px; border-top: 1px solid var(--border-light); }
+    /* TABS — scrollable single row */
+    .tabs-row {
+      display: flex;
+      padding: 0 20px;
+      border-top: 1px solid var(--border-light);
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tabs-row::-webkit-scrollbar { display: none; }
 
-    nav { display: flex; }
+    nav { display: flex; min-width: max-content; }
 
     .tab-btn {
       background: none;
@@ -695,7 +705,7 @@
     /* CURRENCY */
     .currency-fab {
       position: fixed;
-      bottom: 76px;
+      bottom: 24px;
       right: 20px;
       width: 46px;
       height: 46px;
@@ -718,7 +728,7 @@
 
     .currency-widget {
       position: fixed;
-      bottom: 132px;
+      bottom: 80px;
       right: 20px;
       width: 238px;
       background: var(--card);
@@ -748,7 +758,7 @@
     .back-top {
       position: fixed;
       bottom: 24px;
-      right: 20px;
+      right: 76px;
       width: 36px;
       height: 36px;
       border-radius: 50%;
@@ -809,21 +819,105 @@
     .auth-err { font-size: 12px; color: var(--verm); margin-top: 10px; min-height: 14px; }
 
     /* MOBILE */
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 12.5px;
+      padding: 9px 18px;
+      border-radius: 20px;
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap;
+    }
+    body.dark .toast { background: #E8E8E8; color: #111; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* PAST DAYS TOGGLE */
+    .itinerary-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+    }
+    .past-toggle-btn {
+      font-size: 11px;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 5px 11px;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: all 0.15s;
+    }
+    .past-toggle-btn:hover { border-color: var(--verm); color: var(--verm); }
+    .past-toggle-btn.hiding { color: var(--light); }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--light);
+      padding: 2px 6px;
+      border-radius: 3px;
+      letter-spacing: 0.04em;
+      transition: all 0.12s;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+    .copy-btn:hover { background: var(--green-bg); color: var(--green-text); }
+
+    /* QUICK DATE BUTTONS */
+    .exp-quick-dates {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .exp-quick-date {
+      flex: 1;
+      padding: 8px;
+      font-size: 12px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.12s;
+      text-align: center;
+    }
+    .exp-quick-date.active { background: var(--verm); border-color: var(--verm); color: #fff; }
+    .exp-quick-date:hover:not(.active) { border-color: var(--verm); color: var(--verm); }
+
+    /* EXPENSE DAY GROUP */
+    .exp-day-group { margin-bottom: 16px; }
+    .exp-day-hd {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--light);
+      padding: 6px 0 6px;
+      border-bottom: 1px solid var(--border-light);
+      margin-bottom: 6px;
+    }
+    .exp-day-total { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
     @media (max-width: 600px) {
-      .header-main { padding: 12px 14px 8px; }
-      .tabs-row { padding: 0 14px; }
-      main { padding: 20px 12px 110px; }
-      .dest-pills { padding: 8px 14px; }
-      .act { grid-template-columns: 1fr; gap: 1px; }
-      .act-time { font-size: 9.5px; color: var(--verm); opacity: 0.7; padding-top: 0; }
-      .act-time:empty { display: none; }
-      .conf-key { min-width: 86px; }
-      .currency-widget { right: 12px; }
-      .currency-fab { right: 16px; bottom: 72px; }
-      .back-top { right: 16px; }
-      .dest-cards { grid-template-columns: 1fr 1fr; }
-      .route-strip { gap: 0; }
-      .landing-title { font-size: clamp(30px, 10vw, 46px); }
+      .back-top { right: 72px; bottom: 20px; }
+      .currency-fab { bottom: 20px; right: 16px; }
+      .currency-widget { right: 12px; bottom: 76px; }
     }
   </style>
 </head>
@@ -1019,6 +1113,9 @@
   </div>
 </div>
 
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <!-- Expense Modal -->
 <div class="overlay" id="expenseOverlay">
   <div class="expense-modal">
@@ -1067,9 +1164,15 @@
     <div class="exp-field-label">Note (optional)</div>
     <input type="text" id="expNote" class="exp-note-input" placeholder="e.g. Ramen at Fuunji, Nishiki Market" maxlength="80">
 
-    <!-- Date -->
+    <!-- Date — quick buttons + fallback picker -->
     <div class="exp-field-label">Date</div>
-    <input type="date" id="expDate" class="exp-note-input" min="2026-04-15" max="2026-04-29">
+    <div class="exp-quick-dates" id="expQuickDates">
+      <button class="exp-quick-date" data-offset="0">Today</button>
+      <button class="exp-quick-date" data-offset="-1">Yesterday</button>
+      <button class="exp-quick-date" data-offset="-2">2 days ago</button>
+      <button class="exp-quick-date" id="expPickerToggle">Pick date</button>
+    </div>
+    <input type="date" id="expDate" class="exp-note-input" min="2026-04-15" max="2026-04-29" style="display:none;margin-top:6px">
 
     <button class="exp-submit" id="expSubmit">Add Expense</button>
     <div class="exp-err" id="expErr"></div>
@@ -1129,7 +1232,7 @@
 .exp-delete:hover { background: #FEE2E2; color: var(--verm); }
 
 /* Add FAB */
-.add-exp-fab { position: fixed; bottom: 130px; left: 20px; background: var(--verm); color: #fff; border: none; padding: 11px 20px; border-radius: 24px; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; box-shadow: 0 3px 14px rgba(192,57,43,0.35); z-index: 300; transition: transform 0.15s, background 0.15s; }
+.add-exp-fab { position: fixed; bottom: 24px; left: 20px; background: var(--verm); color: #fff; border: none; padding: 11px 20px; border-radius: 24px; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; box-shadow: 0 3px 14px rgba(192,57,43,0.35); z-index: 300; transition: transform 0.15s, background 0.15s; }
 .add-exp-fab:hover { transform: scale(1.05); background: var(--verm-dark); }
 
 /* Expense modal */
@@ -1178,6 +1281,226 @@
   .add-exp-fab { left: 16px; bottom: 120px; }
   .expense-modal { padding: 20px 16px 16px; }
   .exp-amount-input { font-size: 24px; }
+}
+</style>
+
+<!-- Activity Modal -->
+<div id="activity-modal" class="modal-overlay act-modal-overlay hidden">
+  <div class="act-modal-card">
+    <div class="act-modal-hd">
+      <span class="act-modal-title" id="act-modal-title">Add Activity</span>
+      <button class="auth-modal-close" id="act-modal-close">&times;</button>
+    </div>
+
+    <div class="act-form-row">
+      <div class="act-form-group half">
+        <label class="act-label">Time</label>
+        <input type="time" id="act-time" class="act-input">
+      </div>
+      <div class="act-form-group half">
+        <label class="act-label">Category</label>
+        <select id="act-category" class="act-input act-select">
+          <option value="activity">Activity</option>
+          <option value="transport">Transport</option>
+          <option value="hotel">Hotel</option>
+          <option value="food">Food</option>
+          <option value="shopping">Shopping</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="act-form-group">
+      <label class="act-label">Title *</label>
+      <input type="text" id="act-title" class="act-input" placeholder="e.g. Fushimi Inari Shrine">
+    </div>
+
+    <div class="act-form-group">
+      <label class="act-label">Notes</label>
+      <textarea id="act-notes" class="act-input act-textarea" rows="3" placeholder="Confirmation numbers, tips, addresses, links…"></textarea>
+    </div>
+
+    <div class="act-form-row">
+      <div class="act-form-group half">
+        <label class="act-label">Cost</label>
+        <input type="number" id="act-cost" class="act-input" placeholder="0" min="0">
+      </div>
+      <div class="act-form-group half">
+        <label class="act-label">Currency</label>
+        <select id="act-currency" class="act-input act-select">
+          <option value="JPY">JPY ¥</option>
+          <option value="USD">USD $</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="act-form-group">
+      <label class="act-label">Google Drive Photo (optional)</label>
+      <input type="url" id="act-photo-url" class="act-input" placeholder="Paste Google Drive share link…">
+      <span class="act-hint">Drive: right-click photo → Share → Copy link → paste here</span>
+    </div>
+
+    <div class="act-modal-footer">
+      <button class="act-cancel-btn" id="act-cancel">Cancel</button>
+      <button class="act-save-btn" id="act-save">Save</button>
+    </div>
+    <div class="act-modal-err" id="act-err"></div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" class="lightbox-overlay hidden">
+  <div class="lightbox-inner">
+    <img id="lightbox-img" src="" alt="">
+    <div class="lightbox-bar">
+      <a id="lightbox-link" href="" target="_blank" class="lightbox-open-btn">Open in Google Drive</a>
+      <button class="lightbox-close-btn" id="lightbox-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ═══ ACTIVITY EDIT CONTROLS ═══ */
+.day-acts-section { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-light); }
+.day-acts-label { font-size: 9.5px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--light); margin-bottom: 10px; }
+
+.fs-act-card {
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: 2px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  cursor: grab;
+  transition: border-color 0.12s, background 0.25s;
+}
+.fs-act-card:active { cursor: grabbing; }
+.fs-act-card.drag-over { border-color: var(--verm); background: var(--today-bg); }
+.fs-act-card.dragging { opacity: 0.45; }
+
+.fs-act-stripe { width: 3px; flex-shrink: 0; }
+.fs-act-body { flex: 1; padding: 9px 12px; min-width: 0; }
+.fs-act-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.fs-act-title { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; min-width: 0; }
+.fs-act-time { font-family: var(--mono); font-size: 10.5px; color: var(--light); flex-shrink: 0; }
+.fs-act-meta { display: flex; gap: 6px; align-items: center; margin-top: 3px; flex-wrap: wrap; }
+.fs-act-tag { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 2px; }
+.fs-act-cost { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.fs-act-notes { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.5; word-break: break-word; }
+.fs-act-notes a { color: var(--verm); word-break: break-all; }
+
+.fs-act-photo { margin-top: 8px; border-radius: 3px; overflow: hidden; cursor: pointer; max-width: 220px; }
+.fs-act-photo img { width: 100%; display: block; border-radius: 3px; }
+.fs-act-photo-label { font-size: 10px; color: var(--light); margin-top: 3px; }
+
+.fs-act-actions { display: flex; flex-direction: column; border-left: 1px solid var(--border-light); flex-shrink: 0; }
+.fs-act-btn { background: none; border: none; cursor: pointer; padding: 0 10px; font-size: 10px; letter-spacing: 0.06em; color: var(--light); transition: color 0.12s, background 0.12s; flex: 1; white-space: nowrap; }
+.fs-act-btn:first-child { border-bottom: 1px solid var(--border-light); }
+.fs-act-btn:hover { color: var(--verm); background: var(--today-bg); }
+.fs-act-btn.del:hover { color: #C0392B; background: #FEE2E2; }
+
+.add-act-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 8px;
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: border-color 0.15s, color 0.15s;
+}
+.add-act-btn:hover { border-color: var(--verm); color: var(--verm); }
+
+.fs-empty { font-size: 12px; color: var(--light); font-style: italic; padding: 4px 0 8px; }
+
+/* ═══ ACTIVITY MODAL ═══ */
+.act-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 600;
+  align-items: center;
+  justify-content: center;
+}
+.act-modal-overlay.open { display: flex; }
+.act-modal-card {
+  background: var(--card);
+  border-radius: 8px;
+  padding: 24px 22px 20px;
+  width: 420px;
+  max-width: 95vw;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+}
+.act-modal-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.act-modal-title { font-family: var(--serif); font-size: 16px; font-weight: 600; letter-spacing: 0.1em; color: var(--text); }
+.act-form-group { margin-bottom: 14px; }
+.act-form-group.half { flex: 1; }
+.act-form-row { display: flex; gap: 12px; margin-bottom: 0; }
+.act-label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--light); margin-bottom: 6px; }
+.act-input {
+  width: 100%;
+  padding: 9px 11px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.15s, background 0.25s;
+}
+.act-input:focus { border-color: var(--verm); }
+.act-select { cursor: pointer; }
+.act-textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+.act-hint { display: block; font-size: 10.5px; color: var(--light); margin-top: 4px; }
+.act-modal-footer { display: flex; gap: 8px; margin-top: 20px; }
+.act-cancel-btn { flex: 1; padding: 11px; background: none; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.12s; }
+.act-cancel-btn:hover { border-color: var(--verm); color: var(--verm); }
+.act-save-btn { flex: 2; padding: 11px; background: var(--verm); border: none; border-radius: 4px; font-size: 13px; font-weight: 600; color: #fff; cursor: pointer; transition: background 0.12s; }
+.act-save-btn:hover { background: var(--verm-dark); }
+.act-modal-err { font-size: 12px; color: var(--verm); margin-top: 8px; min-height: 14px; text-align: center; }
+
+/* ═══ LIGHTBOX ═══ */
+.lightbox-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 700; align-items: center; justify-content: center; cursor: pointer; }
+.lightbox-overlay.open { display: flex; }
+.lightbox-inner { max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center; cursor: default; }
+.lightbox-inner img { max-width: 100%; max-height: 75vh; object-fit: contain; border-radius: 4px; }
+.lightbox-bar { display: flex; gap: 12px; margin-top: 14px; align-items: center; }
+.lightbox-open-btn { font-size: 12px; color: #A8D8A8; text-decoration: underline; }
+.lightbox-close-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 3px; padding: 6px 14px; color: #fff; font-size: 12px; cursor: pointer; transition: background 0.12s; }
+.lightbox-close-btn:hover { background: rgba(255,255,255,0.25); }
+
+/* Category colors */
+.cat-activity  { background: #D1FAE5; color: #065F46; }
+.cat-transport { background: #DBEAFE; color: #1E40AF; }
+.cat-hotel     { background: #EDE9FE; color: #5B21B6; }
+.cat-food      { background: #FEF3C7; color: #92400E; }
+.cat-shopping  { background: #FCE7F3; color: #9D174D; }
+.cat-other     { background: var(--border-light); color: var(--muted); }
+
+.cat-stripe-activity  { background: #10B981; }
+.cat-stripe-transport { background: #3B82F6; }
+.cat-stripe-hotel     { background: #8B5CF6; }
+.cat-stripe-food      { background: #F59E0B; }
+.cat-stripe-shopping  { background: #EC4899; }
+.cat-stripe-other     { background: #9CA3AF; }
+
+body.dark .cat-activity  { background: #064E3B; color: #6EE7B7; }
+body.dark .cat-transport { background: #1E3A8A; color: #93C5FD; }
+body.dark .cat-hotel     { background: #2E1065; color: #C4B5FD; }
+body.dark .cat-food      { background: #78350F; color: #FCD34D; }
+body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
+
+@media (max-width: 600px) {
+  .act-form-row { flex-direction: column; gap: 0; }
+  .act-modal-card { padding: 18px 14px 16px; }
 }
 </style>
 
