@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 </head>
 <body>
   <canvas id="blossom-canvas"></canvas>
@@ -15,9 +15,12 @@
   <!-- LOGIN -->
   <div id="login-screen" class="login-screen">
     <div class="login-card">
-      <div class="login-kana">日本</div>
-      <h1 class="login-title">Japan 2026</h1>
-      <p class="login-subtitle">April 15 – 29 · Gwen &amp; Christina</p>
+      <div class="login-eyebrow">
+        <span class="login-flag">🇯🇵</span>
+        <span class="login-trip-label">Japan 2026 · Apr 15–29</span>
+      </div>
+      <h1 class="login-title">Your trip awaits</h1>
+      <p class="login-subtitle">Gwen &amp; Christina · 15 days in Japan</p>
       <button id="sign-in-btn" class="sign-in-btn">
         <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
         Sign in with Google
@@ -35,7 +38,7 @@
       <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Open menu">
         <span></span><span></span><span></span>
       </button>
-      <span class="mobile-title"><span class="mobile-title-kana">日本</span> Japan 2026</span>
+      <span class="mobile-title"><span class="mobile-title-flag">🇯🇵</span> Japan 2026</span>
       <button class="mobile-currency-btn" onclick="toggleCurrencyWidget()">¥ / $</button>
     </div>
 
@@ -45,10 +48,12 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-header-top">
-          <div>
-            <div class="trip-title">日本</div>
-            <div class="trip-subtitle">Japan 2026</div>
-            <div class="trip-dates">Apr 15 – 29</div>
+          <div class="sidebar-brand">
+            <span class="sidebar-flag">🇯🇵</span>
+            <div>
+              <div class="sidebar-trip-name">Japan 2026</div>
+              <div class="sidebar-trip-dates">Apr 15 – 29 · Gwen &amp; Christina</div>
+            </div>
           </div>
           <div class="sidebar-header-btns">
             <button class="icon-btn" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">☽</button>
@@ -58,23 +63,25 @@
       </div>
 
       <div class="sidebar-nav">
-        <button class="nav-btn active" data-view="overview">Overview</button>
-        <button class="nav-btn" data-view="budget">Budget</button>
-        <button class="nav-btn" data-view="packing">Packing</button>
-        <button class="nav-btn" data-view="info">Info</button>
+        <button class="nav-btn active" data-view="overview"><span class="nav-btn-icon">🗾</span>Overview</button>
+        <button class="nav-btn" data-view="budget"><span class="nav-btn-icon">💴</span>Budget</button>
+        <button class="nav-btn" data-view="packing"><span class="nav-btn-icon">🧳</span>Packing</button>
+        <button class="nav-btn" data-view="info"><span class="nav-btn-icon">ℹ️</span>Info</button>
       </div>
 
-      <div class="day-list-header">
-        <span class="day-list-label">
-          <span class="day-list-active-dot"></span>
-          Itinerary
-        </span>
-        <button class="today-btn" onclick="jumpToToday()">Today</button>
+      <div class="day-list-section">
+        <div class="day-list-header">
+          <span class="day-list-label">
+            <span class="day-list-active-dot"></span>
+            Itinerary
+          </span>
+          <button class="today-btn" onclick="jumpToToday()">Today</button>
+        </div>
+        <div class="day-list" id="day-list"></div>
       </div>
-      <div class="day-list" id="day-list"></div>
 
       <div class="sidebar-footer">
-        <div class="budget-label-text">Total Booked</div>
+        <div class="budget-footer-label">Total Booked</div>
         <div id="budget-summary"></div>
         <div class="user-row">
           <img id="user-avatar" class="user-avatar" src="" alt="">
@@ -92,9 +99,9 @@
   <!-- ACTIVITY MODAL -->
   <div id="modal" class="modal-overlay hidden" onclick="handleModalOverlayClick(event)">
     <div class="modal-card">
-      <div class="modal-header">
+      <div class="modal-hd">
         <h3 id="modal-title">Add Activity</h3>
-        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+        <button class="modal-x" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -102,12 +109,12 @@
           <div class="form-group half">
             <label>Category</label>
             <select id="form-category">
-              <option value="activity">Activity</option>
-              <option value="transport">Transport</option>
-              <option value="hotel">Hotel</option>
-              <option value="food">Food</option>
-              <option value="shopping">Shopping</option>
-              <option value="other">Other</option>
+              <option value="activity">🎌 Activity</option>
+              <option value="transport">🚄 Transport</option>
+              <option value="hotel">🏨 Hotel</option>
+              <option value="food">🍜 Food</option>
+              <option value="shopping">🛍️ Shopping</option>
+              <option value="other">📌 Other</option>
             </select>
           </div>
         </div>
@@ -115,8 +122,8 @@
         <div class="form-group">
           <label>Status</label>
           <select id="form-status">
-            <option value="booked">Booked ✓</option>
-            <option value="idea">Idea (unconfirmed)</option>
+            <option value="booked">✓ Booked</option>
+            <option value="idea">💡 Idea (unconfirmed)</option>
           </select>
         </div>
         <div class="form-group"><label>Confirmation Number</label><input type="text" id="form-confirmation" placeholder="e.g. F354LH"></div>
@@ -126,7 +133,7 @@
           <div class="form-group half"><label>Cost</label><input type="number" id="form-cost" placeholder="0" min="0"></div>
           <div class="form-group half">
             <label>Currency</label>
-            <select id="form-currency"><option value="JPY">JPY ¥</option><option value="USD">USD $</option></select>
+            <select id="form-currency"><option value="JPY">¥ JPY</option><option value="USD">$ USD</option></select>
           </div>
         </div>
         <div class="form-group">
@@ -145,9 +152,9 @@
   <!-- INFO MODAL -->
   <div id="info-modal" class="modal-overlay hidden" onclick="handleInfoModalOverlayClick(event)">
     <div class="modal-card">
-      <div class="modal-header">
+      <div class="modal-hd">
         <h3 id="info-modal-title">Add Section</h3>
-        <button class="modal-close" onclick="closeInfoModal()">&#x2715;</button>
+        <button class="modal-x" onclick="closeInfoModal()">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-group"><label>Title *</label><input type="text" id="info-form-title" placeholder="e.g. Emergency Numbers"></div>
@@ -173,23 +180,23 @@
 
   <!-- CURRENCY CONVERTER -->
   <div id="currency-widget" class="currency-widget hidden">
-    <div class="currency-widget-header">
+    <div class="currency-widget-hd">
       <span>Currency Converter</span>
-      <button onclick="toggleCurrencyWidget()" class="currency-close">&#x2715;</button>
+      <button onclick="toggleCurrencyWidget()" class="currency-close-btn">✕</button>
     </div>
-    <div class="currency-widget-body">
-      <div class="currency-row">
-        <span class="currency-flag">&#165;</span>
-        <input type="number" id="jpy-input" class="currency-input" placeholder="0" oninput="convertJPY()">
-        <span class="currency-code">JPY</span>
+    <div class="currency-body">
+      <div class="curr-row">
+        <span class="curr-flag">¥</span>
+        <input type="number" id="jpy-input" class="curr-input" placeholder="0" oninput="convertJPY()">
+        <span class="curr-code">JPY</span>
       </div>
-      <div class="currency-divider">&#8645;</div>
-      <div class="currency-row">
-        <span class="currency-flag">$</span>
-        <input type="number" id="usd-input" class="currency-input" placeholder="0" oninput="convertUSD()">
-        <span class="currency-code">USD</span>
+      <div class="curr-divider">⇅</div>
+      <div class="curr-row">
+        <span class="curr-flag">$</span>
+        <input type="number" id="usd-input" class="curr-input" placeholder="0" oninput="convertUSD()">
+        <span class="curr-code">USD</span>
       </div>
-      <div class="currency-rate-note" id="currency-rate-note">Rate: 1 USD = 149 JPY</div>
+      <div class="curr-rate-note" id="currency-rate-note">Rate: 1 USD = 149 JPY</div>
     </div>
   </div>
   <button class="currency-fab" onclick="toggleCurrencyWidget()" title="Currency converter">&#165; / $</button>

@@ -36,9 +36,12 @@ async function fetchExchangeRate() {
 }
 
 const CATEGORIES = {
-  activity:  { color: '#10b981' }, transport: { color: '#3b82f6' },
-  hotel:     { color: '#8b5cf6' }, food:      { color: '#f59e0b' },
-  shopping:  { color: '#ec4899' }, other:     { color: '#6b7280' },
+  activity:  { color: '#10b981', icon: '🎌' },
+  transport: { color: '#3b82f6', icon: '🚄' },
+  hotel:     { color: '#8b5cf6', icon: '🏨' },
+  food:      { color: '#f59e0b', icon: '🍜' },
+  shopping:  { color: '#ec4899', icon: '🛍️' },
+  other:     { color: '#6b7280', icon: '📌' },
 };
 
 const CITY_GROUPS = [
@@ -313,36 +316,55 @@ function jumpToToday() {
 function renderSidebar() {
   const list = document.getElementById('day-list');
   list.innerHTML = '';
+
+  // City group swatches
+  const CITY_COLORS = {
+    'Tokyo':    '#1E3A5F', 'Hakone': '#14532D',
+    'Kyoto':    '#7C2D12', 'Kanazawa': '#713F12',
+    'Los Angeles': '#374151',
+  };
+
+  let lastCity = null;
   Object.values(days).sort((a,b)=>a.dayNum-b.dayNum).forEach(day => {
-    const el   = document.createElement('div');
-    const acts = day.activities||[];
+    const baseName = day.city.split('—')[0].trim().split(' ')[0];
+    if (baseName !== lastCity) {
+      lastCity = baseName;
+      const lbl = document.createElement('div');
+      lbl.className = 'day-city-label';
+      const color = CITY_COLORS[baseName] || '#374151';
+      lbl.innerHTML = `<span class="day-city-swatch" style="background:${color}"></span>${baseName}`;
+      list.appendChild(lbl);
+    }
+
+    const acts = day.activities || [];
     const isT  = TRANSIT_DAYS.has(day.id);
-    el.className = 'day-item'+(day.id===currentDayId?' active':'')+(isT?' transit':'');
+    const el   = document.createElement('div');
+    el.className = 'day-item' + (day.id === currentDayId ? ' active' : '') + (isT ? ' transit' : '');
     el.dataset.id = day.id;
-    const d  = new Date(day.id+'T12:00:00');
-    const ds = d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    // First activity title as preview
-    const firstAct = acts.find(a=>a.title);
+    const d   = new Date(day.id + 'T12:00:00');
+    const ds  = d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+    const firstAct = acts.find(a => a.title);
     const preview  = firstAct ? firstAct.title : '';
     el.innerHTML =
-      '<div class="day-item-num">D'+day.dayNum+'</div>'+
-      '<div class="day-item-info">'+
-        '<div class="day-item-date">'+ds+' · '+day.city.split('—')[0].trim()+'</div>'+
-        (preview ? '<div class="day-item-preview">'+escHtml(preview.slice(0,26))+'</div>' : '<div class="day-item-city">'+day.city+'</div>')+
-      '</div>'+
-      '<div class="day-item-ind'+(acts.length>0?' filled':'')+'"></div>';
-    el.addEventListener('click', ()=>{
-      currentView='itinerary';
-      document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-      document.querySelector('.day-list-header').classList.add('in-itinerary');
-      selectDay(day.id,true);
+      '<div class="day-item-num">D' + day.dayNum + '</div>' +
+      '<div class="day-item-info">' +
+        '<div class="day-item-date">' + ds + '</div>' +
+        (preview ? '<div class="day-item-preview">' + escHtml(preview.slice(0,28)) + '</div>' : '') +
+      '</div>' +
+      '<div class="day-item-dot' + (acts.length > 0 ? ' filled' : '') + '"></div>';
+    el.addEventListener('click', () => {
+      currentView = 'itinerary';
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      const dlh = document.querySelector('.day-list-header');
+      if (dlh) dlh.classList.add('in-itinerary');
+      selectDay(day.id, true);
       closeSidebar();
     });
     list.appendChild(el);
   });
-  // Show itinerary active dot if in itinerary view
+
   const dlh = document.querySelector('.day-list-header');
-  if (dlh) dlh.classList.toggle('in-itinerary', currentView==='itinerary');
+  if (dlh) dlh.classList.toggle('in-itinerary', currentView === 'itinerary');
   renderSidebarBudget();
 }
 
@@ -351,12 +373,12 @@ function renderSidebarBudget() {
   Object.values(days).forEach(d=>(d.activities||[]).forEach(a=>{
     if(a.cost>0&&a.status!=='idea'){if(a.currency==='JPY')jpy+=a.cost;else usd+=a.cost;}
   }));
-  const est        = jpy/JPY_RATE+usd;
-  const perPerson  = Math.round(est/2);
+  const est       = jpy/JPY_RATE+usd;
+  const perPerson = Math.round(est/2);
   document.getElementById('budget-summary').innerHTML =
-    '<div class="budget-row"><span>¥'+Math.round(jpy).toLocaleString()+'</span><span class="budget-label">JPY</span></div>'+
-    (usd>0?'<div class="budget-row"><span>$'+usd.toFixed(0)+'</span><span class="budget-label">USD</span></div>':'')+
-    '<div class="budget-usd-est">~$'+Math.round(est).toLocaleString()+' total · $'+perPerson.toLocaleString()+'/person</div>';
+    '<div class="budget-footer-row"><span class="budget-footer-num">¥'+Math.round(jpy).toLocaleString()+'</span><span class="budget-footer-cur">JPY</span></div>'+
+    (usd>0?'<div class="budget-footer-row"><span class="budget-footer-num">$'+usd.toFixed(0)+'</span><span class="budget-footer-cur">USD</span></div>':'')+
+    '<div class="budget-footer-est">~$'+Math.round(est).toLocaleString()+' total · $'+perPerson.toLocaleString()+'/person</div>';
 }
 
 // ── JAPAN SVG MAP ────────────────────────────────────────────
@@ -472,23 +494,23 @@ function renderOverview() {
   }
 
 
-  const flightsHtml = `<div class="section-label" style="margin-bottom:0.75rem">Flights · Conf: F354LH</div>
-  <div class="flights-card" style="margin-bottom:1.4rem">
+  const flightsHtml = `
+  <div class="flights-card" style="margin-bottom:0.4rem">
     <div class="flight-row">
-      <div class="flight-direction">Out</div>
-      <div class="flight-route">
-        <div class="flight-num">UA39 · LAX → HND</div>
-        <div class="flight-detail">Apr 15 · 11:20am → Apr 16 3:05pm · Seats 31L / 31J · 787-10 · $1,098 / person</div>
+      <div class="flight-arrow">✈</div>
+      <div class="flight-detail-wrap">
+        <div class="flight-route-line">UA39 · LAX → HND</div>
+        <div class="flight-meta">Apr 15 · 11:20am → Apr 16 3:05pm · Seats 31L / 31J · 787-10 · $1,098/person</div>
       </div>
-      <button class="flight-conf" onclick="copyText('F354LH',this)">F354LH</button>
+      <button class="flight-conf-btn" onclick="copyText('F354LH',this)">F354LH</button>
     </div>
     <div class="flight-row">
-      <div class="flight-direction">Return</div>
-      <div class="flight-route">
-        <div class="flight-num">UA38 · HND → LAX</div>
-        <div class="flight-detail">Apr 29 · 6:10pm → same day 12:15pm · Seats 31J / 31L · 787-10</div>
+      <div class="flight-arrow return">✈</div>
+      <div class="flight-detail-wrap">
+        <div class="flight-route-line">UA38 · HND → LAX</div>
+        <div class="flight-meta">Apr 29 · 6:10pm → same day 12:15pm · Seats 31J / 31L · 787-10</div>
       </div>
-      <button class="flight-conf" onclick="copyText('F354LH',this)" style="opacity:0.55;cursor:default" disabled>F354LH</button>
+      <button class="flight-conf-btn" style="opacity:0.45;cursor:default" disabled>F354LH</button>
     </div>
   </div>`;
 
@@ -504,9 +526,11 @@ function renderOverview() {
   document.getElementById('main-view').innerHTML =
     countdownHtml +
     todayFocusHtml +
-    `<div class="japan-map-wrap"><div class="section-label" style="margin-bottom:0.8rem">Route</div>${buildJapanMapSVG()}</div>` +
+    `<span class="section-title">Route</span>` +
+    `<div class="japan-map-wrap"><div class="japan-map-inner">${buildJapanMapSVG()}</div></div>` +
+    `<span class="section-title" style="margin-top:1.4rem">Flights · <span style="font-weight:400;text-transform:none;letter-spacing:0">Conf: F354LH</span></span>` +
     flightsHtml +
-    `<div class="section-label" style="margin-bottom:0.75rem">Cities</div><div class="city-grid">${cityCardsHtml}</div>`;
+    `<span class="section-title" style="margin-top:1.4rem">Cities</span><div class="city-grid">${cityCardsHtml}</div>`;
 }
 
 function goToCity(firstDayId) {
@@ -562,7 +586,7 @@ function renderDay(dayId) {
         const curr = acts[i], next = acts[i+1];
         if (curr.address && next.address && curr.category !== 'transport' && next.category !== 'transport') {
           const mUrl = 'https://www.google.com/maps/dir/'+encodeURIComponent(curr.address)+'/'+encodeURIComponent(next.address);
-          actsHtml += `<div class="travel-connector"><div class="travel-connector-info"><a href="${mUrl}" target="_blank">Get directions</a></div></div>`;
+          actsHtml += `<div class="travel-connector"><div class="travel-conn-inner"><a href="${mUrl}" target="_blank">Get directions →</a></div></div>`;
         }
       }
     }
@@ -571,65 +595,69 @@ function renderDay(dayId) {
   document.getElementById('main-view').innerHTML = `
     <div class="day-header">
       <div class="day-header-left">
-        <span class="day-type-badge ${isTransit?'day-type-transit':'day-type-explore'}">${isTransit?'Transit day':'Explore day'}</span>
-        <div class="day-header-num">Day ${day.dayNum} of ${Object.keys(days).length}</div>
+        <div class="day-header-eyebrow">
+          <span class="day-num-tag">Day ${day.dayNum} of ${Object.keys(days).length}</span>
+          <span class="day-type-badge ${isTransit?'day-type-transit':'day-type-explore'}">${isTransit?'🚄 Transit':'✦ Explore'}</span>
+        </div>
         <h2 class="day-header-city">${day.city}</h2>
         <div class="day-header-date">${fullDate}</div>
-        <a href="${mapUrl}" target="_blank" class="map-link">${mapsActs.length>=2?'View all stops on map':'View on map'}</a>
+        <a href="${mapUrl}" target="_blank" class="map-link">📍 ${mapsActs.length>=2?'View all stops on map':'View on map'}</a>
       </div>
-      ${day.hotel?'<div class="day-header-hotel"><div class="hotel-label">Staying at</div>'+escHtml(day.hotel)+'</div>':''}
+      ${day.hotel?'<div class="day-hotel-chip"><div class="hotel-lbl">Staying at</div>'+escHtml(day.hotel)+'</div>':''}
     </div>
     <div class="activities-list" id="activities-list">${actsHtml}</div>
-    <button class="add-btn" onclick="openAddModal()">+ Add Activity</button>`;
+    <button class="add-act-btn" onclick="openAddModal()">+ Add Activity</button>`;
   initDragDrop();
 }
 
 function renderActivityCard(act) {
-  const cat   = CATEGORIES[act.category]||CATEGORIES.other;
-  const color = cat.color;
-  const bg    = color+'18';
-  const isDone = act.done||false;
-  const isIdea = (act.status||'booked')==='idea';
+  const cat    = CATEGORIES[act.category] || CATEGORIES.other;
+  const color  = cat.color;
+  const bg     = color + '18';
+  const isDone = act.done || false;
+  const isIdea = (act.status || 'booked') === 'idea';
 
   const confirmHtml = act.confirmation
-    ? `<div class="confirmation-row"><span class="confirmation-label">Conf.</span><span class="confirmation-value">${escHtml(act.confirmation)}</span><button class="copy-btn" onclick="copyText('${escAttr(act.confirmation)}',this)">Copy</button></div>` : '';
+    ? `<div class="conf-row"><span class="conf-label">Conf.</span><span class="conf-value">${escHtml(act.confirmation)}</span><button class="copy-btn" onclick="copyText('${escAttr(act.confirmation)}',this)">Copy</button></div>` : '';
 
   const addrHtml = act.address
-    ? `<div class="address-row"><span class="address-value">${escHtml(act.address)}</span><a href="https://www.google.com/maps/search/${encodeURIComponent(act.address)}" target="_blank" class="maps-btn">Maps</a></div>` : '';
+    ? `<div class="addr-row"><span class="addr-text">${escHtml(act.address)}</span><a href="https://www.google.com/maps/search/${encodeURIComponent(act.address)}" target="_blank" class="maps-btn">Maps ↗</a></div>` : '';
 
   const NOTES_LIMIT = 130;
   const notesLong   = act.notes && act.notes.length > NOTES_LIMIT;
   const notesShown  = notesLong ? act.notes.slice(0, NOTES_LIMIT) + '…' : act.notes;
   const notesHtml   = act.notes
-    ? `<div class="activity-notes" id="notes-${act.id}">${linkify(escHtml(notesShown))}</div>`+
+    ? `<div class="act-notes" id="notes-${act.id}">${linkify(escHtml(notesShown))}</div>` +
       (notesLong ? `<button class="notes-toggle" onclick="toggleNotes('${act.id}',${JSON.stringify(act.notes).replace(/'/g,"&#39;")})">Show more</button>` : '')
     : '';
 
-
+  let photoHtml = '';
   if (act.driveUrl && act.driveUrl.trim()) {
     const embed = driveUrlToEmbed(act.driveUrl.trim());
-    if (embed) photoHtml = `<div class="activity-drive-photo" onclick="openLightbox('${escAttr(embed)}','${escAttr(act.driveUrl)}')"><img src="${escAttr(embed)}" alt="Photo" loading="lazy" onerror="this.closest('.activity-drive-photo').style.display='none'"><div class="drive-photo-label">Google Drive photo</div></div>`;
+    if (embed) photoHtml = `<div class="act-photo" onclick="openLightbox('${escAttr(embed)}','${escAttr(act.driveUrl)}')"><img src="${escAttr(embed)}" alt="Photo" loading="lazy" onerror="this.closest('.act-photo').style.display='none'"><div class="act-photo-label">Google Drive photo</div></div>`;
   }
 
   return `<div class="activity-card${isDone?' done':''}${isIdea?' idea':''}" draggable="true" data-id="${act.id}">
-    <div class="activity-timeline"><div class="activity-dot" style="background:${color}"></div><div class="activity-line"></div></div>
-    <div class="activity-content">
-      <div class="activity-header">
-        <div class="activity-meta">
-          ${act.time?'<span class="activity-time">'+act.time+'</span>':''}
-          <span class="activity-category-tag" style="background:${bg};color:${color}">${act.category}</span>
-          ${isIdea?'<span class="status-idea-tag">Idea</span>':''}
+    <div class="act-timeline">
+      <div class="act-dot" style="background:${color}"></div>
+      <div class="act-line"></div>
+    </div>
+    <div class="act-card-body">
+      <div class="act-header">
+        <div class="act-meta">
+          ${act.time ? '<span class="act-time">' + act.time + '</span>' : ''}
+          <span class="act-cat-pill" style="background:${bg};color:${color}"><span class="act-cat-icon">${cat.icon}</span>${act.category}</span>
+          ${isIdea ? '<span class="act-idea-tag">Idea</span>' : ''}
         </div>
-        <div class="activity-actions">
-          <button class="done-btn${isDone?' checked':''}" onclick="toggleDone('${act.id}')">${isDone?'✓':''}</button>
-          <button class="action-btn" onclick="openEditModal('${act.id}')">Edit</button>
-          <button class="action-btn" onclick="deleteActivity('${act.id}')">Delete</button>
+        <div class="act-actions">
+          <button class="done-chk${isDone?' checked':''}" onclick="toggleDone('${act.id}')" title="Mark done">${isDone?'✓':''}</button>
+          <button class="act-action-btn" onclick="openEditModal('${act.id}')">Edit</button>
+          <button class="act-action-btn" onclick="deleteActivity('${act.id}')">Del</button>
         </div>
       </div>
-      <div class="activity-title">${escHtml(act.title)}</div>
-      ${confirmHtml}${addrHtml}
-      ${notesHtml}
-      ${act.cost>0?'<span class="activity-cost">'+formatCost(act.cost,act.currency)+'</span>':''}
+      <div class="act-title">${escHtml(act.title)}</div>
+      ${confirmHtml}${addrHtml}${notesHtml}
+      ${act.cost > 0 ? '<span class="act-cost">' + formatCost(act.cost, act.currency) + '</span>' : ''}
       ${photoHtml}
     </div>
   </div>`;
@@ -762,16 +790,16 @@ function renderBudgetView() {
   }).join('');
   document.getElementById('main-view').innerHTML =
     `<div class="view-header"><div class="view-title">Budget</div><div class="view-subtitle">Booked expenses only · Ideas excluded</div></div>
-    <div class="rate-control"><span>1 USD =</span><input type="number" class="rate-input" id="jpy-rate-input" value="${JPY_RATE}" min="50" max="300"><span>JPY</span>${liveBadge}</div>
-    <div class="budget-totals">
-      <div class="budget-total-card"><div class="budget-total-num">¥${Math.round(totalJPY).toLocaleString()}</div><div class="budget-total-lbl">Total in JPY</div></div>
-      <div class="budget-total-card accent"><div class="budget-total-num">~$${Math.round(usdEst).toLocaleString()}</div><div class="budget-total-lbl">USD estimate</div></div>
-      <div class="budget-total-card per-person"><div class="budget-total-num">~$${parseInt(perPerson).toLocaleString()}</div><div class="budget-total-lbl">Per person ÷ 2</div></div>
+    <div class="rate-row"><span>1 USD =</span><input type="number" class="rate-input" id="jpy-rate-input" value="${JPY_RATE}" min="50" max="300"><span>JPY</span>${liveBadge}</div>
+    <div class="budget-cards">
+      <div class="budget-card"><div class="budget-card-num">¥${Math.round(totalJPY).toLocaleString()}</div><div class="budget-card-lbl">Total in JPY</div></div>
+      <div class="budget-card primary"><div class="budget-card-num">~$${Math.round(usdEst).toLocaleString()}</div><div class="budget-card-lbl">USD Estimate</div></div>
+      <div class="budget-card muted"><div class="budget-card-num">~$${parseInt(perPerson).toLocaleString()}</div><div class="budget-card-lbl">Per Person ÷ 2</div></div>
     </div>
-    <div class="budget-section-title">By Category</div>
-    <div class="category-bars">${catBarsHtml||'<span style="color:var(--text-light);font-size:0.82rem">No booked costs yet</span>'}</div>
-    <div class="budget-section-title">By City</div>
-    <div class="city-cost-table">${cityRowsHtml||'<div style="padding:1rem;color:var(--text-light);font-size:0.82rem">No costs yet</div>'}</div>`;
+    <div class="budget-section-hd">By Category</div>
+    <div class="cat-bars">${catBarsHtml || '<span style="color:var(--text-light);font-size:0.82rem">No booked costs yet</span>'}</div>
+    <div class="budget-section-hd">By City</div>
+    <div class="city-costs">${cityRowsHtml || '<div style="padding:1rem;color:var(--text-light);font-size:0.82rem">No costs yet</div>'}</div>`;
   document.getElementById('jpy-rate-input').addEventListener('change', e=>{
     const v=parseFloat(e.target.value); if(v>0){JPY_RATE=v;rateIsLive=false;localStorage.setItem('jpyRate',v);renderBudgetView();renderSidebarBudget();}
   });
@@ -786,37 +814,37 @@ function renderPackingView() {
   const pct   = items.length ? Math.round((done/items.length)*100) : 0;
 
   const groupsHtml = cats.map(cat => {
-    const ci   = items.filter(i=>i.category===cat);
-    const cd   = ci.filter(i=>i.done).length;
-    const cpct = ci.length ? Math.round((cd/ci.length)*100) : 0;
-    return `<div class="packing-cat-group">
-      <div class="packing-cat-header">
-        <span class="packing-cat-name">${cat}</span>
-        <div class="packing-cat-progress">
-          <div class="packing-cat-bar-track"><div class="packing-cat-bar-fill" style="width:${cpct}%"></div></div>
-          <span class="packing-cat-count">${cd}/${ci.length}</span>
+    const ci   = items.filter(i => i.category === cat);
+    const cd   = ci.filter(i => i.done).length;
+    const cpct = ci.length ? Math.round((cd / ci.length) * 100) : 0;
+    return `<div class="pack-group">
+      <div class="pack-group-hd">
+        <span class="pack-group-name">${cat}</span>
+        <div class="pack-group-meta">
+          <div class="pack-group-bar"><div class="pack-group-bar-fill" style="width:${cpct}%"></div></div>
+          <span class="pack-group-count">${cd}/${ci.length}</span>
         </div>
       </div>
-      ${ci.map(item=>`<div class="packing-item${item.done?' done':''}" data-id="${item.id}">
-        <input type="checkbox" class="packing-check" ${item.done?'checked':''} onchange="togglePackingItem('${item.id}')">
-        <span class="packing-text">${escHtml(item.text)}</span>
-        <button class="packing-delete" onclick="deletePackingItem('${item.id}')" aria-label="Delete">✕</button>
+      ${ci.map(item => `<div class="pack-item${item.done?' done':''}" data-id="${item.id}">
+        <input type="checkbox" class="pack-check" ${item.done?'checked':''} onchange="togglePackingItem('${item.id}')">
+        <span class="pack-text">${escHtml(item.text)}</span>
+        <button class="pack-del" onclick="deletePackingItem('${item.id}')" aria-label="Delete">✕</button>
       </div>`).join('')}
-      <div class="packing-add-row">
-        <input type="text" class="packing-add-input" placeholder="Add to ${cat}…" data-cat="${cat}" onkeydown="if(event.key==='Enter')addPackingItem(this)">
-        <button class="packing-add-btn" onclick="addPackingItem(this.previousElementSibling)">Add</button>
+      <div class="pack-add-row">
+        <input type="text" class="pack-add-input" placeholder="Add to ${cat}…" data-cat="${cat}" onkeydown="if(event.key==='Enter')addPackingItem(this)">
+        <button class="pack-add-btn" onclick="addPackingItem(this.previousElementSibling)">Add</button>
       </div>
     </div>`;
   }).join('');
 
-  const addCatHtml = `<div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center">
-    <input type="text" id="new-cat-input" class="packing-add-input" style="flex:1" placeholder="New category name…" onkeydown="if(event.key==='Enter')addPackingCategory()">
-    <button class="packing-add-btn" onclick="addPackingCategory()">+ Category</button>
+  const addCatHtml = `<div class="new-cat-row">
+    <input type="text" id="new-cat-input" class="pack-add-input" style="flex:1" placeholder="New category name…" onkeydown="if(event.key==='Enter')addPackingCategory()">
+    <button class="pack-add-btn" onclick="addPackingCategory()">+ Category</button>
   </div>`;
 
   document.getElementById('main-view').innerHTML =
     `<div class="view-header"><div class="view-title">Packing List</div><div class="view-subtitle">Syncs between both of you in real time.</div></div>
-    <div class="packing-progress"><div class="packing-progress-track"><div class="packing-progress-fill" style="width:${pct}%"></div></div><span class="packing-progress-text">${done} / ${items.length} packed</span></div>
+    <div class="pack-overall"><div class="pack-overall-track"><div class="pack-overall-fill" style="width:${pct}%"></div></div><span class="pack-overall-text">${done} / ${items.length} packed</span></div>
     ${groupsHtml}
     ${addCatHtml}`;
 }
@@ -850,10 +878,20 @@ async function addPackingCategory() {
 // ── TRIP INFO ────────────────────────────────────────────────
 function renderInfoView() {
   if (!infoData) { document.getElementById('main-view').innerHTML='<div class="loading-state"><div class="spinner"></div></div>'; return; }
-  const sections=infoData.sections||[];
-  document.getElementById('main-view').innerHTML=`<div class="view-header"><div class="view-title">Trip Info</div><div class="view-subtitle">Key details, tips, and emergency contacts.</div></div>
-    ${sections.map(s=>`<div class="info-section-card"><div class="info-section-header"><span class="info-section-title">${escHtml(s.title)}</span><div class="info-section-actions"><button class="action-btn" onclick="openInfoEditModal('${s.id}')">Edit</button><button class="action-btn" onclick="deleteInfoSection('${s.id}')">Delete</button></div></div><div class="info-section-content">${linkify(escHtml(s.content))}</div></div>`).join('')}
-    <button class="add-section-btn" onclick="openInfoAddModal()">+ Add Section</button>`;
+  const sections = infoData.sections || [];
+  document.getElementById('main-view').innerHTML =
+    `<div class="view-header"><div class="view-title">Trip Info</div><div class="view-subtitle">Key details, tips, and emergency contacts.</div></div>` +
+    sections.map(s => `<div class="info-card">
+      <div class="info-card-hd">
+        <span class="info-card-title">${escHtml(s.title)}</span>
+        <div class="info-card-actions">
+          <button class="act-action-btn" onclick="openInfoEditModal('${s.id}')">Edit</button>
+          <button class="act-action-btn" onclick="deleteInfoSection('${s.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="info-card-body">${linkify(escHtml(s.content))}</div>
+    </div>`).join('') +
+    `<button class="add-info-btn" onclick="openInfoAddModal()">+ Add Section</button>`;
 }
 function openInfoAddModal() {
   currentInfoEditId=null;
