@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Japan 2026</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <canvas id="blossom-canvas"></canvas>
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-kana">日本</div>
+      <h1 class="login-title">Japan 2026</h1>
+      <p class="login-subtitle">April 15 – 29 · Gwen &amp; Christina</p>
+      <button id="sign-in-btn" class="sign-in-btn">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Sign in with Google
+      </button>
+      <p class="login-note">Only accessible to Gwen &amp; Christina</p>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="trip-title">日本</div>
+        <div class="trip-subtitle">Japan 2026</div>
+        <div class="trip-dates">Apr 15 – 29</div>
+      </div>
+      <div class="day-list" id="day-list"></div>
+      <div class="sidebar-footer">
+        <div class="budget-label-text">Trip Budget</div>
+        <div id="budget-summary" class="budget-summary"></div>
+        <div class="user-row">
+          <img id="user-avatar" class="user-avatar" src="" alt="">
+          <span id="user-name" class="user-name"></span>
+          <button class="sign-out-btn" onclick="signOut()" title="Sign out">&#8617;</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div id="day-content" class="day-content"></div>
+    </main>
+  </div>
+
+  <!-- ACTIVITY MODAL -->
+  <div id="modal" class="modal-overlay hidden" onclick="handleModalOverlayClick(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-title">Add Activity</h3>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Time</label>
+            <input type="time" id="form-time">
+          </div>
+          <div class="form-group half">
+            <label>Category</label>
+            <select id="form-category">
+              <option value="activity">Activity</option>
+              <option value="transport">Transport</option>
+              <option value="hotel">Hotel</option>
+              <option value="food">Food</option>
+              <option value="shopping">Shopping</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" id="form-title" placeholder="e.g. Fushimi Inari Shrine">
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="form-notes" rows="3" placeholder="Confirmation numbers, tips, addresses..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Cost</label>
+            <input type="number" id="form-cost" placeholder="0" min="0">
+          </div>
+          <div class="form-group half">
+            <label>Currency</label>
+            <select id="form-currency">
+              <option value="JPY">JPY</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Google Drive Photo Link</label>
+          <input type="url" id="form-photo-url" placeholder="Paste a Google Drive share link...">
+          <span class="field-hint">In Drive: right-click photo → Share → Copy link → paste here</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="saveActivity()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div id="lightbox" class="lightbox hidden" onclick="closeLightbox()">
+    <div class="lightbox-inner" onclick="event.stopPropagation()">
+      <img id="lightbox-img" src="" alt="">
+      <div class="lightbox-bar">
+        <a id="lightbox-link" href="" target="_blank" class="lightbox-open">Open in Google Drive</a>
+        <button class="lightbox-close" onclick="closeLightbox()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
