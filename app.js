@@ -935,7 +935,7 @@ function renderOverview(){
   const hotelGrid=OVERVIEW_DATA.filter(s=>!s.waypoint).map(s=>'<div class="hotel-cell"><div class="hotel-cell-city">'+esc(s.city.split('\u00b7')[0].trim())+'</div><div class="hotel-cell-name">'+esc(s.hotel.split('\u00b7')[0].trim())+'</div>'+(s.phone?'<div class="hotel-cell-phone">'+esc(s.phone)+'</div>':'')+'<div class="hotel-cell-dates">'+esc(s.dates)+'</div></div>').join('');
 
   el.innerHTML=
-    '<div class="ov-hero"><div class="ov-hero-top"><div><div class="ov-eyebrow">April 15\u201329, 2026 &middot; 15 days &middot; 5 cities &middot; 4 day trips</div><div class="ov-title">Japan</div><div class="ov-who">Gwendalynn &amp; Christina</div></div><div class="ov-cd" id="ovCd">'+cdHtml()+'</div></div>'
+    '<div class="ov-hero"><div class="ov-hero-top"><div><div class="ov-eyebrow">April 15\u201329, 2026 &middot; 15 days</div><div class="ov-title">Japan</div><div class="ov-who">Gwendalynn &amp; Christina</div></div><div class="ov-cd" id="ovCd">'+cdHtml()+'</div></div>'
     +(inTrip&&todayDay?'<div class="ov-in-japan"><div class="ov-currently-label">Currently in</div><div class="ov-currently-city">'+esc(todayDay.location)+'</div></div>':'')
     +'</div>'
     +'<div class="ov-section-label">The route</div><div class="ov-route">'+journeyHtml+'</div>'
@@ -1283,6 +1283,12 @@ function renderBookings(){
   });
 }
 
+window.deleteBookedCost=async function(id){
+  bookedCosts=bookedCosts.filter(c=>c.id!==id);
+  await db.collection('settings').doc('bookedCosts').set({items:bookedCosts});
+  renderBudget();
+  showToast('Removed','ok');
+};
 window.toggleDriveSection=function(){
   const sec=$('driveSection'); sec?.classList.toggle('expanded');
 };
@@ -1539,13 +1545,21 @@ function renderBudget(){
       return '<tr><td><span class="b-cat-chip '+catClass+'">'+esc(c.category||'')+'</span></td><td class="b-item-cell">'+esc(c.label)+'</td><td class="b-amt-cell">'+fmt(c.jpy||0)+'</td><td>'+(c.paidBy==='gwen'?'Gwendalynn':c.paidBy==='christina'?'Christina':'Split')+'</td><td>50/50</td></tr>';
     }).join('')+'</tbody>'
     +'<tbody id="bcEdit" style="'+(bookedEditing?'':'display:none')+'">'+bookedCosts.map(c=>{
-      return '<tr><td><span class="b-cat-chip">'+esc(c.category||'')+'</span></td><td class="b-item-cell">'+esc(c.label)+'</td><td class="b-amt-cell">'+fmt(c.jpy||0)+'</td><td><select class="b-payer-sel" data-id="'+ea(c.id)+'">'
+      const cats=['Flights','Hotels','Transport','Activities','Other'];
+      return '<tr><td><select class="b-payer-sel" data-id="'+ea(c.id)+'" data-field="category" style="font-size:10px;padding:2px 4px">'+cats.map(cat=>'<option'+(c.category===cat?' selected':'')+'>'+cat+'</option>').join('')+'</select></td>'
+        +'<td class="b-item-cell"><input type="text" class="form-input" data-id="'+ea(c.id)+'" data-field="label" value="'+ea(c.label)+'" style="font-size:12px;padding:4px 6px;width:100%"></td>'
+        +'<td class="b-amt-cell"><input type="number" class="form-input" data-id="'+ea(c.id)+'" data-field="jpy" value="'+(c.jpy||0)+'" style="font-size:12px;padding:4px 6px;width:100px;font-family:var(--mono)"></td>'
+        +'<td><select class="b-payer-sel" data-id="'+ea(c.id)+'" data-field="paidBy">'
         +'<option value="gwen"'+(c.paidBy==='gwen'?' selected':'')+'>Gwendalynn</option>'
         +'<option value="christina"'+(c.paidBy==='christina'?' selected':'')+'>Christina</option>'
         +'<option value="split"'+(c.paidBy==='split'?' selected':'')+'>Split</option>'
-        +'</select></td><td>50/50</td></tr>';
+        +'</select></td>'
+        +'<td><button class="conf-toggle-btn" onclick="deleteBookedCost(\''+ea(c.id)+'\')" style="color:var(--red)">&times;</button></td></tr>';
     }).join('')
-    +(bookedEditing?'<tr class="b-save-row"><td colspan="5"><button class="b-save-btn" id="bcSaveBtn">Save changes</button></td></tr>':'')
+    +'<tr class="b-save-row"><td colspan="5" style="display:flex;gap:8px;align-items:center">'
+    +'<button class="b-save-btn" id="bcSaveBtn">Save changes</button>'
+    +'<button class="booked-edit-btn" id="bcAddBtn" style="margin-left:auto">+ Add item</button>'
+    +'</td></tr>'
     +'</tbody>'
     +'<tfoot><tr><td colspan="2">Total pre-booked</td><td class="b-amt-cell">'+fmt(bookedTotal)+'</td><td colspan="2"></td></tr></tfoot>'
     +'</table></div></div>'
@@ -1563,12 +1577,20 @@ function renderBudget(){
   $('budgetAddBtn')?.addEventListener('click',openExpenseModal);
   $('bookedEditToggle')?.addEventListener('click',()=>{bookedEditing=!bookedEditing;renderBudget();});
   $('bcSaveBtn')?.addEventListener('click',async()=>{
-    el.querySelectorAll('.b-payer-sel').forEach(sel=>{
-      const item=bookedCosts.find(c=>c.id===sel.dataset.id); if(item)item.paidBy=sel.value;
+    // Read all editable fields
+    el.querySelectorAll('[data-id][data-field]').forEach(el=>{
+      const item=bookedCosts.find(c=>c.id===el.dataset.id); if(!item)return;
+      const f=el.dataset.field, v=el.value;
+      if(f==='jpy'){item.jpy=parseInt(v,10)||0;item.usd=Math.round(item.jpy/exchRate);}
+      else item[f]=v;
     });
     bookedEditing=false;
     await db.collection('settings').doc('bookedCosts').set({items:bookedCosts});
     showToast('Saved','ok'); renderBudget();
+  });
+  $('bcAddBtn')?.addEventListener('click',()=>{
+    bookedCosts.push({id:'bc-'+Date.now(),label:'New item',category:'Other',jpy:0,usd:0,paidBy:'gwen'});
+    renderBudget();
   });
   el.querySelectorAll('.exp-filter-btn').forEach(btn=>btn.addEventListener('click',()=>{expFilter=btn.dataset.filter;renderBudget();}));
   el.querySelectorAll('.exp-delete').forEach(btn=>btn.addEventListener('click',async e=>{
