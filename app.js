@@ -1012,15 +1012,15 @@ const PACKING = [
 
 function DEFAULT_BOOKED_COSTS_fn(){
   return [
-    {id:'bc1',label:'United flights + Economy Plus seats',   category:'Flights',   jpy:349100, usd:2197, paidBy:'gwen', dates:'Apr 15 + Apr 29'},
-    {id:'bc2',label:'Hotel Gracery Shinjuku \u00b7 4 nights', category:'Hotels',    jpy:200692, usd:1261, paidBy:'gwen', dates:'Apr 16\u201320'},
-    {id:'bc3',label:'teamLab Borderless \u00b7 2 tickets',    category:'Activities',jpy:11200,  usd:70,   paidBy:'gwen', dates:'Apr 17'},
-    {id:'bc4',label:'Fuji-Excursion 7',                      category:'Transport', jpy:8400,   usd:53,   paidBy:'gwen', dates:'Apr 20'},
-    {id:'bc5',label:'Tensui Saryo Ryokan \u00b7 2 nights',    category:'Hotels',    jpy:126340, usd:794,  paidBy:'gwen', dates:'Apr 20\u201322'},
-    {id:'bc6',label:'Shinkansen HIKARI 637',                  category:'Transport', jpy:23800,  usd:150,  paidBy:'gwen', dates:'Apr 22'},
-    {id:'bc7',label:'Hotel Granvia Kyoto \u00b7 4 nights',    category:'Hotels',    jpy:268256, usd:1686, paidBy:'gwen', dates:'Apr 22\u201326'},
-    {id:'bc8',label:'Hotel Intergate Kanazawa \u00b7 2 nights',category:'Hotels',   jpy:39004,  usd:245,  paidBy:'gwen', dates:'Apr 26\u201328'},
-    {id:'bc9',label:'Quintessa Hotel Ginza \u00b7 1 night',   category:'Hotels',    jpy:24713,  usd:155,  paidBy:'gwen', dates:'Apr 28\u201329'},
+    {id:'bc1',label:'United flights + Economy Plus seats',   category:'Flights',   jpy:349100, usd:2197, paidBy:'gwen', dates:'Apr 15 + Apr 29', purchased:'Dec 22, 2025'},
+    {id:'bc2',label:'Hotel Gracery Shinjuku \u00b7 4 nights', category:'Hotels',    jpy:200692, usd:1261, paidBy:'gwen', dates:'Apr 16\u201320', purchased:'Jan 25, 2026'},
+    {id:'bc3',label:'teamLab Borderless \u00b7 2 tickets',    category:'Activities',jpy:11200,  usd:70,   paidBy:'gwen', dates:'Apr 17', purchased:'Mar 21, 2026'},
+    {id:'bc4',label:'Fuji-Excursion 7',                      category:'Transport', jpy:8400,   usd:53,   paidBy:'gwen', dates:'Apr 20', purchased:'Mar 20, 2026'},
+    {id:'bc5',label:'Tensui Saryo Ryokan \u00b7 2 nights',    category:'Hotels',    jpy:126340, usd:794,  paidBy:'gwen', dates:'Apr 20\u201322', purchased:'Jan 22, 2026'},
+    {id:'bc6',label:'Shinkansen HIKARI 637',                  category:'Transport', jpy:23800,  usd:150,  paidBy:'gwen', dates:'Apr 22', purchased:'Mar 20, 2026'},
+    {id:'bc7',label:'Hotel Granvia Kyoto \u00b7 4 nights',    category:'Hotels',    jpy:268256, usd:1686, paidBy:'gwen', dates:'Apr 22\u201326', purchased:'Jan 25, 2026'},
+    {id:'bc8',label:'Hotel Intergate Kanazawa \u00b7 2 nights',category:'Hotels',   jpy:39004,  usd:245,  paidBy:'gwen', dates:'Apr 26\u201328', purchased:'Jan 25, 2026'},
+    {id:'bc9',label:'Quintessa Hotel Ginza \u00b7 1 night',   category:'Hotels',    jpy:24713,  usd:155,  paidBy:'gwen', dates:'Apr 28\u201329', purchased:'Jan 25, 2026'},
   ];
 }
 const CAT_COLORS={food:'#E91E8C',drinks:'#C0392B',transport:'#4A90D9',shopping:'#F39C12',activities:'#27AE60',other:'#8E8E8E'};
@@ -1819,14 +1819,14 @@ function renderBudget(){
     +'<button class="booked-edit-btn" id="bookedEditToggle">'+(bookedEditing?'Done':'Edit')+'</button>'
     +'</div></div>'
     +'<div class="b-table-scroll"><table class="b-table">'
-    +'<thead><tr><th>Category</th><th>Item</th><th>Amount</th><th>Paid by</th><th>Split</th></tr></thead>'
+    +'<thead><tr><th>Category</th><th>Item</th><th>Amount</th><th>Paid by</th><th>Purchased</th></tr></thead>'
     +'<tbody id="bcView" style="'+(bookedEditing?'display:none':'')+'">'+bookedCosts.map(c=>{
       const catClass='b-cat-'+(c.category||'Other').toLowerCase().replace(' ','');
       return '<tr><td><span class="b-cat-chip '+catClass+'">'+esc(c.category||'')+'</span></td>'
         +'<td class="b-item-cell">'+esc(c.label)+(c.dates?'<div style="font-size:10px;color:var(--light);margin-top:1px">'+esc(c.dates)+'</div>':'')+'</td>'
         +'<td class="b-amt-cell">'+fmt(c.jpy||0)+'</td>'
         +'<td>'+(c.paidBy==='gwen'?'Gwendalynn':c.paidBy==='christina'?'Christina':'Split')+'</td>'
-        +'<td>50/50</td></tr>';
+        +'<td style="font-size:12px;color:var(--light)">'+esc(c.purchased||'')+'</td></tr>';
     }).join('')+'</tbody>'
     +'<tbody id="bcEdit" style="'+(bookedEditing?'':'display:none')+'">'+bookedCosts.map(c=>{
       const cats=['Flights','Hotels','Transport','Activities','Other'];
@@ -1838,7 +1838,8 @@ function renderBudget(){
         +'<option value="christina"'+(c.paidBy==='christina'?' selected':'')+'>Christina</option>'
         +'<option value="split"'+(c.paidBy==='split'?' selected':'')+'>Split</option>'
         +'</select></td>'
-        +'<td><button class="conf-toggle-btn" onclick="deleteBookedCost(\''+ea(c.id)+'\')" style="color:var(--red)">&times;</button></td></tr>';
+        +'<td style="white-space:nowrap"><input type="text" class="form-input" data-id="'+ea(c.id)+'" data-field="purchased" value="'+ea(c.purchased||'')+'" placeholder="e.g. Jan 25" style="font-size:11px;padding:3px 6px;width:80px;display:inline-block">'
+        +'<button class="conf-toggle-btn" onclick="deleteBookedCost(\''+ea(c.id)+'\')" style="color:var(--red);margin-left:4px" title="Delete">&times;</button></td></tr>';
     }).join('')
     +'<tr class="b-save-row"><td colspan="5" style="display:flex;gap:8px;align-items:center">'
     +'<button class="b-save-btn" id="bcSaveBtn">Save changes</button>'
