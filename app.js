@@ -982,13 +982,22 @@ function renderItinerary(){
     if(card&&!card.classList.contains('expanded')){card.classList.add('expanded');injectDayActsSection(dayId);initItinDragDrop(dayId);}
   });
 
-  // Auto-expand today
+  // Auto-expand today + tomorrow, scroll to today
   const todayId=getTodayDayId();
   if(todayId&&!expandedCards.size){
+    const dayKeys=Object.keys(DAY_DATES);
+    const todayIdx=dayKeys.indexOf(todayId);
+    // Expand today
     const card=document.getElementById('card-'+todayId);
-    if(card){card.classList.add('expanded');expandedCards.add(todayId);injectDayActsSection(todayId);
-      setTimeout(()=>{const hH=document.querySelector('header')?.offsetHeight||0;const pH=$('destPillsWrap')?.offsetHeight||0;window.scrollTo({top:card.getBoundingClientRect().top+window.scrollY-hH-pH-12,behavior:'smooth'});},300);
+    if(card){card.classList.add('expanded');expandedCards.add(todayId);injectDayActsSection(todayId);initItinDragDrop(todayId);}
+    // Expand tomorrow
+    if(todayIdx>=0&&todayIdx<dayKeys.length-1){
+      const tmrwId=dayKeys[todayIdx+1];
+      const tmrwCard=document.getElementById('card-'+tmrwId);
+      if(tmrwCard){tmrwCard.classList.add('expanded');expandedCards.add(tmrwId);injectDayActsSection(tmrwId);initItinDragDrop(tmrwId);}
     }
+    // Scroll to today
+    if(card)setTimeout(()=>{const hH=document.querySelector('header')?.offsetHeight||0;const pH=$('destPillsWrap')?.offsetHeight||0;window.scrollTo({top:card.getBoundingClientRect().top+window.scrollY-hH-pH-12,behavior:'smooth'});},300);
   }
   $('pastToggleBtn')?.addEventListener('click',()=>{hidePastDays=!hidePastDays;renderItinerary();buildDestPills();});
 }
@@ -1632,6 +1641,8 @@ function openEditExpense(id){
 function openExpenseModal(){
   editExpId=null;
   const saveBtn=$('expSaveBtn'); if(saveBtn)saveBtn.textContent='Add expense';
+  // Show quick macros section
+  renderQuickMacros();
   const now=getTodayJST();
   const inTrip=now>=TRIP_START&&now<=TRIP_END;
   const useDate=inTrip?now:TRIP_START;
@@ -1651,6 +1662,40 @@ function openExpenseModal(){
 }
 
 $('expFab')?.addEventListener('click',openExpenseModal);
+
+// Quick-add expense macros
+const QUICK_MACROS=[
+  {label:'\u00a5500 Food',icon:'\ud83c\udf5c',amount:500,cat:'food',desc:'Food'},
+  {label:'\u00a51,000 Food',icon:'\ud83c\udf71',amount:1000,cat:'food',desc:'Food'},
+  {label:'\u00a52,000 Food',icon:'\ud83c\udf63',amount:2000,cat:'food',desc:'Food'},
+  {label:'Suica Top-up',icon:'\ud83d\ude83',amount:2000,cat:'transport',desc:'Suica reload'},
+  {label:'\u00a5500 Drinks',icon:'\ud83c\udf75',amount:500,cat:'drinks',desc:'Drinks'},
+  {label:'Temple Entry',icon:'\u26e9',amount:500,cat:'activities',desc:'Temple entry'},
+];
+function renderQuickMacros(){
+  // Inject macros into expense modal if not already there
+  let container=document.getElementById('quickMacros');
+  if(!container){
+    const body=document.querySelector('#expenseModal .modal-body');
+    if(!body)return;
+    container=document.createElement('div');
+    container.id='quickMacros';
+    container.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border-lt)';
+    body.insertBefore(container,body.firstChild);
+  }
+  container.innerHTML='<div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--light);width:100%;margin-bottom:2px">Quick add</div>'
+    +QUICK_MACROS.map((m,i)=>'<button class="chip" onclick="quickAddExpense('+i+')" style="font-size:12px;padding:6px 12px">'+m.icon+' '+m.label+'</button>').join('');
+}
+window.quickAddExpense=async function(idx){
+  const m=QUICK_MACROS[idx]; if(!m)return;
+  const now=getTodayJST();
+  const dateStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  try{
+    await addExpense({amount:m.amount,category:m.cat,description:m.desc,paidBy:selectedPayer,split:true,date:dateStr});
+    closeModal('expenseModal');
+    showToast('Added \u00a5'+m.amount.toLocaleString(),'ok');
+  }catch(e){showToast('Failed','err');}
+};
 
 document.getElementById('expCatChips')?.addEventListener('click',e=>{
   const btn=e.target.closest('.chip'); if(!btn)return;
