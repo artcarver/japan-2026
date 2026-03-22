@@ -1065,7 +1065,7 @@ function renderOverview(){
     return '<div class="ov-stop'+(isLast?' ov-stop-last':'')+'">'
       +'<div class="ov-stop-left"><div class="ov-stop-dot"></div>'+line+'</div>'
       +'<div class="ov-stop-right"><div class="ov-stop-head"><div class="ov-stop-city">'+esc(stop.city)+'</div><div class="ov-stop-dates">'+esc(stop.dates)+(stop.nights?' \u00b7 '+stop.nights+' night'+(stop.nights>1?'s':''):'')+'</div></div>'
-      +'<div class="ov-stop-hotel">'+esc(stop.hotel)+(stop.phone?' &nbsp;\u00b7 <strong>'+esc(stop.phone)+'</strong>':'')+'</div>'+hlsHtml+'</div></div>';
+      +'<div class="ov-stop-hotel">'+esc(stop.hotel)+'</div>'+hlsHtml+'</div></div>';
   }).join('');
 
   const now=new Date(), inTrip=now>=TRIP_START&&now<=TRIP_END;
