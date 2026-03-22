@@ -426,8 +426,7 @@ header {
   display: grid; grid-template-columns: 1fr 1fr; gap: 0;
 }
 .ov-flight-leg {
-  padding: 10px 16px 12px; display: flex; flex-direction: column; gap: 2px;
-  border-top: 1px solid var(--border-lt);
+  padding: 12px 16px; display: flex; flex-direction: column; gap: 2px;
 }
 .ov-flight-leg:first-child { border-right: 1px solid var(--border-lt); }
 .ov-flight-dir {
@@ -1555,7 +1554,7 @@ body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
   #mainContent { max-width: 1100px; padding: 28px 40px 60px; }
 
   /* Itinerary: sticky pills sidebar + content column */
-  #panel-itinerary {
+  #panel-itinerary.active {
     display: grid;
     grid-template-columns: 160px 1fr;
     gap: 0 28px;

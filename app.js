@@ -1077,7 +1077,6 @@ function renderOverview(){
 
   // Flights card
   const flightsHtml='<div class="ov-info-card">'
-    +'<div class="ov-info-title">Flights</div>'
     +'<div class="ov-flight-row"><div class="ov-flight-leg"><span class="ov-flight-dir">Depart</span><span class="ov-flight-detail">Wed Apr 15 \u00b7 LAX 11:20 AM \u2192 Tokyo HND</span><span class="ov-flight-sub">UA 39 \u00b7 Arrives Apr 16, 3:05 PM Japan time</span></div>'
     +'<div class="ov-flight-leg"><span class="ov-flight-dir">Return</span><span class="ov-flight-detail">Wed Apr 29 \u00b7 Tokyo HND 6:10 PM \u2192 LAX</span><span class="ov-flight-sub">UA 38 \u00b7 Arrives same day 12:15 PM California time</span></div></div></div>';
 
@@ -1107,11 +1106,12 @@ function renderOverview(){
     +(inTrip&&todayDay?'<div class="ov-in-japan"><div class="ov-currently-label">Currently in</div><div class="ov-currently-city">'+esc(todayDay.location)+'</div></div>':'')
     +'</div>'
     +todayPlanHtml
-    +flightsHtml
-    +infoHtml
     +'<div class="ov-section-label">The route</div><div class="ov-route">'+journeyHtml+'</div>'
     +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">View detailed day-by-day plan \u2192</button></div>'
-    +'<div class="ov-section-label" style="margin-top:32px">Hotels &amp; emergency contacts</div>'
+    +'<div class="ov-section-label" style="margin-top:32px">Flights</div>'
+    +flightsHtml
+    +infoHtml
+    +'<div class="ov-section-label" style="margin-top:24px">Hotels &amp; emergency contacts</div>'
     +'<div class="ov-info-note">Dial +81 numbers as shown from any US phone. Tap to call.</div>'
     +'<div class="family-strip"><div class="hotel-grid">'+hotelGrid+'</div></div>';
 
