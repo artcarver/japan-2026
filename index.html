@@ -11,7 +11,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@300;400;500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500@display=swap" rel="stylesheet">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -52,6 +51,16 @@
       --dot-default:  #C8C0B6;
     }
 
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(38,107,50,0.13); }
+      50% { box-shadow: 0 0 0 8px rgba(38,107,50,0.04); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     body.dark {
       --bg:           #141414;
       --card:         #1E1E1E;
@@ -73,6 +82,8 @@
 
     html { scroll-behavior: smooth; }
 
+    canvas.blossom { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.06; }
+
     body {
       font-family: var(--sans);
       background: var(--bg);
@@ -87,8 +98,6 @@
 
     /* Serif is ONLY for the brand mark */
     .brand { font-family: var(--serif); }
-
-    ═══════════════════════════════════════════════ */
 
     /* ═══════════════════════════════════════════════
        MAIN APP
@@ -171,7 +180,8 @@
     .user-avatar { width: 20px; height: 20px; border-radius: 50%; display: none; }
     .edit-btn.active .user-avatar { display: block; }
 
-    .viewonly-hint { font-size: 10px; color: var(--light); letter-spacing: 0.04em; }
+    .viewonly-hint { font-size: 10px; color: var(--light); letter-spacing: 0.04em; cursor: pointer; transition: color 0.15s; }
+    .viewonly-hint:hover { color: var(--muted); }
     body.edit-mode .viewonly-hint { display: none; }
 
     /* TABS — scrollable single row */
@@ -240,7 +250,7 @@
     main { max-width: 720px; margin: 0 auto; padding: 28px 20px 120px; }
 
     .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    .tab-panel.active { display: block; animation: fadeUp 0.22s ease; }
 
     /* TRIP SUMMARY BAR (top of itinerary) */
     .trip-summary-bar {
@@ -348,6 +358,51 @@
     /* TIP */
     .tip-block { margin-top: 12px; padding: 10px 12px; background: var(--amber-bg); border: 1px solid var(--amber-border); border-left: 3px solid #D4900A; font-size: 12px; color: var(--amber-text); line-height: 1.5; }
     .tip-label { font-weight: 700; letter-spacing: 0.04em; color: var(--amber-text); }
+
+    /* ITINERARY LEGEND */
+    .itin-legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      padding: 9px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 11.5px;
+      color: var(--muted);
+      align-items: center;
+    }
+    .itin-legend-title { font-weight: 600; color: var(--text); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-right: 4px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* INLINE CONF TOGGLE */
+    .conf-toggle-btn {
+      font-size: 10.5px;
+      color: var(--light);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 2px 0;
+      margin-top: 3px;
+      display: block;
+      transition: color 0.12s;
+    }
+    .conf-toggle-btn:hover { color: var(--red); }
+    .inline-conf {
+      display: none;
+      font-size: 11.5px;
+      color: var(--muted);
+      background: var(--bg);
+      border-left: 2px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 0 3px 3px 0;
+      margin-top: 5px;
+      line-height: 1.45;
+    }
+    .inline-conf.show { display: block; }
 
     /* NOTES */
     .notes-section { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-light); }
@@ -1455,7 +1510,8 @@
 </head>
 <body>
 
-<!-- Cherry blossom canvas — always present -->
+<!-- Cherry blossom canvas -->
+<canvas class="blossom" id="blc"></canvas>
 
 <!-- ═══ MAIN APP ═══ -->
 <div id="app">
@@ -1470,9 +1526,9 @@
         </div>
       </div>
       <div class="header-right">
-        <span class="viewonly-hint">View only</span>
+        <span class="viewonly-hint" id="viewonlyHint">Gwen &amp; Christina's trip</span>
         <button class="icon-btn" id="darkToggle" title="Toggle dark mode" aria-label="Toggle dark mode">☽</button>
-        <button class="edit-btn" id="editBtn">
+        <button class="edit-btn" id="editBtn" style="display:none">
           <img class="user-avatar" id="userAvatar" src="" alt="">
           <span id="editBtnLabel">✎ Edit</span>
         </button>
