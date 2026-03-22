@@ -372,7 +372,7 @@ const OVERVIEW_DATA = [
     highlights: [
       { text: 'teamLab Borderless — immersive digital art filling entire rooms', star: true, url: 'https://borderless.teamlab.art/en/' },
       { text: 'Senso-ji Temple at dawn — incense smoke and empty lantern-lit corridors', star: true },
-      { text: 'Shibuya Scramble Crossing — the world's busiest intersection' },
+      { text: 'Shibuya Scramble Crossing — the world\'s busiest intersection' },
       { text: 'Golden Gai — forty tiny themed bars, each seating about eight people' },
     ],
     daytrips: [
@@ -382,6 +382,16 @@ const OVERVIEW_DATA = [
         { text: 'Shirasu (whitebait) lunch — the Kamakura specialty' },
       ]},
     ],
+  },
+  {
+    city: 'Kawaguchiko', dates: 'Apr 20 · morning only', nights: 0,
+    hotel: 'Transit stop en route to Hakone',
+    waypoint: true,
+    highlights: [
+      { text: 'Oishi Park — Mt. Fuji reflected in the lake with cherry blossoms', star: true, url: 'https://maps.app.goo.gl/oishipark' },
+      { text: 'Optional: Chureito Pagoda — iconic 5-story pagoda framing Fuji from above' },
+    ],
+    daytrips: [],
   },
   {
     city: 'Hakone', dates: 'Apr 20–22', nights: 2,
@@ -407,25 +417,37 @@ const OVERVIEW_DATA = [
       { text: 'Gion at dusk — wooden alleyways, lantern glow, chance to spot a geiko' },
       { text: "Philosopher’s Path — 2 km canal walk lined with cherry trees" },
     ],
-    daytrips: [
-      { label: 'Day trip', city: 'Nara', note: '45 min by train', highlights: [
-        { text: 'Hundreds of freely roaming deer in Nara Park', star: true },
-        { text: "Todai-ji — the world’s largest wooden building, with a 15-metre bronze Buddha inside", url: 'https://www.todaiji.or.jp/english/' },
-      ]},
-      { label: 'Day trip', city: 'Osaka', note: '30 min by train', highlights: [
-        { text: 'Kaiyukan Aquarium — whale sharks in a four-storey Pacific Ocean tank', star: true, url: 'https://www.kaiyukan.com/language/eng/' },
-        { text: 'Dotonbori — neon food street, takoyaki, okonomiyaki' },
-        { text: 'Kuromon Ichiba Market — fresh seafood, grilled scallops, 580m covered arcade' },
-        { text: 'Osaka Castle park', url: 'https://www.osakacastle.net/english/' },
-      ]},
-    ],
+    daytrips: [],
   },
+  {
+    city: 'Nara', dates: 'Apr 25 · day trip', nights: 0,
+    hotel: 'Day trip from Kyoto · 45 min by JR Nara Line',
+    waypoint: true,
+    highlights: [
+      { text: 'Hundreds of freely roaming deer roaming freely through Nara Park', star: true },
+      { text: 'Todai-ji — the world\'s largest wooden building, giant bronze Buddha inside', star: true, url: 'https://www.todaiji.or.jp/english/' },
+      { text: 'Kasuga Taisha Shrine — 3,000 stone and bronze lanterns, forested paths', url: 'https://maps.app.goo.gl/kasuga' },
+    ],
+    daytrips: [],
+  },
+  {
+    city: 'Osaka', dates: 'Apr 24 · day trip', nights: 0,
+    hotel: 'Day trip from Kyoto · 30 min by JR Shinkaisoku',
+    waypoint: true,
+    highlights: [
+      { text: 'Kaiyukan Aquarium — whale sharks in a four-storey Pacific Ocean tank', star: true, url: 'https://www.kaiyukan.com/language/eng/' },
+      { text: 'Dotonbori — neon food street, takoyaki, the Glico Running Man sign', star: true },
+      { text: 'Kuromon Ichiba Market — 580m covered market, fresh scallops and crab', url: 'https://kuromon.com/en/' },
+      { text: 'Osaka Castle — 16th century, museum inside, beautiful grounds', url: 'https://www.osakacastle.net/english/' },
+    ],
+    daytrips: [],
+  },  },
   {
     city: 'Kanazawa', dates: 'Apr 26–28', nights: 2,
     hotel: 'Hotel Intergate Kanazawa · breakfast included',
     highlights: [
-      { text: 'Kenroku-en — one of Japan's three designated great gardens', star: true, url: 'https://kenrokuen.or.jp/en/' },
-      { text: 'Omicho Market — the freshest seafood rice bowls you'll find anywhere', star: true },
+      { text: 'Kenroku-en — one of Japan\'s three designated great gardens', star: true, url: 'https://kenrokuen.or.jp/en/' },
+      { text: 'Omicho Market — the freshest seafood rice bowls you\'ll find anywhere', star: true },
       { text: 'Higashi Chaya geisha district — better preserved than Kyoto, without the crowds' },
       { text: '21st Century Museum — a room where you stand inside a swimming pool', url: 'https://www.kanazawa21.jp/en/' },
     ],
@@ -481,6 +503,7 @@ function renderOverview() {
 
   const journeyHtml = OVERVIEW_DATA.map((stop, i) => {
     const isLast = i === OVERVIEW_DATA.length - 1;
+    const isWaypoint = stop.waypoint === true;
 
     const hlsHtml = stop.highlights.map(h => `
       <li class="ov-hl${h.star ? ' ov-hl-star' : ''}">
@@ -488,6 +511,25 @@ function renderOverview() {
           ? `<a href="${h.url}" target="_blank" rel="noopener" class="ov-hl-link">${h.text}<span class="ov-ext"> ↗</span></a>`
           : h.text}
       </li>`).join('');
+
+    if (isWaypoint) {
+      return `
+        <div class="ov-stop ov-stop-waypoint${isLast ? ' ov-stop-last' : ''}">
+          <div class="ov-stop-left">
+            <div class="ov-stop-dot ov-stop-dot-sm"></div>
+            ${!isLast ? '<div class="ov-stop-line"></div>' : ''}
+          </div>
+          <div class="ov-stop-right ov-stop-right-wp">
+            <div class="ov-stop-head">
+              <div class="ov-wp-badge">Day trip</div>
+              <div class="ov-stop-city ov-wp-city">${stop.city}</div>
+              <div class="ov-stop-dates">${stop.dates.split(' · ')[0]}</div>
+            </div>
+            <div class="ov-stop-hotel">${stop.hotel}</div>
+            <ul class="ov-hls">${hlsHtml}</ul>
+          </div>
+        </div>`;
+    }
 
     const dtsHtml = stop.daytrips.map(dt => `
       <div class="ov-dt">
