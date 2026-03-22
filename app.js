@@ -400,7 +400,7 @@ const DAYS = {
   apr17:{id:'apr17',date:'FRI APR 17',title:'Art + Harajuku + Shibuya',location:'Tokyo \u00b7 Shinjuku',periods:[
     {label:'Morning',items:[
       {time:'8:30 AM',text:'teamLab Borderless',type:'booked',dur:'~3 hrs',cost:5600,
-       notes:'Conf: A7YRA4LXWCN3-0001 \u00b7 Entry 08:30\u201309:00 \u00b7 \u00a55,600/person \u00b7 No re-entry\nWear pants (mirrored floors) \u00b7 Download teamLab app beforehand \u00b7 Hit Bubble Universe + Infinite Crystal World first',
+       notes:'Conf: A7YRA4LXWCN3-0001 \u00b7 Entry 08:30\u201309:00 \u00b7 No re-entry\nWear pants (mirrored floors) \u00b7 Download teamLab app beforehand \u00b7 Hit Bubble Universe + Infinite Crystal World first',
        addr:'teamLab Borderless, Azabudai Hills, 1-2-4 Azabudai, Minato-ku, Tokyo'},
       {time:'11:30 AM',text:'Explore Azabudai Hills complex',
        notes:'Contemporary architecture and upscale retail surrounding teamLab. Worth 20 minutes.'},
@@ -485,8 +485,8 @@ const DAYS = {
 
   apr20:{id:'apr20',date:'MON APR 20',title:'Fuji Excursion \u2192 Kawaguchiko \u2192 Hakone',location:'Shinjuku \u2192 Kawaguchiko \u2192 Gora',periods:[
     {label:'Morning',items:[
-      {time:'8:30 AM',text:'Fuji-Excursion 7 \u00b7 Shinjuku \u2192 Kawaguchiko',type:'booked',
-       notes:'Res: E77821 \u00b7 Pickup code: 24492390994521288\n\u00a58,400 total (~$53) \u00b7 Car 3, Seat 13-C (Gwen) & 13-D (Christina) \u00b7 Arrives 10:26 AM'},
+      {time:'8:30 AM',text:'Fuji-Excursion 7 \u00b7 Shinjuku \u2192 Kawaguchiko',type:'booked',cost:8400,
+       notes:'Res: E77821 \u00b7 Pickup code: 24492390994521288\nCar 3, Seat 13-C (Gwen) & 13-D (Christina) \u00b7 Arrives 10:26 AM'},
       {time:'10:30 AM',text:'Oishi Park',dur:'~1.5 hrs',
        notes:'North shore of Lake Kawaguchi \u2014 best Fuji reflections in the lake with late cherry blossoms.',
        addr:'Oishi Park, Kawaguchiko, Fujikawaguchiko, Yamanashi'},
@@ -525,7 +525,7 @@ const DAYS = {
     ]},
     {label:'Midday',items:[
       {time:'12:00 PM',text:'Owakudani volcanic valley',cost:500,
-       notes:'\u00a5500 for 5 black eggs (boiled in volcanic hot spring) \u2014 supposedly adds 7 years per egg. Active sulfur vents.',
+       notes:'Black eggs boiled in volcanic hot spring \u2014 supposedly adds 7 years per egg. Active sulfur vents.',
        addr:'Owakudani, Hakone, Ashigarashimo-gun, Kanagawa'},
       {time:'1:00 PM',text:'Ropeway \u2192 Togendai on Lake Ashi',dur:'~25 min',
        notes:'Covered by Hakone Free Pass'},
@@ -555,8 +555,8 @@ const DAYS = {
        notes:'Must leave by 9:00 AM'},
       {time:'9:05 AM',text:'Tozan Railway: Gora \u2192 Hakone-Yumoto',dur:'~35 min'},
       {time:'9:45 AM',text:'Local train: Hakone-Yumoto \u2192 Odawara',dur:'~15 min'},
-      {time:'10:11 AM',text:'HIKARI 637 \u00b7 Odawara \u2192 Kyoto',type:'booked',
-       notes:'Res: 2002 \u00b7 Smart EX: 9007241665 \u00b7 \u00a523,800 total (~$150)\nSeries N700 \u00b7 Ordinary class \u00b7 Car 11, Seats 10-D & 10-E \u00b7 Board via QR-Ticket'},
+      {time:'10:11 AM',text:'HIKARI 637 \u00b7 Odawara \u2192 Kyoto',type:'booked',cost:23800,
+       notes:'Res: 2002 \u00b7 Smart EX: 9007241665\nSeries N700 \u00b7 Ordinary class \u00b7 Car 11, Seats 10-D & 10-E \u00b7 Board via QR-Ticket'},
       {time:'12:12 PM',text:'Arrive Kyoto Station'},
     ]},
     {label:'Afternoon',items:[
@@ -694,7 +694,7 @@ const DAYS = {
        notes:'Conf: 20260125110822242 \u00b7 Expedia: 73356721260247\nSuperior Twin \u00b7 Breakfast buffet included \u00b7 2-5 Takaokamachi \u00b7 +81-76-205-1122',
        addr:'Hotel Intergate Kanazawa, 2-5 Takaokamachi, Kanazawa'},
       {time:'3:30 PM',text:'21st Century Museum of Contemporary Art',dur:'~1.5 hrs',cost:1400,
-       notes:'VISIT TODAY \u2014 closed Mondays. Free exchange zone + ~\u00a51,400 for exhibitions.\nSwimming Pool (Leandro Erlich) + Blue Planet Sky (James Turrell) \u2014 both must-sees.',
+       notes:'VISIT TODAY \u2014 closed Mondays.\nSwimming Pool (Leandro Erlich) + Blue Planet Sky (James Turrell) \u2014 both must-sees. Free exchange zone outside.',
        addr:'21st Century Museum, 1-2-1 Hirosaka, Kanazawa, Ishikawa'},
     ]},
     {label:'Evening',items:[
@@ -719,8 +719,8 @@ const DAYS = {
        addr:'Omicho Market, 50 Kami-Omicho, Kanazawa, Ishikawa'},
     ]},
     {label:'Afternoon',items:[
-      {time:'1:00 PM',text:'Nagamachi Samurai District',dur:'~1.5 hrs',
-       notes:'Preserved samurai residences and mud walls. Nomura Clan House is the standout \u2014 \u00a5550, beautiful garden and tatami rooms.',
+      {time:'1:00 PM',text:'Nagamachi Samurai District',dur:'~1.5 hrs',cost:550,
+       notes:'Preserved samurai residences and mud walls. Nomura Clan House \u2014 beautiful garden and tatami rooms.',
        addr:'Nagamachi, Kanazawa, Ishikawa'},
       {time:'3:00 PM',text:'D.T. Suzuki Museum',dur:'~1 hr',cost:310,
        notes:'Meditative architecture by Yoshio Taniguchi. Water mirror garden. Calm and contemplative.',
@@ -735,8 +735,9 @@ const DAYS = {
   apr28:{id:'apr28',date:'TUE APR 28',title:'Depart Kanazawa \u2192 Tokyo Ginza',location:'Kanazawa \u2192 Tokyo \u00b7 Ginza',periods:[
     {label:'Morning',items:[
       {time:'8:00 AM',text:'Breakfast buffet at Hotel Intergate \u00b7 included'},
-      {time:'10:00 AM',text:'Check out \u00b7 by 11:00 AM',
-       notes:'Hokuriku Shinkansen: Kanazawa \u2192 Tokyo (Ueno) \u00b7 ~2.5 hrs \u00b7 ~\u00a514,000/person (~$88)'},
+      {time:'10:00 AM',text:'Check out \u00b7 by 11:00 AM'},
+      {text:'Hokuriku Shinkansen \u00b7 Kanazawa \u2192 Tokyo',cost:14000,
+       notes:'~2.5 hrs \u00b7 Multiple departures mid-morning \u00b7 Kagayaki or Hakutaka'},
     ]},
     {label:'Afternoon',items:[
       {time:'2:30 PM',text:'Hamarikyu Gardens',dur:'~1 hr',cost:300,
@@ -1296,19 +1297,20 @@ function renderFsItem(dayId,act,isEdit){
     const notesLines=(act.notes||'').split('\n').filter(Boolean);
     const notesHtml=notesLines.map(l=>'<div class="act-detail-notes">'+esc(l)+'</div>').join('');
     const mapLink=act.addr?'<a class="act-detail-map" href="https://maps.google.com/?q='+encodeURIComponent(act.addr)+'" target="_blank" rel="noopener">View on map \u2197</a>':'';
-    const editBtn=isEdit?'<button class="act-edit-btn" onclick="event.stopPropagation();openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button>':'';
-    detailHtml='<div class="act-detail"><div class="act-detail-inner">'+meta+notesHtml+mapLink+editBtn+'</div></div>';
-  } else if(isEdit) {
-    detailHtml='<div class="act-detail"><div class="act-detail-inner"><button class="act-edit-btn" onclick="event.stopPropagation();openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button></div></div>';
+    detailHtml='<div class="act-detail"><div class="act-detail-inner">'+meta+notesHtml+mapLink+'</div></div>';
   }
 
-  const clickable=hasDetails||isEdit;
+  const clickable=hasDetails;
   const clickAttr=clickable?' onclick="toggleActExpand(\''+ea(act.id)+'\',event)"':'';
+  const editBtn=isEdit?'<button class="act-edit-inline" onclick="event.stopPropagation();openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button>':'';
 
   return '<div class="act'+(isExp?' expanded':'')+(isBooked?' booked':'')+(clickable?' clickable':'')+'" data-item-id="'+ea(act.id)+'"'+dragAttr+clickAttr+'>'
     +time
     +'<div class="act-body">'
-    +'<div class="act-main"><div class="act-text">'+esc(act.title)+tag+'</div>'+(hasDetails?'<span class="act-chevron">\u25B8</span>':'')+'</div>'
+    +'<div class="act-main"><div class="act-text">'+esc(act.title)+tag+'</div>'
+    +(hasDetails?'<span class="act-chevron">\u25B8</span>':'')
+    +editBtn
+    +'</div>'
     +detailHtml
     +'</div></div>';
 }
@@ -1775,8 +1777,9 @@ function renderBudget(){
   });
   expenses.forEach(e=>{
     const a=e.amount||0;
-    if(e.paidBy==='gwen'){gwenPaid+=a; if(e.split)settlement+=a/2;}
-    else if(e.paidBy==='christina'){christinaPaid+=a; if(e.split)settlement-=a/2;}
+    if(e.paidBy==='gwen'){gwenPaid+=a; settlement+=a/2;}
+    else if(e.paidBy==='christina'){christinaPaid+=a; settlement-=a/2;}
+    else if(e.paidBy==='split'){gwenPaid+=a/2; christinaPaid+=a/2;}
   });
   const bookedTotal=bookedCosts.reduce((s,c)=>s+(c.jpy||0),0);
   const expTotal=expenses.reduce((s,e)=>s+(e.amount||0),0);
@@ -1803,7 +1806,7 @@ function renderBudget(){
         +byDay[day].map(e=>'<div class="expense-item">'
           +'<div class="exp-cat-stripe" style="background:'+(CAT_COLORS[e.category]||'#ccc')+'"></div>'
           +'<div class="exp-body"><div class="exp-top"><span class="exp-desc">'+esc(e.description||e.category||'')+'</span><span class="exp-amount">\u00a5'+(e.amount||0).toLocaleString()+'</span></div>'
-          +'<div class="exp-meta"><span>'+(e.paidBy==='gwen'?'Gwen':'Christina')+' paid</span>'+(e.split?'<span class="exp-tag split">Split</span>':'')+'<span class="exp-tag">'+esc(e.category||'')+'</span>'+(e.date?'<span style="color:var(--light);font-size:10px">'+e.date+'</span>':'')+'</div></div>'
+          +'<div class="exp-meta"><span>'+(e.paidBy==='gwen'?'Gwen paid':e.paidBy==='christina'?'Christina paid':'Split 50/50')+'</span><span class="exp-tag">'+esc(e.category||'')+'</span>'+(e.date?'<span style="color:var(--light);font-size:10px">'+e.date+'</span>':'')+'</div></div>'
           +'<button class="exp-edit" data-id="'+ea(e.id||'')+'" title="Edit" style="background:none;border:none;border-left:1px solid var(--border-lt);padding:0 8px;cursor:pointer;color:var(--light);font-size:11px">\u270e</button>'
           +'<button class="exp-delete" data-id="'+ea(e.id||'')+'" title="Delete">&times;</button></div>'
         ).join('')+'</div>';
@@ -1908,8 +1911,6 @@ function openEditExpense(id){
   const exp=expenses.find(e=>e.id===id); if(!exp)return;
   editExpId=id;
   if($('expModalTitle'))$('expModalTitle').textContent='Edit expense';
-  // Remove quick macros section — not relevant when editing
-  document.getElementById('quickMacros')?.remove();
   if($('expAmount'))$('expAmount').value=exp.amount||'';
   if($('expNote'))  $('expNote').value=exp.description||'';
   if($('expDate'))  $('expDate').value=exp.date||'';
@@ -1917,7 +1918,6 @@ function openEditExpense(id){
   selectedPayer=exp.paidBy||'gwen';
   document.querySelectorAll('#expCatChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.cat===selectedCat));
   document.querySelectorAll('#expPayerChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.payer===selectedPayer));
-  if($('expSplit'))$('expSplit').checked=!!exp.split;
   // Show date input, hide quick-date chips
   if($('expDate'))$('expDate').style.display='block';
   if($('expQuickDates'))$('expQuickDates').style.display='none';
@@ -1931,8 +1931,6 @@ function openExpenseModal(){
   editExpId=null;
   if($('expModalTitle'))$('expModalTitle').textContent='Log expense';
   const saveBtn=$('expSaveBtn'); if(saveBtn)saveBtn.textContent='Add expense';
-  // Show quick macros
-  renderQuickMacros();
   // Restore quick-date row visibility (may have been hidden by edit mode)
   if($('expQuickDates'))$('expQuickDates').style.display='';
   const now=getTodayJST();
@@ -1942,11 +1940,9 @@ function openExpenseModal(){
   if($('expAmount'))$('expAmount').value='';
   if($('expNote'))$('expNote').value='';
   document.querySelectorAll('#expCatChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.cat==='food'));
-  document.querySelectorAll('#expPayerChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.payer==='gwen'));
-  if($('expSplit'))$('expSplit').checked=true;
-  selectedCat='food'; selectedPayer='gwen';
+  document.querySelectorAll('#expPayerChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.payer===selectedPayer));
+  selectedCat='food';
   $('expErr')?.classList.add('hidden');
-  if($('expSplitHint'))$('expSplitHint').textContent='';
   document.querySelectorAll('.qd-btn').forEach(b=>b.classList.toggle('active',b.dataset.offset==='0'));
   if($('expDate'))$('expDate').style.display='none';
   openModal('expenseModal');
@@ -1956,42 +1952,6 @@ function openExpenseModal(){
 $('expFab')?.addEventListener('click',openExpenseModal);
 
 // Quick-add expense macros
-const QUICK_MACROS=[
-  {label:'\u00a5500 Food',   amount:500,  cat:'food',      desc:'Food'},
-  {label:'\u00a51,000 Food', amount:1000, cat:'food',      desc:'Food'},
-  {label:'\u00a52,000 Food', amount:2000, cat:'food',      desc:'Food'},
-  {label:'Suica top-up',    amount:2000, cat:'transport', desc:'Suica reload'},
-  {label:'\u00a5500 Drinks', amount:500,  cat:'drinks',    desc:'Drinks'},
-  {label:'Temple entry',    amount:500,  cat:'activities',desc:'Temple entry'},
-];
-function renderQuickMacros(){
-  let container=document.getElementById('quickMacros');
-  if(!container){
-    const body=document.querySelector('#expenseModal .modal-body'); if(!body)return;
-    container=document.createElement('div');
-    container.id='quickMacros';
-    container.style.cssText='display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border-lt)';
-    body.insertBefore(container,body.firstChild);
-  }
-  const payerName=selectedPayer==='gwen'?'Gwendalynn':'Christina';
-  container.innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline;width:100%;margin-bottom:6px">'
-    +'<span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--light)">Quick add</span>'
-    +'<span style="font-size:11px;color:var(--muted)">Paying: <strong>'+payerName+'</strong></span>'
-    +'</div>'
-    +QUICK_MACROS.map((m,i)=>'<button class="chip" onclick="quickAddExpense('+i+')" style="font-size:11.5px;padding:5px 11px;font-family:var(--mono)">'+m.label+'</button>').join('');
-}
-window.quickAddExpense=async function(idx){
-  const m=QUICK_MACROS[idx]; if(!m)return;
-  const now=getTodayJST();
-  const dateStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  try{
-    await addExpense({amount:m.amount,category:m.cat,description:m.desc,paidBy:selectedPayer,split:true,date:dateStr});
-    closeModal('expenseModal');
-    showToast('Added \u00a5'+m.amount.toLocaleString()+' \u00b7 '+payerLabelFor(selectedPayer)+' paid','ok');
-  }catch(e){showToast('Failed','err');}
-};
-function payerLabelFor(p){return p==='gwen'?'Gwen':'Christina';}
-
 document.getElementById('expCatChips')?.addEventListener('click',e=>{
   const btn=e.target.closest('.chip'); if(!btn)return;
   document.querySelectorAll('#expCatChips .chip').forEach(c=>c.classList.remove('active'));
@@ -2001,9 +1961,6 @@ document.getElementById('expPayerChips')?.addEventListener('click',e=>{
   const btn=e.target.closest('.chip'); if(!btn)return;
   document.querySelectorAll('#expPayerChips .chip').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active'); selectedPayer=btn.dataset.payer||'gwen';
-  updateSplitHint();
-  // Update quick macros payer label if visible
-  const qm=document.getElementById('quickMacros'); if(qm)renderQuickMacros();
 });
 document.getElementById('expQuickDates')?.addEventListener('click',e=>{
   const btn=e.target.closest('.qd-btn'); if(!btn)return;
@@ -2018,16 +1975,6 @@ document.getElementById('expQuickDates')?.addEventListener('click',e=>{
   if($('expDate'))$('expDate').value=clamped.toISOString().split('T')[0];
   document.querySelectorAll('.qd-btn').forEach(b=>b.classList.toggle('active',b===btn));
 });
-function updateSplitHint(){
-  const el=$('expSplitHint'); if(!el)return;
-  if(!$('expSplit')?.checked){el.textContent='';return;}
-  const amt=parseFloat($('expAmount')?.value)||0;
-  const half=Math.round(amt/2);
-  const other=selectedPayer==='gwen'?'Christina':'Gwen';
-  el.textContent=half>0?other+' owes \u00a5'+half.toLocaleString():'';
-}
-$('expAmount')?.addEventListener('input',updateSplitHint);
-$('expSplit')?.addEventListener('change',updateSplitHint);
 
 async function saveExpense(){
   const amount=parseInt($('expAmount')?.value||'0',10);
@@ -2039,7 +1986,8 @@ async function saveExpense(){
     const expData={
       amount, category:selectedCat,
       description:$('expNote')?.value.trim()||selectedCat,
-      paidBy:selectedPayer, split:!!$('expSplit')?.checked,
+      paidBy:selectedPayer,
+      split:selectedPayer==='split',
       date:$('expDate')?.value||'',
     };
     if(editExpId){
