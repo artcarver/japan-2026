@@ -67,24 +67,18 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // For everything else — cache first, fall back to network
+  // For everything else — stale-while-revalidate:
+  // Return cached version instantly for speed, fetch update in background
+  // so the *next* load always has the latest files without manual cache busting.
   event.respondWith(
     caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        // Cache font files and static assets as they're fetched
-        if (response.ok && (
-          url.hostname.includes('fonts.gstatic.com') ||
-          url.hostname.includes('fonts.googleapis.com') ||
-          url.pathname.endsWith('.css') ||
-          url.pathname.endsWith('.js') ||
-          url.pathname.endsWith('.png')
-        )) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+      const fetchPromise = fetch(event.request).then(networkResponse => {
+        if(networkResponse.ok){
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResponse.clone()));
         }
-        return response;
-      });
+        return networkResponse;
+      }).catch(() => {}); // ignore network errors silently in background
+      return cached || fetchPromise;
     })
   );
 });

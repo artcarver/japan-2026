@@ -52,6 +52,7 @@ let ovTimer        = null;
 let selectedCat    = 'food';
 let selectedPayer  = 'gwen';
 let editExpId      = null;
+const expandedItems = new Set(); // tracks which activity items are expanded in-place
 
 // ── Trip dates ────────────────────────────────────────────────
 const TRIP_START = new Date('2026-04-15T00:00:00');
@@ -72,6 +73,31 @@ const $ = id => document.getElementById(id);
 function esc(s){ if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function ea(s){ if(s==null)return''; return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function fmt(jpy){ return budgetCur==='USD'?'$'+Math.round(jpy/exchRate).toLocaleString():'\u00a5'+Math.round(jpy).toLocaleString(); }
+
+// Convert HH:MM (from type="time") to 12h display e.g. "9:30 AM"
+// Passes through anything that doesn't match HH:MM so legacy data is safe
+function fmt12h(t){
+  if(!t)return'';
+  const m=t.match(/^(\d{1,2}):(\d{2})$/);
+  if(!m)return t; // already 12h or free-text — leave as-is
+  let h=parseInt(m[1],10), min=m[2], ampm='AM';
+  if(h===0){h=12;}
+  else if(h===12){ampm='PM';}
+  else if(h>12){h-=12;ampm='PM';}
+  return h+':'+min+' '+ampm;
+}
+// Convert legacy "9:30 AM" strings back to HH:MM for type="time" input
+function fmt24h(t){
+  if(!t)return'';
+  if(/^\d{1,2}:\d{2}$/.test(t.trim()))return t.trim().padStart(5,'0'); // already HH:MM
+  const m=t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if(!m)return'';
+  let h=parseInt(m[1],10);
+  const min=m[2], ampm=m[3].toUpperCase();
+  if(ampm==='PM'&&h<12)h+=12;
+  if(ampm==='AM'&&h===12)h=0;
+  return String(h).padStart(2,'0')+':'+min;
+}
 
 let toastT;
 function showToast(msg, type=''){
@@ -107,13 +133,19 @@ function dayIdToDate(id){
 function parseTimeToMinutes(t){
   if(!t)return 9999;
   const clean=t.replace(/^~/, '').trim();
-  const m=clean.match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/);
-  if(!m)return 9999;
-  let h=parseInt(m[1],10), min=parseInt(m[2],10);
-  const ampm=(m[3]||'').toUpperCase();
-  if(ampm==='PM'&&h<12)h+=12;
-  if(ampm==='AM'&&h===12)h=0;
-  return h*60+min;
+  // HH:MM from type="time" — 24h format
+  const m24=clean.match(/^(\d{1,2}):(\d{2})$/);
+  if(m24)return parseInt(m24[1],10)*60+parseInt(m24[2],10);
+  // Legacy 12h format — "9:30 AM", "10:00 PM"
+  const m12=clean.match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)/);
+  if(m12){
+    let h=parseInt(m12[1],10), min=parseInt(m12[2],10);
+    const ampm=m12[3].toUpperCase();
+    if(ampm==='PM'&&h<12)h+=12;
+    if(ampm==='AM'&&h===12)h=0;
+    return h*60+min;
+  }
+  return 9999;
 }
 
 function sortActivitiesByTime(acts){
@@ -168,7 +200,10 @@ function sortActivitiesByTime(acts){
 function updateClock(){
   const el=$('jstClock'); if(!el)return;
   const jst=getTodayJST();
-  el.textContent='JST '+String(jst.getHours()).padStart(2,'0')+':'+String(jst.getMinutes()).padStart(2,'0');
+  const mo=jst.toLocaleString('en-US',{month:'short'});
+  const dt=jst.getDate();
+  const pad=n=>String(n).padStart(2,'0');
+  el.textContent=mo+' '+dt+', '+pad(jst.getHours())+':'+pad(jst.getMinutes())+' JST';
 }
 function updateTripStatus(){
   const el=$('tripStatus'); if(!el)return;
@@ -325,310 +360,399 @@ const GROUPS = [
 const DAYS = {
   apr15:{id:'apr15',date:'WED APR 15',title:'Depart Los Angeles',location:'LAX \u2192 HND Tokyo',periods:[
     {label:'Flight',items:[
-      {time:'11:20 AM',text:'United UA 39 departs LAX',type:'booked'},
-      {text:'Arrives HND Thursday April 16, 3:05 PM'},
-      {text:'Boeing 787-10 Dreamliner \u00b7 Economy (K) \u00b7 Seats 31L & 31J',sub:true},
-      {text:'Confirmation: F354LH',sub:true},
+      {time:'11:20 AM',text:'United UA 39 \u00b7 LAX \u2192 HND',type:'booked',
+       notes:'Conf: F354LH \u00b7 Seats 31L (Gwen) & 31J (Christina) \u00b7 Boeing 787-10 Dreamliner \u00b7 Economy (K)\nArrives Tokyo HND Thursday April 16, 3:05 PM \u00b7 11 hrs 45 min'},
     ]},
-  ],tip:'Get to LAX by 8:30 AM. Check in online beforehand. Settle in and adjust to the time zone.'},
+  ],tip:'Get to LAX by 8:30 AM. Check in online beforehand.'},
 
   apr16:{id:'apr16',date:'THU APR 16',title:'Arrival Day',location:'Tokyo \u00b7 Shinjuku',periods:[
     {label:'Afternoon',items:[
-      {time:'3:05 PM',text:'Arrive HND \u00b7 clear customs, collect bags',dur:'~90 min'},
-      {text:'Tokyo Monorail or Keikyu Line \u2192 Shinjuku (~60\u201375 min)',sub:true},
-      {time:'~5:30 PM',text:'Check in Hotel Gracery Shinjuku',type:'booked'},
-      {text:'From 14:00 \u00b7 Conf: 5594.831.309 \u00b7 PIN: 6506',sub:true},
-      {text:'Kabukicho 1-19-1, Shinjuku 160-0021',sub:true,addr:'Hotel Gracery Shinjuku, Kabukicho 1-19-1, Shinjuku, Tokyo'},
+      {time:'3:05 PM',text:'Arrive Haneda Airport',dur:'~90 min to hotel',
+       notes:'Clear customs, collect bags \u00b7 Tokyo Monorail or Keikyu Line \u2192 Shinjuku (~60\u201375 min)'},
+      {time:'~5:30 PM',text:'Check in Hotel Gracery Shinjuku',type:'booked',
+       notes:'Conf: 5594.831.309 \u00b7 PIN: 6506 \u00b7 Standard Twin \u00b7 From 14:00\nKabukicho 1-19-1, Shinjuku 160-0021 \u00b7 +81 3 6833 1111',
+       addr:'Hotel Gracery Shinjuku, Kabukicho 1-19-1, Shinjuku, Tokyo'},
     ]},
-    {label:'Evening \u2014 take it easy',items:[
-      {time:'7:00 PM',text:'Omoide Yokocho (Memory Lane) \u00b7 5 min walk from hotel'},
-      {text:'Tiny smoky yakitori stalls, beer \u2014 ease into Japan',sub:true},
-      {time:'9:00 PM',text:'Wander Kabukicho \u00b7 neon, arcades, vending machines'},
+    {label:'Evening',items:[
+      {time:'7:00 PM',text:'Omoide Yokocho',
+       notes:'Memory Lane \u2014 tiny smoky yakitori stalls, ice-cold beer. 5 min walk from hotel. Ease into Japan here.'},
+      {time:'9:00 PM',text:'Wander Kabukicho',
+       notes:'Neon arcades, vending machines, convenience stores. No agenda \u2014 just absorb it.'},
     ]},
   ],tip:'Jet lag will hit in waves. Keep tonight very light \u2014 you have four full days ahead.'},
 
   apr17:{id:'apr17',date:'FRI APR 17',title:'Art + Harajuku + Shibuya',location:'Tokyo \u00b7 Shinjuku',periods:[
-    {label:'Morning \u2014 teamLab Borderless',items:[
-      {time:'8:15 AM',text:'Depart hotel \u00b7 Metro Hibiya Line \u2192 Kamiyacho (Exit 5)'},
-      {time:'8:30 AM',text:'teamLab Borderless \u00b7 Azabudai Hills',type:'booked',dur:'~3 hrs'},
-      {text:'\u00a55,600/person (~$35) \u00b7 2 tickets \u00b7 no re-entry',sub:true},
-      {text:'Wear pants (mirrored floors) \u00b7 download teamLab app beforehand',sub:true},
-      {text:'Hit Bubble Universe + Infinite Crystal World first \u00b7 EN Tea House is extra',sub:true},
-      {text:'Azabudai Hills Garden Plaza B, B1, 1-2-4 Azabudai, Minato-ku',sub:true,addr:'teamLab Borderless, Azabudai Hills, 1-2-4 Azabudai, Minato-ku, Tokyo'},
-      {time:'11:30 AM',text:'Exit teamLab \u00b7 explore Azabudai Hills complex'},
+    {label:'Morning',items:[
+      {time:'8:30 AM',text:'teamLab Borderless',type:'booked',dur:'~3 hrs',cost:5600,
+       notes:'Conf: A7YRA4LXWCN3-0001 \u00b7 Entry 08:30\u201309:00 \u00b7 \u00a55,600/person \u00b7 No re-entry\nWear pants (mirrored floors) \u00b7 Download teamLab app beforehand \u00b7 Hit Bubble Universe + Infinite Crystal World first',
+       addr:'teamLab Borderless, Azabudai Hills, 1-2-4 Azabudai, Minato-ku, Tokyo'},
+      {time:'11:30 AM',text:'Explore Azabudai Hills complex',
+       notes:'Contemporary architecture and upscale retail surrounding teamLab. Worth 20 minutes.'},
     ]},
-    {label:'Afternoon \u2014 Harajuku',items:[
-      {time:'12:30 PM',text:'Metro Hibiya Line \u2192 Meiji-Jingumae (Harajuku)'},
-      {time:'1:00 PM',text:'Meiji Shrine \u00b7 forested approach, very peaceful',dur:'~1 hr'},
-      {text:'1-1 Yoyogikamizonocho, Shibuya-ku',sub:true,addr:'Meiji Shrine, Yoyogi, Shibuya, Tokyo'},
-      {time:'2:30 PM',text:'Takeshita-dori \u00b7 Harajuku street fashion, crepes'},
-      {time:'3:30 PM',text:'Omotesando \u00b7 tree-lined boulevard, flagship architecture'},
+    {label:'Afternoon',items:[
+      {time:'12:30 PM',text:'Meiji Shrine',dur:'~1 hr',
+       notes:'Forested approach through towering torii gates. Peaceful after a hectic morning.',
+       addr:'Meiji Shrine, 1-1 Yoyogikamizonocho, Shibuya, Tokyo'},
+      {time:'2:30 PM',text:'Takeshita-dori',
+       notes:'Harajuku street fashion, crepe stands, chaotic energy. Short but worth seeing.'},
+      {time:'3:30 PM',text:'Omotesando',
+       notes:'Tree-lined boulevard with flagship architecture \u2014 Prada, Tod\'s, Louis Vuitton. Window shopping is free.'},
     ]},
-    {label:'Evening \u2014 Shibuya',items:[
-      {time:'5:30 PM',text:'Shibuya Scramble Crossing \u00b7 view from above first, then walk through'},
-      {time:'7:00 PM',text:'Dinner in Shibuya or Shimokitazawa \u00b7 izakayas, wine bars'},
+    {label:'Evening',items:[
+      {time:'5:30 PM',text:'Shibuya Scramble Crossing',
+       notes:'View from above first \u2014 Starbucks on the corner or Mag\'s Park rooftop. Then walk through at street level.'},
+      {time:'7:00 PM',text:'Dinner in Shibuya or Shimokitazawa',
+       notes:'Izakayas and wine bars throughout. Shimokitazawa (10 min from Shibuya) is more bohemian with excellent small bars.'},
     ]},
-  ],tip:'teamLab closes at 10 PM on Apr 17 (extended spring hours). 8:30 AM is the least crowded slot \u2014 crowds don\'t arrive until after 11 AM.'},
+  ],tip:'teamLab is least crowded 8:30\u201310 AM. Skip the EN Tea House inside unless you want to spend extra.'},
 
   apr18:{id:'apr18',date:'SAT APR 18',title:'Old Tokyo',location:'Asakusa \u00b7 Yanaka \u00b7 Akihabara',periods:[
-    {label:'Morning \u2014 Asakusa',items:[
-      {time:'7:30 AM',text:'Arrive Asakusa \u00b7 Senso-ji before the crowds',dur:'~2 hrs'},
-      {text:'Tour buses arrive by 10 AM \u2014 early light through incense smoke is worth it',sub:true},
-      {text:'2-3-1 Asakusa, Taito-ku',sub:true,addr:'Senso-ji Temple, 2-3-1 Asakusa, Taito, Tokyo'},
-      {time:'8:30 AM',text:'Nakamise-dori \u00b7 ningyo-yaki, age-manju, melonpan'},
-      {time:'9:30 AM',text:'Kappabashi-dori \u00b7 restaurant supply street, plastic food models'},
+    {label:'Morning',items:[
+      {time:'7:30 AM',text:'Senso-ji Temple',dur:'~2 hrs',
+       notes:'Tour buses arrive by 10 AM \u2014 early morning incense smoke through near-empty corridors is worth it.',
+       addr:'Senso-ji Temple, 2-3-1 Asakusa, Taito, Tokyo'},
+      {time:'8:30 AM',text:'Nakamise-dori',
+       notes:'Shopping street leading to Senso-ji. Ningyo-yaki (fish cakes), age-manju, melonpan.'},
+      {time:'9:30 AM',text:'Kappabashi-dori',
+       notes:'Restaurant supply street \u2014 plastic food models, knives, ceramics. Fascinating even if you buy nothing.'},
     ]},
-    {label:'Afternoon \u2014 Yanaka + Akihabara',items:[
-      {time:'11:00 AM',text:'Yanaka \u00b7 Tokyo\'s best-preserved traditional neighborhood',dur:'~1.5 hrs'},
-      {text:'Yanaka Cemetery (cherry trees) \u00b7 Yanaka Ginza covered shopping street',sub:true},
-      {time:'1:00 PM',text:'Lunch in Yanaka \u00b7 local tofu shops, small restaurants'},
-      {time:'2:30 PM',text:'Akihabara \u00b7 15 min walk \u00b7 electronics, retro games, arcade floors'},
+    {label:'Afternoon',items:[
+      {time:'11:00 AM',text:'Yanaka',dur:'~1.5 hrs',
+       notes:'Tokyo\'s best-preserved traditional neighborhood. Yanaka Cemetery (cherry trees) and Yanaka Ginza covered shopping street.',
+       addr:'Yanaka, Taito-ku, Tokyo'},
+      {time:'1:00 PM',text:'Lunch in Yanaka',
+       notes:'Local tofu shops and small family restaurants. Cheap and unpretentious.'},
+      {time:'2:30 PM',text:'Akihabara',
+       notes:'Electronics, retro games, multi-floor arcades. 15 min walk from Yanaka.',
+       addr:'Akihabara, Chiyoda-ku, Tokyo'},
     ]},
-    {label:'Evening \u2014 Shinjuku',items:[
-      {time:'7:00 PM',text:'Fuunji ramen \u00b7 exceptional tsukemen \u00b7 short queue likely',addr:'Fuunji Ramen, Nishi-Shinjuku, Tokyo'},
-      {time:'8:30 PM',text:'Golden Gai \u00b7 cluster of tiny themed bars (jazz, film, rock) \u00b7 just wander in'},
+    {label:'Evening',items:[
+      {time:'7:00 PM',text:'Fuunji Ramen',
+       notes:'Exceptional tsukemen (dipping ramen). Short queue usual \u2014 worth the wait.',
+       addr:'Fuunji Ramen, Nishi-Shinjuku, Tokyo'},
+      {time:'8:30 PM',text:'Golden Gai',
+       notes:'~80 tiny themed bars \u2014 jazz, film noir, rock. Each seats about 8 people. Just wander in, most welcome tourists.'},
     ]},
   ],tip:''},
 
   apr19:{id:'apr19',date:'SUN APR 19',title:'Kamakura Day Trip',location:'Tokyo \u2192 Kamakura (~1 hr)',periods:[
-    {label:'Morning \u2014 Kita-Kamakura',items:[
-      {time:'8:00 AM',text:'Depart Shinjuku \u00b7 JR Shonan-Shinjuku Line \u2192 Kita-Kamakura (~1 hr \u00b7 \u00a5920/~$6)'},
-      {time:'9:15 AM',text:'Engaku-ji Temple \u00b7 cedar forest, zen garden',dur:'~45 min',addr:'Engaku-ji, 409 Yamanouchi, Kamakura, Kanagawa'},
-      {time:'10:00 AM',text:'Walk the trail south toward Kamakura (20\u201330 min scenic walk)'},
+    {label:'Morning',items:[
+      {time:'8:00 AM',text:'JR Shonan-Shinjuku Line \u2192 Kita-Kamakura',
+       notes:'~1 hr \u00b7 \u00a5920/person (~$6) \u00b7 Weekends are busy \u2014 arriving before 10 AM puts you ahead of tour groups'},
+      {time:'9:15 AM',text:'Engaku-ji Temple',dur:'~45 min',cost:300,
+       notes:'Cedar forest, zen garden. Quiet and meditative in the morning.',
+       addr:'Engaku-ji, 409 Yamanouchi, Kamakura, Kanagawa'},
+      {time:'10:00 AM',text:'Walk trail south to Kamakura',dur:'20\u201330 min',
+       notes:'Scenic forest path between Kita-Kamakura and central Kamakura. Stay on the main trail.'},
     ]},
-    {label:'Afternoon \u2014 Kamakura',items:[
-      {time:'11:00 AM',text:'Great Buddha \u00b7 Kotoku-in \u00b7 \u00a5300 (~$2) \u00b7 enter the hollow statue',dur:'~1 hr',addr:'Kotoku-in Great Buddha, 4-2-28 Hase, Kamakura, Kanagawa'},
-      {time:'12:00 PM',text:'Hase-dera Temple \u00b7 ocean views, cave system \u00b7 \u00a5400 (~$3)',dur:'~1 hr',addr:'Hase-dera Temple, 3-11-2 Hase, Kamakura, Kanagawa'},
-      {time:'1:00 PM',text:'Lunch near Hase Station \u00b7 shirasu (whitebait) dishes, a local specialty'},
-      {time:'2:30 PM',text:'Optional: Tsurugaoka Hachimangu Shrine',addr:'Tsurugaoka Hachimangu, 2-1-31 Yukinoshita, Kamakura'},
+    {label:'Afternoon',items:[
+      {time:'11:00 AM',text:'Great Buddha \u00b7 Kotoku-in',dur:'~1 hr',cost:300,
+       notes:'13th-century bronze Buddha, 13 metres tall. You can enter the hollow statue for a small extra fee.',
+       addr:'Kotoku-in, 4-2-28 Hase, Kamakura, Kanagawa'},
+      {time:'12:00 PM',text:'Hase-dera Temple',dur:'~1 hr',cost:400,
+       notes:'Ocean views over Kamakura Bay, cave system with 11,000 miniature Jizo statues.',
+       addr:'Hase-dera Temple, 3-11-2 Hase, Kamakura, Kanagawa'},
+      {time:'1:00 PM',text:'Lunch near Hase Station',
+       notes:'Shirasu (whitebait) is the local specialty \u2014 shirasu don (rice bowl) or shirasu pizza.'},
+      {time:'2:30 PM',text:'Tsurugaoka Hachimangu Shrine',
+       notes:'Optional if energy allows. Main shrine of Kamakura \u2014 impressive approach avenue.',
+       addr:'Tsurugaoka Hachimangu, 2-1-31 Yukinoshita, Kamakura'},
     ]},
-    {label:'Evening \u2014 Return + Luggage Forwarding',items:[
-      {time:'4:00 PM',text:'Return to Shinjuku by 5:30 PM'},
-      {time:'6:00 PM',text:'Arrange takkyubin at hotel front desk tonight'},
-      {text:'Send luggage: Hotel Gracery Shinjuku \u2192 Hotel Granvia Kyoto',sub:true},
-      {text:'Sent Apr 19 arrives Apr 21 \u00b7 ~\u00a51,500\u20132,000/bag (~$10\u201313)',sub:true},
+    {label:'Evening',items:[
+      {time:'4:00 PM',text:'Return to Shinjuku',
+       notes:'Aim to be back by 5:30 PM'},
+      {time:'6:00 PM',text:'Arrange takkyubin at hotel front desk',
+       notes:'Send luggage: Hotel Gracery Shinjuku \u2192 Hotel Granvia Kyoto\nSent Apr 19 arrives Apr 21 \u00b7 ~\u00a51,500\u20132,000/bag (~$10\u201313)'},
       {time:'7:30 PM',text:'Last dinner in Shinjuku'},
     ]},
   ],tip:'Weekends in Kamakura are busy \u2014 arriving before 10 AM puts you ahead of the tour groups.'},
 
   apr20:{id:'apr20',date:'MON APR 20',title:'Fuji Excursion \u2192 Kawaguchiko \u2192 Hakone',location:'Shinjuku \u2192 Kawaguchiko \u2192 Gora',periods:[
-    {label:'Morning \u2014 Fuji Excursion',items:[
-      {time:'8:30 AM',text:'Fuji-Excursion 7 departs Shinjuku',type:'booked'},
-      {text:'\u00a58,400 total (~$53) \u00b7 Car 3, Seats 13-C & 13-D \u00b7 Res: E77821',sub:true},
-      {time:'10:26 AM',text:'Arrive Kawaguchiko Station'},
+    {label:'Morning',items:[
+      {time:'8:30 AM',text:'Fuji-Excursion 7 \u00b7 Shinjuku \u2192 Kawaguchiko',type:'booked',
+       notes:'Res: E77821 \u00b7 Pickup code: 24492390994521288\n\u00a58,400 total (~$53) \u00b7 Car 3, Seat 13-C (Gwen) & 13-D (Christina) \u00b7 Arrives 10:26 AM'},
+      {time:'10:30 AM',text:'Oishi Park',dur:'~1.5 hrs',
+       notes:'North shore of Lake Kawaguchi \u2014 best Fuji reflections in the lake with late cherry blossoms.',
+       addr:'Oishi Park, Kawaguchiko, Fujikawaguchiko, Yamanashi'},
+      {time:'12:00 PM',text:'Chureito Pagoda',dur:'~1 hr',
+       notes:'30 min from Kawaguchiko \u00b7 ~400 stone steps \u00b7 Iconic 5-story pagoda framing Fuji \u2014 worth the detour if skies are clear.',
+       addr:'Chureito Pagoda, Arakurayama Sengen Park, Fujiyoshida, Yamanashi'},
     ]},
-    {label:'Morning & Afternoon \u2014 Kawaguchiko',items:[
-      {time:'10:30 AM',text:'Oishi Park \u00b7 north shore \u00b7 best Fuji reflections + late cherry blossoms',dur:'~1.5 hrs',addr:'Oishi Park, Kawaguchiko, Fujikawaguchiko, Yamanashi'},
-      {time:'12:00 PM',text:'Chureito Pagoda \u00b7 30 min to Fujiyoshida \u00b7 ~400 steps',dur:'~1 hr',addr:'Chureito Pagoda, Fujiyoshida, Yamanashi'},
-      {text:'Iconic 5-story pagoda framing Fuji with blossoms \u2014 worth the detour',sub:true},
-      {time:'1:00 PM',text:'Lunch near Kawaguchiko Station \u00b7 hoto noodles (local specialty)'},
-    ]},
-    {label:'Afternoon \u2014 Transit to Hakone',items:[
-      {time:'2:00 PM',text:'Bus via Gotemba \u2192 Gora (~2.5 hrs) \u00b7 day bags only'},
-      {time:'~4:30 PM',text:'Arrive Gora \u00b7 walk to ryokan (2\u20133 min from station)'},
-      {time:'5:00 PM',text:'Check in Tensui Saryo \u00b7 Gora, Hakone',type:'booked'},
-      {text:'1320-276 Gora, Hakone-machi, Ashigarashimo-gun',sub:true,addr:'Tensui Saryo, Gora, Hakone, Ashigarashimo-gun, Kanagawa'},
-      {text:'Reservation: IK1516984808 \u00b7 check-in 15:00\u201321:30',sub:true},
+    {label:'Afternoon',items:[
+      {time:'1:00 PM',text:'Lunch \u00b7 Kawaguchiko Station area',
+       notes:'Hoto noodles \u2014 thick flat noodles in miso broth with pumpkin. Local specialty of Yamanashi.'},
+      {time:'2:00 PM',text:'Bus via Gotemba \u2192 Gora',dur:'~2.5 hrs',
+       notes:'Day bags only \u2014 luggage already forwarded to Kyoto via takkyubin'},
+      {time:'~4:30 PM',text:'Arrive Gora \u00b7 walk to ryokan',
+       notes:'2\u20133 min walk from Gora Station to Tensui Saryo'},
+      {time:'5:00 PM',text:'Check in Tensui Saryo',type:'booked',
+       notes:'Res: IK1516984808 \u00b7 Verify: 0F35443D931C12B \u00b7 +81-570-062-302\nDetached Type-A \u00b7 Private open-air onsen + foot bath \u00b7 Check-in 15:00\u201321:30',
+       addr:'Tensui Saryo, 1320-276 Gora, Hakone, Kanagawa'},
     ]},
     {label:'Evening',items:[
-      {time:'5:30 PM',text:'Ryokan \u00b7 change into yukata, explore property, private onsen'},
-      {time:'7:45 PM',text:'Kaiseki dinner at Tensui Saryo \u2014 19:45',type:'booked'},
-      {text:'Dinner and breakfast included \u00b7 10-course traditional kaiseki',sub:true},
+      {time:'5:30 PM',text:'Change into yukata \u00b7 private onsen',
+       notes:'Yukata and slippers provided. Use the private rotenburo on your deck before dinner too.'},
+      {time:'7:45 PM',text:'Kaiseki dinner \u00b7 Tensui Saryo',type:'booked',
+       notes:'10-course traditional kaiseki \u00b7 Dinner and breakfast included in room rate'},
     ]},
   ],tip:'Morning is the best window for Mt. Fuji views before clouds build. The Chureito Pagoda detour is worth it if skies are clear.'},
 
   apr21:{id:'apr21',date:'TUE APR 21',title:'The Hakone Loop',location:'Gora \u2192 Owakudani \u2192 Lake Ashi',periods:[
-    {label:'Morning \u2014 Open Air Museum + Ropeway',items:[
-      {time:'9:00 AM',text:'Hakone Open Air Museum \u00b7 opens 9 AM \u00b7 \u00a52,000 (~$13)',dur:'~2 hrs',addr:'Hakone Open Air Museum, 1121 Ninotaira, Hakone, Kanagawa'},
-      {text:'10 min walk from ryokan \u00b7 outdoor sculptures, Picasso Pavilion (300+ works), foot onsen inside',sub:true},
-      {time:'11:00 AM',text:'Hakone Tozan Railway: Gora \u2192 Sounzan (10 min)'},
-      {time:'11:15 AM',text:'Ropeway: Sounzan \u2192 Owakudani (~25 min) \u00b7 Hakone Free Pass'},
-      {text:'Best Fuji views in the morning before clouds build',sub:true},
+    {label:'Morning',items:[
+      {time:'9:00 AM',text:'Hakone Open Air Museum',dur:'~2 hrs',cost:2000,
+       notes:'10 min walk from ryokan \u00b7 Outdoor sculptures, Picasso Pavilion (300+ works), foot onsen inside\nBuy the Hakone Free Pass at Gora Station (~\u00a54,000 \u00b7 covers Tozan Railway, ropeway, and Lake Ashi boat)',
+       addr:'Hakone Open Air Museum, 1121 Ninotaira, Hakone, Kanagawa'},
+      {time:'11:00 AM',text:'Tozan Railway: Gora \u2192 Sounzan',dur:'10 min',
+       notes:'Covered by Hakone Free Pass'},
+      {time:'11:15 AM',text:'Ropeway: Sounzan \u2192 Owakudani',dur:'~25 min',
+       notes:'Best Fuji views in the morning before clouds build. Covered by Hakone Free Pass.'},
     ]},
-    {label:'Midday \u2014 Owakudani + Lake Ashi',items:[
-      {time:'12:00 PM',text:'Owakudani volcanic valley \u00b7 sulfur steam vents \u00b7 black eggs',addr:'Owakudani, Hakone, Ashigarashimo-gun, Kanagawa'},
-      {text:'\u00a5500 for 5 eggs (~$3) \u00b7 supposedly add 7 years per egg',sub:true},
-      {time:'1:00 PM',text:'Ropeway \u2192 Togendai on Lake Ashi (~25 min)'},
-      {time:'1:30 PM',text:'Lake Ashi sightseeing boat \u2192 Moto-Hakone (~30 min \u00b7 Free Pass)',dur:'30 min'},
+    {label:'Midday',items:[
+      {time:'12:00 PM',text:'Owakudani volcanic valley',cost:500,
+       notes:'\u00a5500 for 5 black eggs (boiled in volcanic hot spring) \u2014 supposedly adds 7 years per egg. Active sulfur vents.',
+       addr:'Owakudani, Hakone, Ashigarashimo-gun, Kanagawa'},
+      {time:'1:00 PM',text:'Ropeway \u2192 Togendai on Lake Ashi',dur:'~25 min',
+       notes:'Covered by Hakone Free Pass'},
+      {time:'1:30 PM',text:'Lake Ashi sightseeing boat \u2192 Moto-Hakone',dur:'30 min',
+       notes:'Views of Mt. Fuji over the lake on a clear day. Covered by Hakone Free Pass.'},
     ]},
-    {label:'Afternoon \u2014 Hakone Shrine + Return',items:[
-      {time:'2:30 PM',text:'Hakone Shrine \u00b7 torii gate rising from the lake',dur:'~45 min',addr:'Hakone Shrine, 80-1 Motohakone, Hakone, Kanagawa'},
-      {time:'3:30 PM',text:'Lunch near Moto-Hakone \u00b7 tofu cuisine, soba'},
-      {time:'5:00 PM',text:'Head back to Gora \u00b7 Hakone Tozan Railway'},
-      {time:'5:30 PM',text:'Tensui Saryo \u00b7 private open-air onsen',dur:'~1.5 hrs'},
+    {label:'Afternoon',items:[
+      {time:'2:30 PM',text:'Hakone Shrine',dur:'~45 min',
+       notes:'Torii gate rising directly from the lake surface. Very photogenic from the lakeside path.',
+       addr:'Hakone Shrine, 80-1 Motohakone, Hakone, Kanagawa'},
+      {time:'3:30 PM',text:'Lunch near Moto-Hakone',
+       notes:'Tofu cuisine and soba restaurants near the shrine.'},
+      {time:'5:00 PM',text:'Return to Gora \u00b7 Tozan Railway'},
+      {time:'5:30 PM',text:'Private open-air onsen at ryokan',dur:'~1.5 hrs',
+       notes:'Most magical at dusk \u2014 use it before dinner.'},
     ]},
     {label:'Evening',items:[
-      {time:'7:45 PM',text:'Kaiseki dinner at Tensui Saryo \u2014 19:45',type:'booked'},
+      {time:'7:45 PM',text:'Kaiseki dinner \u00b7 Tensui Saryo',type:'booked',
+       notes:'10-course kaiseki \u00b7 Second night \u00b7 Dinner included in room rate'},
     ]},
-  ],tip:'Buy the Hakone Free Pass at Gora Station \u2014 covers Tozan Railway, ropeway, and Lake Ashi boat. ~\u00a54,000 (~$25) for 2 days.'},
+  ],tip:'Buy the Hakone Free Pass at Gora Station \u2014 covers Tozan Railway, ropeway, and Lake Ashi boat. ~\u00a54,000 for 2 days.'},
 
   apr22:{id:'apr22',date:'WED APR 22',title:'Depart Hakone \u2192 Arrive Kyoto',location:'Gora \u2192 Odawara \u2192 Kyoto',periods:[
-    {label:'Morning \u2014 Checkout + Shinkansen',items:[
+    {label:'Morning',items:[
       {time:'7:00 AM',text:'Breakfast at ryokan \u00b7 included'},
-      {time:'9:00 AM',text:'Check out Tensui Saryo \u00b7 must leave by 9:00 AM'},
-      {time:'9:05 AM',text:'Hakone Tozan Railway: Gora \u2192 Hakone-Yumoto (~35 min)'},
-      {time:'9:45 AM',text:'Local train: Hakone-Yumoto \u2192 Odawara (~15 min)'},
-      {time:'10:11 AM',text:'HIKARI 637 departs Odawara',type:'booked'},
-      {text:'\u00a523,800 total (~$150) \u00b7 Res: 2002 \u00b7 Series N700 \u00b7 seats TBD by email',sub:true},
-      {time:'12:12 PM',text:'Arrive Kyoto Station',dur:'2 hrs 1 min'},
+      {time:'9:00 AM',text:'Check out Tensui Saryo',
+       notes:'Must leave by 9:00 AM'},
+      {time:'9:05 AM',text:'Tozan Railway: Gora \u2192 Hakone-Yumoto',dur:'~35 min'},
+      {time:'9:45 AM',text:'Local train: Hakone-Yumoto \u2192 Odawara',dur:'~15 min'},
+      {time:'10:11 AM',text:'HIKARI 637 \u00b7 Odawara \u2192 Kyoto',type:'booked',
+       notes:'Res: 2002 \u00b7 Smart EX: 9007241665 \u00b7 \u00a523,800 total (~$150)\nSeries N700 \u00b7 Ordinary class \u00b7 Seats TBD by email notification'},
+      {time:'12:12 PM',text:'Arrive Kyoto Station'},
     ]},
-    {label:'Afternoon \u2014 Arrive Kyoto',items:[
-      {time:'12:15 PM',text:'Check in Hotel Granvia Kyoto',type:'booked'},
-      {text:'JR Kyoto Station (Karasuma) \u00b7 Conf: #23151SF060529',sub:true,addr:'Hotel Granvia Kyoto, JR Kyoto Station, 600-8216 Kyoto'},
-      {text:'Luggage arriving from takkyubin (sent Apr 19)',sub:true},
-      {time:'2:30 PM',text:'Fushimi Inari Taisha \u00b7 5 min by JR \u00b7 FREE \u00b7 open 24 hrs',addr:'Fushimi Inari Taisha, 68 Fukakusa Yabunouchicho, Fushimi-ku, Kyoto'},
-      {text:'Preview visit \u2014 lower gates only \u00b7 save energy for tomorrow 6 AM',sub:true},
+    {label:'Afternoon',items:[
+      {time:'12:15 PM',text:'Check in Hotel Granvia Kyoto',type:'booked',
+       notes:'Conf: #23151SF060529 \u00b7 +81-75-344-8888\nJR Kyoto Station (Karasuma exit) \u00b7 Luggage arriving from takkyubin (sent Apr 19, arrives Apr 21)',
+       addr:'Hotel Granvia Kyoto, JR Kyoto Station, Kyoto'},
+      {time:'2:30 PM',text:'Fushimi Inari Taisha \u00b7 preview visit',
+       notes:'5 min by JR from Kyoto Station \u00b7 FREE \u00b7 Open 24 hrs\nLower gates only today \u2014 save energy for tomorrow\'s 6 AM hike.',
+       addr:'Fushimi Inari Taisha, 68 Fukakusa Yabunouchicho, Fushimi-ku, Kyoto'},
     ]},
     {label:'Evening',items:[
-      {time:'5:30 PM',text:'Nishiki Market \u00b7 closes ~5:30 PM weekdays',addr:'Nishiki Market, Nishikikoji Street, Nakagyo-ku, Kyoto'},
-      {time:'7:30 PM',text:'Dinner in Gion or Pontocho alley'},
+      {time:'5:30 PM',text:'Nishiki Market',
+       notes:'Closes ~5:30 PM weekdays \u2014 arrive by 5 PM. Kyoto pickles, sakura sweets, matcha soft serve.',
+       addr:'Nishiki Market, Nishikikoji Street, Nakagyo-ku, Kyoto'},
+      {time:'7:30 PM',text:'Dinner in Gion or Pontocho',
+       notes:'Pontocho is a narrow lantern-lit alley along the Kamo River \u2014 atmospheric at night.'},
     ]},
-  ],tip:'Check out by 9 AM is essential. The full Fushimi Inari hike is tomorrow at 6 AM \u2014 the single most important timing decision of the Kyoto trip.'},
+  ],tip:'Check out by 9 AM is essential. The full Fushimi Inari hike is tomorrow at 6 AM.'},
 
   apr23:{id:'apr23',date:'THU APR 23',title:'Fushimi Inari + Arashiyama',location:'Kyoto \u00b7 Southern + Western',periods:[
-    {label:'Very Early Morning \u2014 Fushimi Inari',items:[
-      {time:'5:45 AM',text:'JR Nara Line \u2192 Inari Station (5 min \u00b7 \u00a5150/~$1)'},
-      {time:'6:00 AM',text:'Fushimi Inari Taisha \u00b7 FREE \u00b7 open 24 hrs',dur:'~2.5 hrs',addr:'Fushimi Inari Taisha, 68 Fukakusa Yabunouchicho, Fushimi-ku, Kyoto'},
-      {text:'By 8 AM it\'s crowded \u00b7 by 10 AM shoulder-to-shoulder \u00b7 6 AM is transformative',sub:true},
-      {text:'Full hike to summit and back ~2 hrs \u00b7 Yotsutsuji crossroads has best views',sub:true},
-      {time:'8:30 AM',text:'Descend \u00b7 grab breakfast from street stalls outside entrance'},
+    {label:'Very Early Morning',items:[
+      {time:'5:45 AM',text:'JR Nara Line \u2192 Inari Station',
+       notes:'5 min \u00b7 \u00a5150/person (~$1)'},
+      {time:'6:00 AM',text:'Fushimi Inari Taisha',dur:'~2.5 hrs',
+       notes:'10,000 vermilion torii gates. By 8 AM it\'s crowded; 6 AM is genuinely transformative.\nFull hike to summit and back ~2 hrs \u00b7 Yotsutsuji crossroads (~45 min up) has the best views and a rest stop.',
+       addr:'Fushimi Inari Taisha, 68 Fukakusa Yabunouchicho, Fushimi-ku, Kyoto'},
+      {time:'8:30 AM',text:'Breakfast at Inari street stalls',
+       notes:'Inari-zushi, grilled skewers, matcha drinks from vendors outside the main gate.'},
     ]},
-    {label:'Late Morning \u2014 Arashiyama',items:[
-      {time:'9:30 AM',text:'JR Sagano Line \u2192 Saga-Arashiyama (~25 min \u00b7 \u00a5240/~$2)'},
-      {time:'10:00 AM',text:'Arashiyama Bamboo Grove \u00b7 FREE \u00b7 open 24 hrs',dur:'~45 min',addr:'Arashiyama Bamboo Grove, Sagatenryuji, Ukyo-ku, Kyoto'},
-      {text:'Still manageable at 10 AM on a weekday \u2014 earlier is better but you started at dawn',sub:true},
-      {time:'10:45 AM',text:'Tenryu-ji Temple \u00b7 \u00a5500 (~$3) for garden',dur:'~45 min',addr:'Tenryu-ji, 68 Sagatenryuji Susukinobabacho, Ukyo-ku, Kyoto'},
-      {time:'11:30 AM',text:'Togetsukyo Bridge \u00b7 iconic bridge over the Oi River',addr:'Togetsukyo Bridge, Sagatenryuji, Ukyo-ku, Kyoto'},
+    {label:'Late Morning',items:[
+      {time:'9:30 AM',text:'JR Sagano Line \u2192 Saga-Arashiyama',
+       notes:'~25 min \u00b7 \u00a5240/person (~$2)'},
+      {time:'10:00 AM',text:'Arashiyama Bamboo Grove',dur:'~45 min',
+       notes:'Still manageable at 10 AM on a weekday. Towering bamboo on both sides \u2014 genuinely otherworldly.',
+       addr:'Arashiyama Bamboo Grove, Sagatenryuji, Ukyo-ku, Kyoto'},
+      {time:'10:45 AM',text:'Tenryu-ji Temple',dur:'~45 min',cost:500,
+       notes:'UNESCO site. Beautiful strolling garden with pond \u2014 mountain backdrop is quintessential Kyoto.',
+       addr:'Tenryu-ji, 68 Sagatenryuji Susukinobabacho, Ukyo-ku, Kyoto'},
+      {time:'11:30 AM',text:'Togetsukyo Bridge',
+       notes:'Iconic bridge over the Oi River. Good views of the mountains from the riverbank.',
+       addr:'Togetsukyo Bridge, Sagatenryuji, Ukyo-ku, Kyoto'},
     ]},
-    {label:'Afternoon \u2014 Higashiyama',items:[
-      {time:'12:30 PM',text:'Lunch in Arashiyama \u00b7 yudofu (hot tofu), matcha soba, or riverside cafe'},
-      {time:'2:00 PM',text:'Bus or JR to Higashiyama district'},
-      {time:'2:30 PM',text:'Ninenzaka + Sannenzaka \u00b7 preserved stone-paved streets',dur:'~1 hr',addr:'Ninenzaka, Higashiyama-ku, Kyoto'},
-      {time:'3:30 PM',text:'Kiyomizudera Temple \u00b7 \u00a5500 (~$3)',dur:'~1 hr',addr:'Kiyomizudera, 1-294 Kiyomizu, Higashiyama-ku, Kyoto'},
+    {label:'Afternoon',items:[
+      {time:'12:30 PM',text:'Lunch in Arashiyama',
+       notes:'Yudofu (hot tofu), matcha soba, or a riverside caf\u00e9. Take your time \u2014 you started at dawn.'},
+      {time:'2:30 PM',text:'Ninenzaka + Sannenzaka',dur:'~1 hr',
+       notes:'Preserved stone-paved streets lined with tea houses and craft shops.',
+       addr:'Ninenzaka, Higashiyama-ku, Kyoto'},
+      {time:'3:30 PM',text:'Kiyomizudera Temple',dur:'~1 hr',cost:500,
+       notes:'Dramatic wooden stage jutting from the mountainside \u2014 panoramic views over eastern Kyoto.',
+       addr:'Kiyomizudera, 1-294 Kiyomizu, Higashiyama-ku, Kyoto'},
     ]},
     {label:'Evening',items:[
-      {time:'5:30 PM',text:'Gion district \u00b7 Hanamikoji Street \u00b7 watch for geiko/maiko',addr:'Hanamikoji Street, Gion, Higashiyama-ku, Kyoto'},
-      {time:'7:00 PM',text:'Dinner in Gion or Pontocho \u00b7 book in advance'},
+      {time:'5:30 PM',text:'Gion \u00b7 Hanamikoji Street',
+       notes:'Watch for geiko and maiko in the early evening. No photography rule is taken seriously here.',
+       addr:'Hanamikoji Street, Gion, Higashiyama-ku, Kyoto'},
+      {time:'7:00 PM',text:'Dinner in Gion or Pontocho',
+       notes:'Book in advance for anything good in Gion. Pontocho has more walk-in options.'},
     ]},
-  ],tip:'6 AM at Fushimi Inari is the single best timing call of the Kyoto trip. The difference between 6 AM and 10 AM is serene vs. a crush of tourists.'},
+  ],tip:'6 AM at Fushimi Inari is the single best timing call of the Kyoto trip.'},
 
-  apr24:{id:'apr24',date:'FRI APR 24',title:'Nara Day Trip + Nishiki Market',location:'Kyoto \u2192 Nara \u2192 Central Kyoto',periods:[
-    {label:'Morning \u2014 Nara',items:[
-      {time:'8:30 AM',text:'JR Nara Line: Kyoto \u2192 Nara (45 min \u00b7 \u00a5760/~$5)'},
-      {time:'9:30 AM',text:'Nara Park \u00b7 hundreds of freely roaming deer',dur:'~30 min',addr:'Nara Park, Zoshicho, Nara'},
-      {time:'10:00 AM',text:'Todai-ji Temple \u00b7 world\'s largest wooden building \u00b7 giant bronze Buddha',dur:'~1.5 hrs',addr:'Todai-ji, 406-1 Zoshicho, Nara'},
-      {text:'\u00a5600 (~$4) \u00b7 UNESCO \u00b7 genuinely awe-inspiring scale',sub:true},
-      {time:'11:30 AM',text:'Kasuga Taisha Shrine \u00b7 forest setting \u00b7 lantern-lined paths',addr:'Kasuga Taisha, 160 Kasuganocho, Nara'},
-      {time:'12:30 PM',text:'Lunch in Nara \u00b7 kakinoha-zushi (persimmon-leaf sushi)'},
-      {time:'2:00 PM',text:'Return to Kyoto'},
+  apr24:{id:'apr24',date:'FRI APR 24',title:'Nara Day Trip + Central Kyoto',location:'Kyoto \u2192 Nara \u2192 Central Kyoto',periods:[
+    {label:'Morning',items:[
+      {time:'8:30 AM',text:'JR Nara Line: Kyoto \u2192 Nara',
+       notes:'45 min \u00b7 \u00a5760/person (~$5)'},
+      {time:'9:30 AM',text:'Nara Park \u00b7 deer',
+       notes:'Hundreds of freely roaming deer who bow for crackers (shika senbei, ~\u00a5200 from vendors). Watch your bags.',
+       addr:'Nara Park, Zoshicho, Nara'},
+      {time:'10:00 AM',text:'Todai-ji Temple',dur:'~1.5 hrs',cost:600,
+       notes:'World\'s largest wooden building. The bronze Daibutsu inside is 15 metres tall \u2014 genuinely awe-inspiring.\nSqueezing through the wooden pillar nostril hole inside is said to bring enlightenment.',
+       addr:'Todai-ji, 406-1 Zoshicho, Nara'},
+      {time:'11:30 AM',text:'Kasuga Taisha Shrine',
+       notes:'3,000 stone and bronze lanterns lining forested paths. Less crowded than Todai-ji.',
+       addr:'Kasuga Taisha, 160 Kasuganocho, Nara'},
+      {time:'12:30 PM',text:'Lunch in Nara',
+       notes:'Kakinoha-zushi (sushi wrapped in persimmon leaf) is the local specialty.'},
     ]},
-    {label:'Afternoon \u2014 Central Kyoto',items:[
-      {time:'3:00 PM',text:'Nishiki Market \u00b7 go before 3 PM \u00b7 closes ~5:30 PM weekdays',dur:'~1 hr',addr:'Nishiki Market, Nishikikoji Street, Nakagyo-ku, Kyoto'},
-      {text:'Kyoto\'s Kitchen \u00b7 sakura-themed sweets in April \u00b7 pickles \u00b7 matcha soft serve',sub:true},
-      {time:'4:30 PM',text:'Teramachi + Shinkyogoku shopping arcades \u00b7 adjacent to Nishiki'},
+    {label:'Afternoon',items:[
+      {time:'2:00 PM',text:'Return to Kyoto by JR'},
+      {time:'3:00 PM',text:'Nishiki Market',dur:'~1 hr',
+       notes:'Go before 5:30 PM closing. Sakura-themed sweets in April, Kyoto pickles, matcha everything.',
+       addr:'Nishiki Market, Nishikikoji Street, Nakagyo-ku, Kyoto'},
+      {time:'4:30 PM',text:'Teramachi + Shinkyogoku arcades',
+       notes:'Covered shopping arcades adjacent to Nishiki \u2014 good for souvenirs and snacks.'},
     ]},
     {label:'Evening',items:[
-      {time:'6:00 PM',text:'Philosopher\'s Path \u00b7 2 km canal walk lined with cherry trees',dur:'~1 hr',addr:'Philosopher\'s Path, Sakyo-ku, Kyoto'},
+      {time:'6:00 PM',text:"Philosopher's Path",dur:'~1 hr',
+       notes:'2 km canal walk lined with cherry trees. Best at dusk.',
+       addr:"Philosopher's Path, Sakyo-ku, Kyoto"},
       {time:'7:30 PM',text:'Dinner in Pontocho or Gion'},
     ]},
-  ],tip:'Nara is best before 10 AM when the deer are calm and the temples are quiet. Nishiki Market closes early on weekdays \u2014 arrive by 3 PM.'},
+  ],tip:'Nara is best before 10 AM when the deer are calm and the temples quiet.'},
 
   apr25:{id:'apr25',date:'SAT APR 25',title:'Osaka Day Trip + Kinkaku-ji',location:'Kyoto \u2192 Osaka \u2192 Northern Kyoto',periods:[
-    {label:'Morning \u2014 Osaka',items:[
-      {time:'9:00 AM',text:'JR Shinkaisoku: Kyoto \u2192 Osaka (~30 min \u00b7 \u00a5580/~$4)'},
-      {time:'10:00 AM',text:'Osaka Aquarium Kaiyukan \u00b7 whale sharks in a 4-storey Pacific tank',dur:'~2 hrs',addr:'Osaka Aquarium Kaiyukan, 1-1-10 Kaigandori, Minato-ku, Osaka'},
-      {text:'\u00a52,700 (~$18) \u00b7 book tickets online in advance to skip the queue',sub:true},
-      {time:'12:30 PM',text:'Dotonbori \u00b7 neon food street, takoyaki, the Glico Running Man sign',dur:'~1.5 hrs',addr:'Dotonbori, Chuo-ku, Osaka'},
-      {text:'Try takoyaki (octopus balls), okonomiyaki (savory pancake), and kushikatsu (fried skewers)',sub:true},
+    {label:'Morning',items:[
+      {time:'9:00 AM',text:'JR Shinkaisoku: Kyoto \u2192 Osaka',
+       notes:'~30 min \u00b7 \u00a5580/person (~$4)'},
+      {time:'10:00 AM',text:'Osaka Aquarium Kaiyukan',dur:'~2 hrs',cost:2700,
+       notes:'Whale sharks in a 4-storey Pacific Ocean tank. Book tickets online in advance to skip the queue.',
+       addr:'Osaka Aquarium Kaiyukan, 1-1-10 Kaigandori, Minato-ku, Osaka'},
+      {time:'12:30 PM',text:'Dotonbori',dur:'~1.5 hrs',
+       notes:'Neon food street. Try: takoyaki (octopus balls), okonomiyaki (savory pancake), kushikatsu (fried skewers). The Glico Running Man sign.',
+       addr:'Dotonbori, Chuo-ku, Osaka'},
     ]},
-    {label:'Afternoon \u2014 Osaka + Return',items:[
-      {time:'2:30 PM',text:'Kuromon Ichiba Market \u00b7 580m covered market \u00b7 fresh scallops and crab',dur:'~1 hr',addr:'Kuromon Ichiba Market, Nipponbashi, Chuo-ku, Osaka'},
-      {time:'3:30 PM',text:'Optional: Osaka Castle \u00b7 \u00a5600 \u00b7 museum inside \u00b7 beautiful grounds',addr:'Osaka Castle, 1-1 Osakajo, Chuo-ku, Osaka'},
-      {time:'4:30 PM',text:'Return to Kyoto \u00b7 JR Shinkaisoku (~30 min)'},
+    {label:'Afternoon',items:[
+      {time:'2:30 PM',text:'Kuromon Ichiba Market',dur:'~1 hr',
+       notes:'580m covered market. Fresh scallops, crab, and sea urchin at stalls.',
+       addr:'Kuromon Ichiba Market, Nipponbashi, Chuo-ku, Osaka'},
+      {time:'3:30 PM',text:'Osaka Castle \u00b7 optional',cost:600,
+       notes:'Beautiful grounds and moat. Museum inside. Worth it if energy allows.',
+       addr:'Osaka Castle, 1-1 Osakajo, Chuo-ku, Osaka'},
+      {time:'4:30 PM',text:'Return to Kyoto \u00b7 JR Shinkaisoku',
+       notes:'~30 min'},
     ]},
-    {label:'Late Afternoon \u2014 Northern Kyoto',items:[
-      {time:'5:30 PM',text:'Kinkaku-ji (Golden Pavilion) \u00b7 \u00a5500 (~$3)',addr:'Kinkaku-ji, 1 Kinkakujicho, Kita-ku, Kyoto'},
-      {text:'Late afternoon light on the gold leaf is stunning \u00b7 closes 5 PM but aim for just before',sub:true},
+    {label:'Late Afternoon',items:[
+      {time:'5:30 PM',text:'Kinkaku-ji \u00b7 Golden Pavilion',cost:500,
+       notes:'Late afternoon light on the gold leaf is the best time to visit. Closes 5 PM \u2014 aim for 4:45 PM.\nExtremely crowded but genuinely worth seeing once.',
+       addr:'Kinkaku-ji, 1 Kinkakujicho, Kita-ku, Kyoto'},
     ]},
-    {label:'Evening \u2014 Last Night in Kyoto',items:[
-      {time:'7:00 PM',text:'Dinner \u00b7 Kawaramachi or Shijo area \u00b7 izakaya, sake bar, or splurge kaiseki'},
+    {label:'Evening',items:[
+      {time:'7:00 PM',text:'Last night in Kyoto \u00b7 dinner',
+       notes:'Kawaramachi or Shijo area. Consider a splurge kaiseki if you haven\'t had one yet.'},
     ]},
-  ],tip:'Book Kaiyukan tickets online in advance to skip queues. Dotonbori street food is best around lunch. Kinkaku-ji is worth seeing once despite crowds \u2014 late afternoon light is beautiful.'},
+  ],tip:'Book Kaiyukan online in advance. Kinkaku-ji late afternoon light is beautiful.'},
 
   apr26:{id:'apr26',date:'SUN APR 26',title:'Depart Kyoto \u2192 Kanazawa',location:'Kyoto \u2192 Kanazawa',periods:[
-    {label:'Morning \u2014 Checkout',items:[
-      {time:'10:00 AM',text:'Check out Hotel Granvia Kyoto',type:'booked'},
+    {label:'Morning',items:[
+      {time:'10:00 AM',text:'Check out Hotel Granvia Kyoto',type:'booked',
+       notes:'Conf: #23151SF060529'},
+      {text:'Thunderbird Limited Express: Kyoto \u2192 Kanazawa',
+       notes:'~2 hrs \u00b7 ~\u00a56,000\u20137,000/person (~$38\u201344) \u00b7 Multiple departures, aim for mid-morning'},
     ]},
-    {label:'Transit to Kanazawa',items:[
-      {text:'Thunderbird Limited Express: Kyoto \u2192 Kanazawa (~2 hrs \u00b7 ~\u00a56,000\u20137,000/~$38\u201344)'},
-      {text:'Multiple departures \u00b7 check timetable \u00b7 aim for mid-morning',sub:true},
-    ]},
-    {label:'Afternoon \u2014 Arrive Kanazawa',items:[
-      {time:'3:00 PM',text:'Check in Hotel Intergate Kanazawa',type:'booked'},
-      {text:'2-5 Takaokamachi, Kanazawa \u00b7 breakfast buffet included',sub:true,addr:'Hotel Intergate Kanazawa, 2-5 Takaokamachi, Kanazawa, Ishikawa'},
-      {time:'3:30 PM',text:'21st Century Museum of Contemporary Art \u00b7 VISIT TODAY \u2014 closed Mondays',dur:'~1.5 hrs',addr:'21st Century Museum, 1-2-1 Hirosaka, Kanazawa, Ishikawa'},
-      {text:'Free exchange zone \u00b7 ~\u00a51,400 (~$9) for exhibitions',sub:true},
-      {text:'Swimming Pool (Leandro Erlich) + Blue Planet Sky (James Turrell)',sub:true},
+    {label:'Afternoon',items:[
+      {time:'3:00 PM',text:'Check in Hotel Intergate Kanazawa',type:'booked',
+       notes:'Conf: 20260125110822242 \u00b7 Expedia: 73356721260247\nSuperior Twin \u00b7 Breakfast buffet included \u00b7 2-5 Takaokamachi \u00b7 +81-76-205-1122',
+       addr:'Hotel Intergate Kanazawa, 2-5 Takaokamachi, Kanazawa'},
+      {time:'3:30 PM',text:'21st Century Museum of Contemporary Art',dur:'~1.5 hrs',cost:1400,
+       notes:'VISIT TODAY \u2014 closed Mondays. Free exchange zone + ~\u00a51,400 for exhibitions.\nSwimming Pool (Leandro Erlich) + Blue Planet Sky (James Turrell) \u2014 both must-sees.',
+       addr:'21st Century Museum, 1-2-1 Hirosaka, Kanazawa, Ishikawa'},
     ]},
     {label:'Evening',items:[
-      {time:'6:00 PM',text:'Higashi Chaya District \u00b7 Japan\'s best-preserved geisha quarter outside Kyoto',dur:'~1.5 hrs',addr:'Higashi Chaya District, Higashiyama, Kanazawa, Ishikawa'},
-      {time:'7:30 PM',text:'Dinner \u00b7 Nodoguro (blackthroat seaperch), sweet shrimp \u00b7 Korinbo area'},
+      {time:'6:00 PM',text:'Higashi Chaya District',dur:'~1.5 hrs',
+       notes:'Japan\'s best-preserved geisha quarter outside Kyoto. Gold leaf shops, tea houses, machiya townhouses.',
+       addr:'Higashi Chaya District, Higashiyama, Kanazawa, Ishikawa'},
+      {time:'7:30 PM',text:'Dinner \u00b7 Korinbo area',
+       notes:'Nodoguro (blackthroat seaperch) and sweet shrimp are Kanazawa specialties.'},
     ]},
-  ],tip:'The 21st Century Museum is CLOSED on Mondays \u2014 visit it today on arrival. It\'s a 20-minute walk or short bus ride from the hotel.'},
+  ],tip:'The 21st Century Museum is CLOSED on Mondays \u2014 visit it today on arrival.'},
 
   apr27:{id:'apr27',date:'MON APR 27',title:'Kanazawa Full Day',location:'Kenroku-en \u00b7 Omicho \u00b7 Nagamachi',periods:[
-    {label:'Morning \u2014 Kenroku-en + Castle',items:[
-      {time:'7:00 AM',text:'Kenroku-en Garden \u00b7 opens 7 AM \u00b7 \u00a5320 (~$2)',dur:'~2 hrs',addr:'Kenroku-en, 1 Kenrokumachi, Kanazawa, Ishikawa'},
-      {text:'One of Japan\'s three great gardens \u00b7 Kasumigaike Pond + Kotojitoro lantern',sub:true},
-      {text:'Free early entry from 4 AM through Mayumizaka Gate',sub:true},
-      {time:'9:00 AM',text:'Kanazawa Castle Park \u00b7 directly adjacent \u00b7 free grounds',addr:'Kanazawa Castle, 1-1 Marunouchi, Kanazawa, Ishikawa'},
+    {label:'Morning',items:[
+      {time:'7:00 AM',text:'Kenroku-en Garden',dur:'~2 hrs',cost:320,
+       notes:'One of Japan\'s three great gardens. Most peaceful before 9 AM. Kasumigaike Pond + Kotojitoro lantern.\nFree entry from 4 AM via Mayumizaka Gate.',
+       addr:'Kenroku-en, 1 Kenrokumachi, Kanazawa, Ishikawa'},
+      {time:'9:00 AM',text:'Kanazawa Castle Park',
+       notes:'Directly adjacent to Kenroku-en. Free grounds. White plaster walls and elegant restored gates.',
+       addr:'Kanazawa Castle, 1-1 Marunouchi, Kanazawa, Ishikawa'},
+      {time:'10:30 AM',text:'Omicho Market',dur:'~1.5 hrs',
+       notes:'Kanazawa\'s kitchen. Kaisendon (seafood rice bowl) from market stalls \u2014 arrive before noon before lines grow.',
+       addr:'Omicho Market, 50 Kami-Omicho, Kanazawa, Ishikawa'},
     ]},
-    {label:'Late Morning \u2014 Omicho Market',items:[
-      {time:'10:30 AM',text:'Omicho Market \u00b7 Kanazawa\'s kitchen \u00b7 9 AM \u2013 5 PM',dur:'~1.5 hrs',addr:'Omicho Market, 50 Kami-Omicho, Kanazawa, Ishikawa'},
-      {text:'Kaisendon (seafood rice bowl) \u00b7 arrive before noon before lines grow',sub:true},
-      {text:'Popular items sell out before noon \u2014 arrive early',sub:true},
-    ]},
-    {label:'Afternoon \u2014 Nagamachi + Explore',items:[
-      {time:'1:00 PM',text:'Nagamachi Samurai District \u00b7 Nomura Clan House \u00b7 \u00a5550 (~$4)',dur:'~1.5 hrs',addr:'Nagamachi Samurai District, Nagamachi, Kanazawa, Ishikawa'},
-      {time:'3:00 PM',text:'D.T. Suzuki Museum \u00b7 \u00a5310 \u00b7 meditative architecture + water mirror garden',dur:'~1 hr',addr:'D.T. Suzuki Museum, 3-4-20 Honda-machi, Kanazawa, Ishikawa'},
-      {text:'Contemplative space designed by Yoshio Taniguchi \u00b7 calming after busy mornings',sub:true},
+    {label:'Afternoon',items:[
+      {time:'1:00 PM',text:'Nagamachi Samurai District',dur:'~1.5 hrs',
+       notes:'Preserved samurai residences and mud walls. Nomura Clan House is the standout \u2014 \u00a5550, beautiful garden and tatami rooms.',
+       addr:'Nagamachi, Kanazawa, Ishikawa'},
+      {time:'3:00 PM',text:'D.T. Suzuki Museum',dur:'~1 hr',cost:310,
+       notes:'Meditative architecture by Yoshio Taniguchi. Water mirror garden. Calm and contemplative.',
+       addr:'D.T. Suzuki Museum, 3-4-20 Honda-machi, Kanazawa, Ishikawa'},
     ]},
     {label:'Evening',items:[
-      {time:'6:30 PM',text:'Dinner \u00b7 Kanazawa seafood \u00b7 Nodoguro, crab, sweet shrimp'},
+      {time:'6:30 PM',text:'Dinner \u00b7 Kanazawa seafood',
+       notes:'Nodoguro, snow crab, sweet shrimp. One of the best food cities in Japan. Splurge if anywhere.'},
     ]},
-  ],tip:'Note: 21st Century Museum is closed today (Monday) \u2014 you already visited yesterday. Kenroku-en is most peaceful in the early morning before tour groups arrive around 9 AM.'},
+  ],tip:'Kenroku-en is most peaceful early morning. 21st Century Museum closed today (Monday) \u2014 you visited yesterday.'},
 
   apr28:{id:'apr28',date:'TUE APR 28',title:'Depart Kanazawa \u2192 Tokyo Ginza',location:'Kanazawa \u2192 Tokyo \u00b7 Ginza',periods:[
-    {label:'Morning \u2014 Checkout + Shinkansen',items:[
+    {label:'Morning',items:[
       {time:'8:00 AM',text:'Breakfast buffet at Hotel Intergate \u00b7 included'},
-      {time:'10:00 AM',text:'Check out \u00b7 by 11:00 AM'},
-      {text:'Hokuriku Shinkansen: Kanazawa \u2192 Tokyo (Ueno) \u00b7 ~2.5 hrs \u00b7 ~\u00a514,000 (~$88)',sub:true},
+      {time:'10:00 AM',text:'Check out \u00b7 by 11:00 AM',
+       notes:'Hokuriku Shinkansen: Kanazawa \u2192 Tokyo (Ueno) \u00b7 ~2.5 hrs \u00b7 ~\u00a514,000/person (~$88)'},
     ]},
-    {label:'Afternoon \u2014 Arrive Tokyo Ginza',items:[
-      {time:'2:30 PM',text:'Hamarikyu Gardens \u00b7 \u00a5300 (~$2) \u00b7 traditional garden on Tokyo Bay',dur:'~1 hr',addr:'Hamarikyu Gardens, 1-1 Hamarikyuteien, Chuo-ku, Tokyo'},
-      {time:'3:00 PM',text:'Check in Quintessa Hotel Tokyo Ginza',type:'booked'},
-      {text:'Conf: 6519361226 \u00b7 PIN: 9235 \u00b7 breakfast included',sub:true,addr:'Quintessa Hotel Tokyo Ginza, 4-11-4 Ginza, Chuo-ku, Tokyo'},
-      {time:'4:00 PM',text:'Ginza main streets \u00b7 Itoya stationery \u00b7 Ginza Six \u00b7 window shopping'},
+    {label:'Afternoon',items:[
+      {time:'2:30 PM',text:'Hamarikyu Gardens',dur:'~1 hr',cost:300,
+       notes:'Traditional stroll garden on Tokyo Bay. Peaceful contrast after the shinkansen.',
+       addr:'Hamarikyu Gardens, 1-1 Hamarikyuteien, Chuo-ku, Tokyo'},
+      {time:'3:00 PM',text:'Check in Quintessa Hotel Tokyo Ginza',type:'booked',
+       notes:'Conf: 6519361226 \u00b7 PIN: 9235 \u00b7 Hollywood Twin \u00b7 Breakfast included\n4-11-4 Ginza, Chuo-ku \u00b7 +81 3-6264-1351',
+       addr:'Quintessa Hotel Tokyo Ginza, 4-11-4 Ginza, Chuo-ku, Tokyo'},
+      {time:'4:00 PM',text:'Ginza streets',
+       notes:'Itoya stationery (excellent for gifts), Ginza Six, window shopping. Ginza is Japan\'s most expensive real estate.'},
     ]},
-    {label:'Evening \u2014 Final Night',items:[
-      {time:'6:30 PM',text:'Tsukiji Outer Market area for dinner \u00b7 sushi, grilled seafood, sake bars',addr:'Tsukiji Outer Market, 4-16-2 Tsukiji, Chuo-ku, Tokyo'},
-      {time:'8:00 PM',text:'Ginza evening stroll \u00b7 excellent last night in Japan'},
+    {label:'Evening',items:[
+      {time:'6:30 PM',text:'Tsukiji Outer Market \u00b7 dinner',
+       notes:'Sushi, grilled seafood, sake bars. 10 min walk from hotel. Preview for tomorrow\'s breakfast.',
+       addr:'Tsukiji Outer Market, 4-16-2 Tsukiji, Chuo-ku, Tokyo'},
+      {time:'8:00 PM',text:'Ginza evening stroll',
+       notes:'The perfect last night in Japan. Pack tonight. Flight tomorrow at 6:10 PM.'},
     ]},
-  ],tip:'Pack tonight and confirm you have everything. Flight departs HND at 6:10 PM tomorrow \u2014 leave the hotel by 12:30 PM.'},
+  ],tip:'Pack tonight. Flight departs HND at 6:10 PM tomorrow \u2014 leave the hotel by 12:30 PM.'},
 
   apr29:{id:'apr29',date:'WED APR 29',title:'Final Morning + Depart',location:'Tokyo Ginza \u2192 HND \u2192 LAX',periods:[
-    {label:'Morning \u2014 Tsukiji Farewell',items:[
-      {time:'7:30 AM',text:'Tsukiji Outer Market \u00b7 10 min walk \u00b7 classic Tokyo farewell breakfast',dur:'~1.5 hrs',addr:'Tsukiji Outer Market, 4-16-2 Tsukiji, Chuo-ku, Tokyo'},
-      {text:'Fresh sushi, tamagoyaki, grilled scallops, matcha \u00b7 best before 10 AM',sub:true},
+    {label:'Morning',items:[
+      {time:'7:30 AM',text:'Tsukiji Outer Market \u00b7 breakfast',dur:'~1.5 hrs',
+       notes:'10 min walk from hotel. Fresh sushi, tamagoyaki, grilled scallops, matcha. Best before 10 AM.',
+       addr:'Tsukiji Outer Market, 4-16-2 Tsukiji, Chuo-ku, Tokyo'},
       {time:'10:00 AM',text:'Return to hotel \u00b7 collect luggage'},
     ]},
-    {label:'Afternoon \u2014 Depart',items:[
-      {time:'12:30 PM',text:'Depart hotel for Haneda Airport \u00b7 no later than 12:30 PM'},
-      {text:'Keikyu Line from Higashi-Ginza \u2192 HND Terminal 3 (~30 min \u00b7 \u00a5300/~$2)',sub:true},
-      {text:'Allow 2.5\u20133 hours before departure for international check-in + security',sub:true},
-      {time:'6:10 PM',text:'United UA 38 departs HND',type:'booked'},
-      {text:'HND \u2192 LAX \u00b7 10 hrs 5 min \u00b7 Seats 31J & 31L \u00b7 Conf: F354LH',sub:true},
-      {text:'Arrives LAX Wednesday April 29, 12:15 PM (same day, crossing date line)',sub:true},
+    {label:'Afternoon',items:[
+      {time:'12:30 PM',text:'Depart hotel for Haneda Airport',
+       notes:'No later than 12:30 PM \u00b7 Keikyu Line from Higashi-Ginza \u2192 HND Terminal 3 (~30 min \u00b7 \u00a5300/person)\nAllow 2.5\u20133 hours before departure for international check-in + security'},
+      {time:'6:10 PM',text:'United UA 38 \u00b7 HND \u2192 LAX',type:'booked',
+       notes:'Conf: F354LH \u00b7 Seats 31J (Gwen) & 31L (Christina)\nHND \u2192 LAX \u00b7 10 hrs 5 min \u00b7 Arrives LAX 12:15 PM same day (date line)'},
     ]},
   ],tip:'Golden Week begins today \u2014 you\'re flying out. Well timed. Allow 3 hours at the airport.'},
 };
@@ -1060,47 +1184,102 @@ function renderDay(d){
     +'<div class="day-location">'+esc(location)+'</div></div></div>'
     +'<div class="day-header-right"><span class="notes-dot'+(noteText?' has-notes':'')+'"></span><span class="day-toggle">&#9660;</span></div>'
     +'</div>'
-    +'<div class="day-body">'+bodyContent
+    +'<div class="day-body"><div class="day-body-inner">'+bodyContent
     +'<div class="notes-section"><div class="notes-label">Notes</div>'
     +'<div class="notes-read">'+noteRead+'</div>'
     +'<textarea class="notes-edit" data-day="'+d.id+'" placeholder="Add notes, restaurant picks, reminders\u2026">'+esc(noteText)+'</textarea>'
     +'<div class="save-indicator" id="save-'+d.id+'"></div>'
-    +'</div></div></div>';
+    +'</div></div></div></div>';
 }
+
+// Toggle expand state of an activity row in-place (no full re-render)
+window.toggleActExpand=function(itemId){
+  const el=document.querySelector('[data-item-id="'+itemId+'"]'); if(!el)return;
+  if(expandedItems.has(itemId)){expandedItems.delete(itemId);el.classList.remove('expanded');}
+  else{expandedItems.add(itemId);el.classList.add('expanded');}
+  const btn=el.querySelector('.act-expand-btn');
+  if(btn)btn.textContent=el.classList.contains('expanded')?'\u25be':'\u25b8';
+};
 
 function renderFsItem(dayId,act,isEdit){
   const isSub=act.sub===true, isBooked=act.booked===true;
   const tag=isBooked&&!isSub?'<span class="tag-booked">BOOKED</span>':'';
-  const time=act.time&&!isSub?'<div class="act-time">'+esc(act.time)+'</div>':'<div class="act-time"></div>';
-  const dur=act.dur?'<div class="act-duration">'+esc(act.dur)+'</div>':'';
-  const titleText=act.addr
-    ?'<a href="https://maps.google.com/?q='+encodeURIComponent(act.addr)+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-decoration-color:var(--border-lt)">'+esc(act.title)+'</a>'+tag
-    :esc(act.title)+tag;
-  let confHtml='';
-  if(act.conf)confHtml='<button class="conf-toggle-btn" onclick="toggleInlineConf(this)">\u25b8 show details</button><div class="inline-conf">'+esc(act.conf)+'</div>';
-  const editBtns=isEdit
-    ?'<span class="item-edit-btns">'
-      +'<button class="conf-toggle-btn" onclick="openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')" title="Edit">\u270e</button>'
-      +'<button class="conf-toggle-btn" onclick="deleteAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')" title="Delete">\u2715</button>'
-      +'</span>':'' ;
-  if(isSub)return '<div class="act sub-item"><div class="act-time"></div><div class="act-body"><div class="act-sub">'+titleText+dur+'</div></div></div>';
-  const desc=act.desc?'<div class="act-sub">'+esc(act.desc)+'</div>':'';
+  const time=act.time&&!isSub?'<div class="act-time">'+fmt12h(act.time)+'</div>':'<div class="act-time"></div>';
+
+  if(isSub)return '<div class="act sub-item"><div class="act-time"></div><div class="act-body"><div class="act-sub">'+esc(act.title)+'</div></div></div>';
+
+  const hasDetails=!!(act.notes||act.cost>0||act.dur||act.addr);
+  const isExp=expandedItems.has(act.id);
   const dragAttr=isEdit?' draggable="true" data-act-id="'+ea(act.id)+'" data-day-id="'+ea(dayId)+'"':'';
-  return '<div class="act'+(isBooked?' booked':'')+'"'+dragAttr+'>'+time+'<div class="act-body"><div class="act-text">'+titleText+'</div>'+desc+dur+confHtml+'</div>'+editBtns+'</div>';
+
+  let detailHtml='';
+  if(hasDetails){
+    const metaParts=[];
+    if(act.cost>0)metaParts.push('<span class="act-detail-cost">\u00a5'+Math.round(act.cost).toLocaleString()+'</span>');
+    if(act.dur)metaParts.push('<span class="act-detail-dur">'+esc(act.dur)+'</span>');
+    const meta=metaParts.length?'<div class="act-detail-meta">'+metaParts.join('')+'</div>':'';
+    const notesLines=(act.notes||'').split('\n').filter(Boolean);
+    const notesHtml=notesLines.map(l=>'<div class="act-detail-notes">'+esc(l)+'</div>').join('');
+    const mapLink=act.addr?'<a class="act-detail-map" href="https://maps.google.com/?q='+encodeURIComponent(act.addr)+'" target="_blank" rel="noopener">View on map \u2197</a>':'';
+    const editBtns=isEdit
+      ?'<div class="act-detail-btns">'
+        +'<button class="fs-act-btn" onclick="openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button>'
+        +'<button class="fs-act-btn del" onclick="deleteAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Delete</button>'
+        +'</div>':'';
+    detailHtml='<div class="act-detail"><div class="act-detail-inner">'+meta+notesHtml+mapLink+editBtns+'</div></div>';
+  } else if(isEdit){
+    detailHtml='<div class="act-detail"><div class="act-detail-inner">'
+      +'<div class="act-detail-btns">'
+      +'<button class="fs-act-btn" onclick="openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button>'
+      +'<button class="fs-act-btn del" onclick="deleteAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Delete</button>'
+      +'</div></div></div>';
+  }
+
+  const showExpand=hasDetails||(isEdit&&!isSub);
+  const expandBtn=showExpand
+    ?'<button class="act-expand-btn" onclick="toggleActExpand(\''+ea(act.id)+'\')">'+(isExp?'\u25be':'\u25b8')+'</button>':'';
+
+  return '<div class="act'+(isExp?' expanded':'')+(isBooked?' booked':'')+'" data-item-id="'+ea(act.id)+'"'+dragAttr+'>'
+    +time
+    +'<div class="act-body">'
+    +'<div class="act-main"><div class="act-text">'+esc(act.title)+tag+'</div>'+expandBtn+'</div>'
+    +detailHtml
+    +'</div></div>';
 }
 
 function renderStaticItem(item,dayId,isEdit){
   const isSub=item.sub===true;
   const tag=item.type==='booked'&&!isSub?'<span class="tag-booked">BOOKED</span>':'';
   const time=item.time&&!isSub?'<div class="act-time">'+item.time+'</div>':'<div class="act-time"></div>';
-  const dur=item.dur?'<div class="act-duration">'+item.dur+'</div>':'';
-  const textContent=item.addr
-    ?'<a href="https://maps.google.com/?q='+encodeURIComponent(item.addr)+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-decoration-color:var(--border-lt)">'+item.text+'</a>'+tag
-    :item.text+tag;
-  let confHtml='';
-  if(item.type==='booked'&&!isSub){const c=findConfForItem(item.text);if(c)confHtml='<button class="conf-toggle-btn" onclick="toggleInlineConf(this)">\u25b8 show details</button><div class="inline-conf">'+c+'</div>';}
-  if(isSub)return '<div class="act sub-item"><div class="act-time"></div><div class="act-body"><div class="act-sub">'+textContent+dur+'</div></div></div>';
-  return '<div class="act'+(item.type==='booked'?' booked':'')+'">'+time+'<div class="act-body"><div class="act-text">'+textContent+'</div>'+dur+confHtml+'</div></div>';
+
+  if(isSub)return '<div class="act sub-item"><div class="act-time"></div><div class="act-body"><div class="act-sub">'+esc(item.text||'')+'</div></div></div>';
+
+  const conf=item.type==='booked'?findConfForItem(item.text):null;
+  const hasDetails=!!(item.notes||item.cost>0||item.dur||item.addr||conf);
+  const itemId=dayId+'-s-'+(item.time||'x').replace(/[:\s]/g,'')+'-'+(item.text||'').replace(/\s/g,'').slice(0,8);
+  const isExp=expandedItems.has(itemId);
+
+  let detailHtml='';
+  if(hasDetails){
+    const metaParts=[];
+    if(item.cost>0)metaParts.push('<span class="act-detail-cost">\u00a5'+Math.round(item.cost).toLocaleString()+'</span>');
+    if(item.dur)metaParts.push('<span class="act-detail-dur">'+esc(item.dur)+'</span>');
+    const meta=metaParts.length?'<div class="act-detail-meta">'+metaParts.join('')+'</div>':'';
+    const notesLines=((item.notes||'')+(conf?'\n'+conf:'')).split('\n').filter(Boolean);
+    const notesHtml=notesLines.map(l=>'<div class="act-detail-notes">'+esc(l)+'</div>').join('');
+    const mapLink=item.addr?'<a class="act-detail-map" href="https://maps.google.com/?q='+encodeURIComponent(item.addr)+'" target="_blank" rel="noopener">View on map \u2197</a>':'';
+    detailHtml='<div class="act-detail"><div class="act-detail-inner">'+meta+notesHtml+mapLink+'</div></div>';
+  }
+
+  const expandBtn=hasDetails
+    ?'<button class="act-expand-btn" onclick="toggleActExpand(\''+itemId+'\')">'+(isExp?'\u25be':'\u25b8')+'</button>':'';
+
+  return '<div class="act'+(isExp?' expanded':'')+(item.type==='booked'?' booked':'')+'" data-item-id="'+itemId+'">'
+    +time
+    +'<div class="act-body">'
+    +'<div class="act-main"><div class="act-text">'+esc(item.text||'')+tag+'</div>'+expandBtn+'</div>'
+    +detailHtml
+    +'</div></div>';
 }
 
 window.toggleInlineConf=function(btn){
@@ -1132,7 +1311,7 @@ function injectDayActsSection(dayId){
   const card=document.getElementById('card-'+dayId);
   if(!card||!card.classList.contains('expanded'))return;
   if(!currentUser)return;
-  const dayBody=card.querySelector('.day-body');
+  const dayBody=card.querySelector('.day-body-inner');
   if(dayBody&&dayBody.querySelector('.add-act-btn'))return;
   card.querySelector('.day-acts-section')?.remove();
   const acts=getDayActivities(dayId)||[];
@@ -1152,8 +1331,8 @@ function getDayActivities(dayId){
 
 function renderFsActivities(dayId,acts){
   if(!acts||!acts.length)return currentUser
-    ?'<div class="fs-empty">Nothing added yet.</div>'
-    :'<div class="fs-empty">Sign in to add activities.</div>';
+    ?'<div class="fs-empty"><div class="fs-empty-icon">&#128197;</div><div class="fs-empty-text">Nothing added yet</div></div>'
+    :'<div class="fs-empty"><div class="fs-empty-icon">&#128197;</div><div class="fs-empty-text">Sign in to add activities</div></div>';
   return acts.map(act=>{
     const cat=act.category||'other';
     const cost=act.cost&&act.cost>0?(act.currency==='JPY'?'\u00a5'+Math.round(act.cost).toLocaleString():'$'+Number(act.cost).toFixed(2)):'';
@@ -1165,7 +1344,7 @@ function renderFsActivities(dayId,acts){
       :'';
     return '<div class="fs-act-card" draggable="'+!!currentUser+'" data-act-id="'+ea(act.id)+'" data-day-id="'+ea(dayId)+'">'
       +'<div class="fs-act-stripe cat-stripe-'+cat+'"></div><div class="fs-act-body">'
-      +'<div class="fs-act-top"><span class="fs-act-title">'+esc(act.title||'')+'</span>'+(act.time?'<span class="fs-act-time">'+esc(act.time)+'</span>':'')+'</div>'
+      +'<div class="fs-act-top"><span class="fs-act-title">'+esc(act.title||'')+'</span>'+(act.time?'<span class="fs-act-time">'+fmt12h(act.time)+'</span>':'')+'</div>'
       +'<div class="fs-act-meta"><span class="fs-act-tag cat-'+cat+'">'+esc(cat)+'</span>'+(cost?'<span class="fs-act-cost">'+cost+'</span>':'')+'</div>'
       +(act.notes?'<div class="fs-act-notes">'+esc(act.notes)+'</div>':'')
       +photo+'</div>'
@@ -1190,8 +1369,7 @@ function driveUrlToThumb(url){
 function initSortable(dayId){
   if(typeof Sortable==='undefined'||!currentUser)return;
   const card=document.getElementById('card-'+dayId); if(!card)return;
-  const dayBody=card.querySelector('.day-body'); if(!dayBody)return;
-  // Destroy existing instance to avoid double-init on re-render
+  const dayBody=card.querySelector('.day-body-inner'); if(!dayBody)return;
   if(dayBody._sortable){dayBody._sortable.destroy();dayBody._sortable=null;}
   dayBody._sortable=Sortable.create(dayBody,{
     animation:150,
@@ -1200,7 +1378,6 @@ function initSortable(dayId){
     onEnd:async evt=>{
       if(evt.oldIndex===evt.newIndex)return;
       const dateId=dayIdToDate(dayId), dd=firestoreDays[dateId]; if(!dd)return;
-      // Read new visual order of all draggable items
       const ids=[...dayBody.querySelectorAll('.act[draggable="true"]')].map(el=>el.dataset.actId);
       let acts=[...(dd.activities||[])];
       ids.forEach((id,i)=>{const a=acts.find(x=>x.id===id);if(a)a.order=i;});
@@ -1228,7 +1405,7 @@ window.openEditAct=function(dayId,actId){
   const act=dd.activities?.find(a=>a.id===actId); if(!act)return;
   editActDayId=dayId; editActId=actId;
   $('actModalTitle').textContent='Edit activity';
-  if($('actTime'))    $('actTime').value=act.time||'';
+  if($('actTime'))    $('actTime').value=fmt24h(act.time||'');
   if($('actTitle'))   $('actTitle').value=act.title||'';
   if($('actCategory'))$('actCategory').value=act.category||'activity';
   if($('actNotes'))   $('actNotes').value=act.notes||'';
@@ -1447,10 +1624,11 @@ function renderPlan(){
     +'<div class="pt-panel'+(ptTab==='packing'?' active':'')+'" id="pt-packing">'+packProgressHtml+packingHtml+'</div>'
     +'<div class="pt-panel'+(ptTab==='tips'?' active':'')+'" id="pt-tips">'+tipsHtml+'</div>'
     +(currentUser?'<div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'
-      +'<div><div style="font-size:13px;font-weight:500;color:var(--text)">Export trip data</div>'
-      +'<div style="font-size:12px;color:var(--light)">Download itinerary, bookings, budget, and notes as JSON</div></div>'
+      +'<div><div style="font-size:13px;font-weight:500;color:var(--text)">Data tools</div>'
+      +'<div style="font-size:12px;color:var(--light)">Export, import, or re-seed itinerary from source</div></div>'
       +'<div style="display:flex;gap:6px"><button class="booked-edit-btn" onclick="exportTripData()" style="white-space:nowrap">Export JSON</button>'
-      +'<button class="booked-edit-btn" onclick="importTripData()" style="white-space:nowrap">Import JSON</button></div></div>':'');
+      +'<button class="booked-edit-btn" onclick="importTripData()" style="white-space:nowrap">Import JSON</button>'
+      +'<button class="booked-edit-btn" onclick="confirmReseed()" style="white-space:nowrap;color:var(--red)">Re-seed days</button></div></div>':'');
 
   el.querySelectorAll('.pt-tab').forEach(btn=>btn.addEventListener('click',()=>{ptTab=btn.dataset.pt;renderPlan();}));
   el.querySelectorAll('.check-item[data-check]').forEach(item=>item.addEventListener('click',()=>toggleCheck(item.dataset.check)));
@@ -1547,7 +1725,10 @@ function renderBudget(){
   displayed.forEach(e=>{const d=e.date||'unknown';if(!byDay[d])byDay[d]=[];byDay[d].push(e);});
   const sortedDays=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
   const expRowsHtml=displayed.length===0
-    ?'<div class="exp-empty">'+(expenses.length===0?'<strong>No expenses logged yet</strong><br>Tap &ldquo;+ Add&rdquo; to log your first expense in Japan.':'No expenses in this category.')+'</div>'
+    ?(expenses.length===0
+      ?'<div class="exp-empty"><div class="exp-empty-icon">&#129534;</div><div class="exp-empty-text">No expenses logged yet.<br>Every ramen, train ticket, and temple entry counts.</div><button class="exp-empty-cta" onclick="openExpenseModal()">+ Log your first expense</button></div>'
+      :'<div class="exp-empty"><div class="exp-empty-icon">&#128269;</div><div class="exp-empty-text">No expenses in this category.</div></div>'
+    )
     :sortedDays.map(day=>{
       const dayTotal=byDay[day].reduce((s,e)=>s+(e.amount||0),0);
       let dayLabel=day;
@@ -1710,12 +1891,12 @@ $('expFab')?.addEventListener('click',openExpenseModal);
 
 // Quick-add expense macros
 const QUICK_MACROS=[
-  {label:'\u00a5500 Food',   icon:'\ud83c\udf5c',amount:500,  cat:'food',      desc:'Food'},
-  {label:'\u00a51,000 Food', icon:'\ud83c\udf71',amount:1000, cat:'food',      desc:'Food'},
-  {label:'\u00a52,000 Food', icon:'\ud83c\udf63',amount:2000, cat:'food',      desc:'Food'},
-  {label:'Suica top-up',    icon:'\ud83d\ude83',amount:2000, cat:'transport', desc:'Suica reload'},
-  {label:'\u00a5500 Drinks', icon:'\ud83c\udf75',amount:500,  cat:'drinks',    desc:'Drinks'},
-  {label:'Temple entry',    icon:'\u26e9',      amount:500,  cat:'activities',desc:'Temple entry'},
+  {label:'\u00a5500 Food',   amount:500,  cat:'food',      desc:'Food'},
+  {label:'\u00a51,000 Food', amount:1000, cat:'food',      desc:'Food'},
+  {label:'\u00a52,000 Food', amount:2000, cat:'food',      desc:'Food'},
+  {label:'Suica top-up',    amount:2000, cat:'transport', desc:'Suica reload'},
+  {label:'\u00a5500 Drinks', amount:500,  cat:'drinks',    desc:'Drinks'},
+  {label:'Temple entry',    amount:500,  cat:'activities',desc:'Temple entry'},
 ];
 function renderQuickMacros(){
   let container=document.getElementById('quickMacros');
@@ -1723,15 +1904,15 @@ function renderQuickMacros(){
     const body=document.querySelector('#expenseModal .modal-body'); if(!body)return;
     container=document.createElement('div');
     container.id='quickMacros';
-    container.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border-lt)';
+    container.style.cssText='display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border-lt)';
     body.insertBefore(container,body.firstChild);
   }
   const payerName=selectedPayer==='gwen'?'Gwendalynn':'Christina';
-  container.innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline;width:100%;margin-bottom:4px">'
+  container.innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline;width:100%;margin-bottom:6px">'
     +'<span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--light)">Quick add</span>'
     +'<span style="font-size:11px;color:var(--muted)">Paying: <strong>'+payerName+'</strong></span>'
     +'</div>'
-    +QUICK_MACROS.map((m,i)=>'<button class="chip" onclick="quickAddExpense('+i+')" style="font-size:12px;padding:6px 12px">'+m.icon+' '+m.label+'</button>').join('');
+    +QUICK_MACROS.map((m,i)=>'<button class="chip" onclick="quickAddExpense('+i+')" style="font-size:11.5px;padding:5px 11px;font-family:var(--mono)">'+m.label+'</button>').join('');
 }
 window.quickAddExpense=async function(idx){
   const m=QUICK_MACROS[idx]; if(!m)return;
@@ -1868,15 +2049,28 @@ async function seedDays(){
       day.periods.forEach(p=>{
         activities.push({id:dayId+'-pl-'+order,type:'period-label',title:p.label,order:order++});
         p.items.forEach(item=>{
-          let itemCost=0;
-          const costMatch=(item.text||'').match(/[¥\u00a5]([\d,]+)/);
-          if(costMatch)itemCost=parseInt(costMatch[1].replace(/,/g,''),10)||0;
+          // Use explicit item.cost if set, else extract from text as fallback
+          let itemCost=item.cost||0;
+          if(!itemCost){
+            const m=(item.text||'').match(/[¥\u00a5]([\d,]+)/);
+            if(m)itemCost=parseInt(m[1].replace(/,/g,''),10)||0;
+          }
           activities.push({
-            id:dayId+'-'+order,time:item.time||'',title:item.text||'',desc:'',
-            category:item.type==='booked'?'hotel':'activity',
-            booked:item.type==='booked',conf:'',addr:item.addr||'',
-            notes:'',cost:itemCost,currency:'JPY',driveUrl:'',
-            sub:item.sub||false,dur:item.dur||'',order:order++,
+            id:dayId+'-'+order,
+            time:item.time||'',
+            title:item.text||'',
+            desc:'',
+            category:item.category||(item.type==='booked'?'hotel':'activity'),
+            booked:item.type==='booked'||item.booked||false,
+            conf:'',
+            addr:item.addr||'',
+            notes:item.notes||'',
+            cost:itemCost,
+            currency:'JPY',
+            driveUrl:'',
+            sub:item.sub||false,
+            dur:item.dur||'',
+            order:order++,
           });
         });
       });
@@ -1927,6 +2121,8 @@ auth.onAuthStateChanged(async user=>{
     }
     $('expFab')?.classList.remove('hidden');
     updateTabVisibility(true);
+    // Auto-set default payer to whoever is signed in
+    selectedPayer=user.email==='cmelikian@gmail.com'?'christina':'gwen';
     await Promise.all([loadAllNotes(), loadChecksFromDB(), loadBookedCostsFromDB(), loadDriveSettings()]);
     renderPlan();
     refreshNoteDisplays(); setupEditors();
@@ -2005,6 +2201,14 @@ function setupEditors(){
     });
   });
 }
+
+// ── Re-seed ───────────────────────────────────────────────────
+window.confirmReseed=async function(){
+  if(!confirm('This will overwrite the seeded itinerary data with the latest source. Your custom activities, notes, and photos are unaffected. Continue?'))return;
+  showToast('Re-seeding\u2026');
+  await seedDays();
+  showToast('Itinerary re-seeded','ok');
+};
 
 // ── Export / Import ───────────────────────────────────────────
 window.exportTripData=async function(){
@@ -2109,7 +2313,11 @@ window.closeLightbox=function(){$('lightbox')?.classList.add('hidden');};
         const cx1=Math.cos(a+.3)*p.r*.4, cy1=Math.sin(a+.3)*p.r*.4;
         j===0?ctx.moveTo(ox,oy):ctx.quadraticCurveTo(cx1,cy1,ox,oy);
       }
-      ctx.closePath(); ctx.fillStyle='#E8A0B0'; ctx.fill(); ctx.restore();
+      ctx.closePath();
+      const isDark=document.body.classList.contains('dark')||
+        (!document.body.classList.contains('light')&&window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+      ctx.fillStyle=isDark?'rgba(200,160,170,0.55)':'#E8A0B0';
+      ctx.fill(); ctx.restore();
     });
     requestAnimationFrame(draw);
   })();
