@@ -1390,7 +1390,8 @@ function renderPlan(){
     +(currentUser?'<div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'
       +'<div><div style="font-size:13px;font-weight:500;color:var(--text)">Export trip data</div>'
       +'<div style="font-size:12px;color:var(--light)">Download itinerary, bookings, budget, and notes as JSON</div></div>'
-      +'<button class="booked-edit-btn" onclick="exportTripData()" style="white-space:nowrap">Download JSON</button></div>':'');
+      +'<div style="display:flex;gap:6px"><button class="booked-edit-btn" onclick="exportTripData()" style="white-space:nowrap">Export JSON</button>'
+      +'<button class="booked-edit-btn" onclick="importTripData()" style="white-space:nowrap">Import JSON</button></div></div>':'');
 
   // Tab switching
   el.querySelectorAll('.pt-tab').forEach(btn=>btn.addEventListener('click',()=>{ptTab=btn.dataset.pt;renderPlan();}));
@@ -1996,6 +1997,77 @@ window.exportTripData=async function(){
     console.error('Export failed:', e);
     showToast('Export failed', 'err');
   }
+};
+
+window.importTripData=async function(){
+  const input=document.createElement('input');
+  input.type='file'; input.accept='.json';
+  input.onchange=async e=>{
+    const file=e.target.files[0]; if(!file)return;
+    showToast('Importing\u2026');
+    try{
+      const text=await file.text();
+      const data=JSON.parse(text);
+
+      // Import itinerary days
+      if(data.itinerary){
+        const ops=Object.entries(data.itinerary).map(([dateId,day])=>{
+          return db.collection('days').doc(dateId).set({
+            dayDate:dateId,
+            dayId:day.dayId||dateId,
+            title:day.title||'',
+            location:day.location||'',
+            tip:day.tip||'',
+            activities:(day.activities||[]).map((a,i)=>({
+              id:a.id||dateId+'-'+i,
+              type:a.type||undefined,
+              time:a.time||'',
+              title:a.title||'',
+              desc:a.desc||'',
+              category:a.category||'activity',
+              booked:a.booked||false,
+              conf:a.conf||'',
+              addr:a.addr||'',
+              notes:a.notes||'',
+              cost:a.cost||0,
+              currency:a.currency||'JPY',
+              driveUrl:a.driveUrl||'',
+              sub:a.sub||false,
+              dur:a.dur||'',
+              order:a.order!=null?a.order:i,
+            })),
+          });
+        });
+        await Promise.all(ops);
+      }
+
+      // Import notes
+      if(data.notes){
+        await Promise.all(Object.entries(data.notes).map(([id,text])=>
+          text?db.collection('notes').doc(id).set({text,updatedAt:new Date()}):Promise.resolve()
+        ));
+      }
+
+      // Import pre-booked costs
+      if(data.prebooked){
+        bookedCosts=data.prebooked;
+        await db.collection('settings').doc('bookedCosts').set({items:bookedCosts});
+      }
+
+      // Import checklist state
+      if(data.checklistState){
+        Object.assign(checks,data.checklistState);
+        await db.collection('checks').doc('all').set(checks);
+      }
+
+      showToast('Import complete \u2014 refreshing','ok');
+      setTimeout(()=>location.reload(),1200);
+    }catch(e){
+      console.error('Import failed:',e);
+      showToast('Import failed: '+e.message,'err');
+    }
+  };
+  input.click();
 };
 
 // ── Lightbox ──────────────────────────────────────────────────
