@@ -402,11 +402,7 @@ const OVERVIEW_DATA = [
       { text: 'Owakudani volcanic ropeway — active sulfur craters and black eggs', url: 'https://www.hakoneropeway.co.jp/en/' },
       { text: 'Lake Ashi boat cruise — torii gate rising from the water at Hakone Shrine' },
     ],
-    daytrips: [
-      { label: 'En route', city: 'Mt. Fuji area', note: 'Oishi Park, Kawaguchiko', highlights: [
-        { text: 'Fuji reflected in the lake with cherry blossoms in the foreground', star: true, url: 'https://maps.app.goo.gl/oishipark' },
-      ]},
-    ],
+    daytrips: [],
   },
   {
     city: 'Kyoto', dates: 'Apr 22–26', nights: 4,
@@ -1513,6 +1509,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     addExpFab.classList.toggle('hidden', btn.dataset.tab !== 'budget');
     if (btn.dataset.tab === 'budget') renderBudget();
     if (btn.dataset.tab === 'overview') renderOverview();
+    if (btn.dataset.tab === 'itinerary') renderItinerary();
+    if (btn.dataset.tab === 'checklist') renderChecklist();
   });
 });
 
@@ -2425,6 +2423,8 @@ onAuthStateChanged(auth, async user => {
     setupEditors();
     subscribeExpenses();
     subscribeDays(); // Firestore-backed editable itinerary
+    renderConfirmations();
+    renderItinerary(); // re-render to show edit controls
   } else {
     document.body.classList.remove('edit-mode');
     editBtn.classList.remove('active');
@@ -2530,6 +2530,7 @@ getDoc(doc(db, 'settings', 'drive')).then(snap => {
 }).catch(() => {});
 
 renderOverview();
+renderItinerary();
 renderConfirmations();
 renderChecklist();
 renderBudget();
