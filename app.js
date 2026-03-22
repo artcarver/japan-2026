@@ -1221,21 +1221,18 @@ function renderDay(d){
 
   if(fsDay&&fsDay.activities&&fsDay.activities.length>0){
     const acts=sortActivitiesByTime([...fsDay.activities]);
-    const hasExpandable=acts.some(a=>a.type!=='period-label'&&!a.sub&&(a.notes||a.cost>0||a.dur||a.addr));
-    const expandAllBtn=hasExpandable?'<div class="expand-all-wrap"><button class="expand-all-btn" onclick="toggleExpandAll(\''+d.id+'\')">Expand all</button></div>':'';
+    const expandAllBtn='<div class="expand-all-wrap"><button class="expand-all-btn" onclick="toggleExpandAll(\''+d.id+'\')">Expand all</button></div>';
     bodyContent=expandAllBtn+acts.map(act=>{
       if(act.type==='period-label')return '<div class="period"><div class="period-label">'+esc(act.title)+'</div></div>';
       return renderFsItem(d.id,act,isEdit);
     }).join('');
     bodyContent+=isEdit?'<button class="add-act-btn" onclick="openAddAct(\''+d.id+'\')">+ Add activity</button>':'';
-    const tipText=fsDay?.tip||d.tip||'';
-    bodyContent+=tipText?'<div class="tip-block"><span class="tip-label">Tip </span>'+tipText+'</div>':'';
+
   } else {
-    const hasExpandable=d.periods.some(p=>p.items.some(i=>!i.sub&&(i.notes||i.cost>0||i.dur||i.addr)));
-    const expandAllBtn=hasExpandable?'<div class="expand-all-wrap"><button class="expand-all-btn" onclick="toggleExpandAll(\''+d.id+'\')">Expand all</button></div>':'';
+    const expandAllBtn='<div class="expand-all-wrap"><button class="expand-all-btn" onclick="toggleExpandAll(\''+d.id+'\')">Expand all</button></div>';
     bodyContent=expandAllBtn+d.periods.map(p=>'<div class="period"><div class="period-label">'+p.label+'</div>'+p.items.map(item=>renderStaticItem(item,d.id,isEdit)).join('')+'</div>').join('');
     bodyContent+=isEdit?'<button class="add-act-btn" onclick="openAddAct(\''+d.id+'\')">+ Add activity</button>':'';
-    bodyContent+=d.tip?'<div class="tip-block"><span class="tip-label">Tip </span>'+d.tip+'</div>':'';
+
   }
 
   const title=fsDay?.title||d.title, location=fsDay?.location||d.location;
@@ -1244,13 +1241,9 @@ function renderDay(d){
     +'<div class="day-header-left"><span class="day-date">'+d.date+'</span>'
     +'<div class="day-title-wrap"><div class="day-title">'+esc(title)+(isToday?'<span class="today-badge">TODAY</span>':'')+'</div>'
     +'<div class="day-location">'+esc(location)+'</div></div></div>'
-    +'<div class="day-header-right"><span class="notes-dot'+(noteText?' has-notes':'')+'"></span><span class="day-toggle">&#9660;</span></div>'
+    +'<div class="day-header-right"><span class="day-toggle">&#9660;</span></div>'
     +'</div>'
-    +'<div class="day-body"><div class="day-body-inner">'+bodyContent
-    +'<div class="notes-section"><div class="notes-label">Notes</div>'
-    +'<div class="notes-read">'+noteRead+'</div>'
-    +'<textarea class="notes-edit" data-day="'+d.id+'" placeholder="Add notes, restaurant picks, reminders\u2026">'+esc(noteText)+'</textarea>'
-    +'<div class="save-indicator" id="save-'+d.id+'"></div>'
+    +'<div class="day-body"><div class="day-body-inner"><div class="timeline">'+bodyContent
     +'</div></div></div></div>';
 }
 
@@ -1266,7 +1259,8 @@ window.toggleActExpand=function(itemId, event){
 // Expand all / collapse all activities in a day
 window.toggleExpandAll=function(dayId){
   const card=document.getElementById('card-'+dayId); if(!card)return;
-  const acts=card.querySelectorAll('.act[data-item-id]:not(.sub-item)');
+  // Only target rows that actually have expandable detail (clickable class)
+  const acts=card.querySelectorAll('.act.clickable[data-item-id]');
   const allExpanded=[...acts].every(a=>a.classList.contains('expanded'));
   acts.forEach(a=>{
     const id=a.dataset.itemId;
@@ -1297,18 +1291,20 @@ function renderFsItem(dayId,act,isEdit){
     const notesLines=(act.notes||'').split('\n').filter(Boolean);
     const notesHtml=notesLines.map(l=>'<div class="act-detail-notes">'+esc(l)+'</div>').join('');
     const mapLink=act.addr?'<a class="act-detail-map" href="https://maps.google.com/?q='+encodeURIComponent(act.addr)+'" target="_blank" rel="noopener">View on map \u2197</a>':'';
-    detailHtml='<div class="act-detail"><div class="act-detail-inner">'+meta+notesHtml+mapLink+'</div></div>';
+    detailHtml='<div class="act-detail"><div class="act-detail-inner"><div class="act-detail-body">'+meta+notesHtml+mapLink+'</div></div></div>';
   }
 
   const clickable=hasDetails;
   const clickAttr=clickable?' onclick="toggleActExpand(\''+ea(act.id)+'\',event)"':'';
   const editBtn=isEdit?'<button class="act-edit-inline" onclick="event.stopPropagation();openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button>':'';
 
-  return '<div class="act'+(isExp?' expanded':'')+(isBooked?' booked':'')+(clickable?' clickable':'')+'" data-item-id="'+ea(act.id)+'"'+dragAttr+clickAttr+'>'
+  const cat=act.category||'activity';
+  return '<div class="act'+(isExp?' expanded':'')+(isBooked?' booked':'')+(clickable?' clickable':'')+'" data-cat="'+ea(cat)+'" data-item-id="'+ea(act.id)+'"'+dragAttr+clickAttr+'>'
+    +'<div class="act-dot"></div>'
     +time
     +'<div class="act-body">'
     +'<div class="act-main"><div class="act-text">'+esc(act.title)+tag+'</div>'
-    +(hasDetails?'<span class="act-chevron"></span>':'')
+    +(hasDetails?'<span class="act-chevron">\u25B8</span>':'')
     +editBtn
     +'</div>'
     +detailHtml
@@ -1336,15 +1332,17 @@ function renderStaticItem(item,dayId,isEdit){
     const notesLines=((item.notes||'')+(conf?'\n'+conf:'')).split('\n').filter(Boolean);
     const notesHtml=notesLines.map(l=>'<div class="act-detail-notes">'+esc(l)+'</div>').join('');
     const mapLink=item.addr?'<a class="act-detail-map" href="https://maps.google.com/?q='+encodeURIComponent(item.addr)+'" target="_blank" rel="noopener">View on map \u2197</a>':'';
-    detailHtml='<div class="act-detail"><div class="act-detail-inner">'+meta+notesHtml+mapLink+'</div></div>';
+    detailHtml='<div class="act-detail"><div class="act-detail-inner"><div class="act-detail-body">'+meta+notesHtml+mapLink+'</div></div></div>';
   }
 
   const clickAttr=hasDetails?' onclick="toggleActExpand(\''+itemId+'\',event)"':'';
 
-  return '<div class="act'+(isExp?' expanded':'')+(item.type==='booked'?' booked':'')+(hasDetails?' clickable':'')+'" data-item-id="'+itemId+'"'+clickAttr+'>'
+  const icat=item.category||(item.type==='booked'?'booked':'activity');
+  return '<div class="act'+(isExp?' expanded':'')+(item.type==='booked'?' booked':'')+(hasDetails?' clickable':'')+'" data-cat="'+icat+'" data-item-id="'+itemId+'"'+clickAttr+'>'
+    +'<div class="act-dot"></div>'
     +time
     +'<div class="act-body">'
-    +'<div class="act-main"><div class="act-text">'+esc(item.text||'')+tag+'</div>'+(hasDetails?'<span class="act-chevron"></span>':'')+'</div>'
+    +'<div class="act-main"><div class="act-text">'+esc(item.text||'')+tag+'</div>'+(hasDetails?'<span class="act-chevron">\u25B8</span>':'')+'</div>'
     +detailHtml
     +'</div></div>';
 }
@@ -2187,8 +2185,7 @@ function refreshNoteDisplays(){
     const ta=el.nextElementSibling; if(!ta)return;
     const dayId=ta.dataset.day, text=notes[dayId]||'';
     el.innerHTML=text?text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'):'<em>No notes yet \u2014 sign in to add notes.</em>';
-    document.querySelector('#card-'+dayId+' .notes-dot')?.classList.toggle('has-notes',!!text);
-  });
+      });
   document.querySelectorAll('.notes-edit').forEach(ta=>{ta.value=notes[ta.dataset.day]||'';});
 }
 
@@ -2203,8 +2200,7 @@ function setupEditors(){
       timer=setTimeout(async()=>{
         const dayId=ta.dataset.day, text=ta.value;
         notes[dayId]=text;
-        document.querySelector('#card-'+dayId+' .notes-dot')?.classList.toggle('has-notes',!!text);
-        const readEl=ta.previousElementSibling;
+                const readEl=ta.previousElementSibling;
         if(readEl)readEl.innerHTML=text?text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'):'<em>No notes yet \u2014 sign in to add notes.</em>';
         try{
           await db.collection('notes').doc(dayId).set({text,updatedAt:new Date()});
