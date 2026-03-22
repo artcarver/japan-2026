@@ -3,125 +3,135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F5F0EA">
 <title>Japan 2026 · Gwendalynn & Christina</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
-:root {
-  --navy:#1c2b4a;--navy-soft:#2e4070;
-  --cream:#faf8f5;--cream-mid:#f2ede6;--cream-dark:#e8e0d4;
-  --red:#b5373d;--red-bg:#fdf0f0;
-  --gold:#c08a3e;--gold-bg:#fdf6ec;
-  --green:#2f7a55;--green-bg:#edf7f2;
-  --text:#1a1a1a;--text-mid:#4a4855;--text-light:#8f8d99;
-  --border:#e2ddd6;--border-soft:#ede9e3;--white:#fff;
-  --shadow-sm:0 1px 4px rgba(0,0,0,.06);--shadow:0 2px 16px rgba(0,0,0,.08);
+:root{
+  --ink:#1C1714;--ink-soft:#3D3530;
+  --cream:#F5F0EA;--cream-mid:#EDE6DB;--cream-dark:#E0D6C8;
+  --red:#B5373D;--red-bg:#FCF0F0;
+  --gold:#C08A3E;--gold-bg:#FDF6EC;
+  --green:#2F7A55;--green-bg:#EDF7F2;
+  --rose:#8B3A2E;--rose-soft:#A04535;
+  --text:#1C1714;--text-mid:#5C5248;--text-light:#9C9288;
+  --border:#DDD6CC;--border-soft:#EAE4DC;--white:#FDFCFA;
+  --shadow-sm:0 1px 4px rgba(28,23,20,.06);--shadow:0 2px 16px rgba(28,23,20,.09);
   --r:6px;
-  --c-flight:#3b6fd4;--c-hotel:#7c4dbb;--c-transport:#2f7a55;
-  --c-food:#c05c1e;--c-activity:#555;--c-mustdo:#b5373d;
+  --c-flight:#4A6FA5;--c-hotel:#7C4DBB;--c-transport:#2F7A55;
+  --c-food:#B85C2A;--c-activity:#7A6E64;--c-mustdo:#B5373D;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.6}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--text);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* CANVAS */
+canvas{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.07}
 
 /* HEADER */
 header{background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
-.header-inner{max-width:1080px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:32px;min-height:56px}
-.logo{font-family:'DM Serif Display',serif;font-size:17px;color:var(--navy);text-decoration:none;flex-shrink:0}
-.logo span{color:var(--text-light);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:300}
+.header-inner{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:24px;min-height:54px;position:relative;z-index:1}
+.logo{font-family:'DM Serif Display',serif;font-size:16px;color:var(--ink);text-decoration:none;flex-shrink:0;letter-spacing:.01em}
+.logo span{color:var(--text-light);font-size:13px;font-family:'DM Sans',sans-serif;font-weight:300}
 nav.tabs{display:flex;flex:1}
-.tab-btn{background:none;border:none;cursor:pointer;padding:0 16px;height:56px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:400;color:var(--text-light);border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.tab-btn{background:none;border:none;cursor:pointer;padding:0 14px;height:54px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:400;color:var(--text-light);border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
 .tab-btn:hover{color:var(--text)}
-.tab-btn.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:500}
-.tab-btn.locked{opacity:.4;cursor:default}
+.tab-btn.active{color:var(--ink);border-bottom-color:var(--rose);font-weight:500}
+.tab-btn.locked{opacity:.35;cursor:default}
 .auth-section{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .user-pill{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-mid)}
-.avatar{width:26px;height:26px;border-radius:50%;background:var(--navy);color:white;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--cream);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
 .btn{cursor:pointer;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:7px 14px;transition:all .15s}
-.btn-primary{background:var(--navy);color:white}
-.btn-primary:hover{background:var(--navy-soft)}
+.btn-primary{background:var(--ink);color:var(--cream)}
+.btn-primary:hover{background:var(--ink-soft)}
 .btn-outline{background:none;border:1px solid var(--border);color:var(--text-mid)}
-.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
+.btn-outline:hover{border-color:var(--ink);color:var(--ink)}
 .btn-sm{padding:5px 10px;font-size:12px}
 .icon-btn{background:none;border:none;cursor:pointer;width:26px;height:26px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text-light);transition:all .15s;opacity:0;flex-shrink:0}
 .icon-btn:hover{background:var(--cream-mid);color:var(--text);opacity:1!important}
 
 /* MAIN */
-main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
+main{max-width:1100px;margin:0 auto;padding:32px 24px 80px;position:relative;z-index:1}
 .page{display:none;animation:fadeUp .25s ease}
 .page.active{display:block}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
 /* PAGE HEADER */
 .page-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)}
-.page-eyebrow{font-size:12px;font-weight:500;color:var(--text-light);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
-.page-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--navy);font-weight:400;line-height:1.15}
+.page-eyebrow{font-size:11px;font-weight:500;color:var(--text-light);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.page-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);font-weight:400;line-height:1.15}
 .page-sub{font-size:13px;color:var(--text-light);margin-top:2px}
-.section-title{font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.section-title{font-size:10.5px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
 
-/* OVERVIEW */
-.trip-banner{background:var(--navy);border-radius:10px;padding:36px 40px;color:white;display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:32px;flex-wrap:wrap}
-.trip-banner-eyebrow{font-size:12px;font-weight:500;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
-.trip-banner-title{font-family:'DM Serif Display',serif;font-size:36px;font-weight:400;line-height:1.1;margin-bottom:6px}
-.trip-banner-dates{font-size:14px;color:rgba(255,255,255,.5)}
-.trip-stats{display:flex;gap:32px;flex-wrap:wrap}
-.trip-stat-num{font-family:'DM Serif Display',serif;font-size:28px;color:rgba(255,255,255,.9);display:block;line-height:1;margin-bottom:2px}
-.trip-stat-label{font-size:11px;color:rgba(255,255,255,.4);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+/* OVERVIEW BANNER */
+.trip-banner{background:var(--ink);border-radius:10px;padding:36px 40px;color:white;display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:28px;flex-wrap:wrap;overflow:hidden;position:relative}
+.trip-banner::after{content:'';position:absolute;right:-40px;top:-60px;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.025);pointer-events:none}
+.trip-banner-eyebrow{font-size:11px;font-weight:500;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.trip-banner-title{font-family:'DM Serif Display',serif;font-size:38px;font-weight:400;line-height:1.05;margin-bottom:6px;letter-spacing:.01em}
+.trip-banner-dates{font-size:13px;color:rgba(255,255,255,.45);letter-spacing:.02em}
+.trip-countdown-block{text-align:right;flex-shrink:0}
+.countdown-num{font-family:'DM Serif Display',serif;font-size:54px;color:white;line-height:1;display:block;margin-bottom:3px}
+.countdown-label{font-size:11px;color:rgba(255,255,255,.4);font-weight:500;text-transform:uppercase;letter-spacing:.08em;display:block}
+.countdown-sub{font-size:12px;color:rgba(255,255,255,.3);margin-top:3px;display:block}
+.day-of-wrap{display:flex;gap:3px;align-items:baseline;justify-content:flex-end}
+.day-of-num{font-family:'DM Serif Display',serif;font-size:54px;color:white;line-height:1}
+.day-of-denom{font-family:'DM Serif Display',serif;font-size:26px;color:rgba(255,255,255,.35);line-height:1}
+.cdot-live{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4CAF80;box-shadow:0 0 0 4px rgba(76,175,128,.18);animation:pulse 2.2s ease-in-out infinite;margin-right:6px;vertical-align:middle}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(76,175,128,.15)}50%{box-shadow:0 0 0 7px rgba(76,175,128,.05)}}
 
-.trip-countdown-block{text-align:right}
-.countdown-num{font-family:'DM Serif Display',serif;font-size:52px;color:white;line-height:1;display:block;margin-bottom:4px}
-.countdown-label{font-size:12px;color:rgba(255,255,255,.45);font-weight:500;text-transform:uppercase;letter-spacing:.07em;display:block}
-.countdown-sub{font-size:13px;color:rgba(255,255,255,.35);margin-top:3px;display:block}
-.day-of-wrap{display:flex;gap:4px;align-items:baseline;justify-content:flex-end}
-.day-of-num{font-family:'DM Serif Display',serif;font-size:52px;color:white;line-height:1}
-.day-of-denom{font-family:'DM Serif Display',serif;font-size:28px;color:rgba(255,255,255,.4);line-height:1}
+/* ROUTE */
+.city-row{display:flex;margin-bottom:28px;background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .city-stop{flex:1;padding:16px 18px;border-right:1px solid var(--border);position:relative}
 .city-stop:last-child{border-right:none}
-.city-stop-bar{height:3px;background:var(--navy);position:absolute;top:0;left:0;right:0}
-.city-stop-nights{font-size:11px;font-weight:500;color:var(--text-light);margin-bottom:3px}
-.city-stop-name{font-family:'DM Serif Display',serif;font-size:17px;color:var(--navy);margin-bottom:2px}
-.city-stop-dates{font-size:12px;color:var(--text-light)}
+.city-stop-bar{height:2px;background:var(--rose);position:absolute;top:0;left:0;right:0}
+.city-stop-nights{font-size:10.5px;font-weight:500;color:var(--text-light);margin-bottom:3px;letter-spacing:.03em}
+.city-stop-name{font-family:'DM Serif Display',serif;font-size:17px;color:var(--ink);margin-bottom:2px}
+.city-stop-dates{font-size:11.5px;color:var(--text-light)}
 
+/* HIGHLIGHTS */
 .highlights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px;margin-bottom:28px}
 .highlight-item{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
-.hl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.hl-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:7px}
 .dot-confirmed{background:var(--green)}
-.dot-mustdo{background:var(--red)}
+.dot-mustdo{background:var(--rose)}
 .dot-neutral{background:var(--cream-dark);border:1.5px solid var(--border)}
-.hl-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px}
-.hl-desc{font-size:12.5px;color:var(--text-light);line-height:1.4}
-.tag{display:inline-block;font-size:11px;font-weight:500;padding:2px 7px;border-radius:4px;margin-top:4px}
+.hl-title{font-size:13.5px;font-weight:500;color:var(--text);margin-bottom:2px}
+.hl-desc{font-size:12px;color:var(--text-light);line-height:1.45}
+.tag{display:inline-block;font-size:10.5px;font-weight:500;padding:2px 7px;border-radius:4px;margin-top:4px}
 .tag-conf{background:var(--green-bg);color:var(--green)}
-.tag-must{background:var(--red-bg);color:var(--red)}
+.tag-must{background:var(--red-bg);color:var(--rose)}
 
+/* INFO TABLE */
 .info-table{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:28px}
 .info-table td{padding:11px 16px;border-bottom:1px solid var(--border-soft);font-size:13.5px;vertical-align:top}
 .info-table tr:last-child td{border-bottom:none}
 .info-table td:first-child{font-weight:500;color:var(--text-mid);white-space:nowrap;width:180px;background:var(--cream)}
 
 /* ITINERARY */
-.type-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text-mid)}
+.type-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;padding:9px 14px;background:var(--white);border:1px solid var(--border);border-radius:7px;font-size:11.5px;color:var(--text-mid)}
 .legend-item{display:flex;align-items:center;gap:5px}
-.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 
-.day-block{margin-bottom:16px}
+.day-block{margin-bottom:14px}
 .day-label{display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none;padding:12px 16px;background:var(--white);border:1px solid var(--border);border-radius:8px;transition:background .15s}
 .day-label:hover{background:var(--cream)}
 .day-label.open{border-radius:8px 8px 0 0;border-bottom-color:transparent}
-.day-num{font-family:'DM Serif Display',serif;font-size:14px;color:white;background:var(--navy);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.day-num{font-family:'DM Serif Display',serif;font-size:13px;color:var(--cream);background:var(--ink);width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .day-meta{flex:1}
-.day-date{font-size:11px;color:var(--text-light);margin-bottom:1px}
-.day-name{font-size:14px;font-weight:500;color:var(--navy);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.day-city-tag{font-size:11px;font-weight:400;color:var(--text-light);background:var(--cream-mid);padding:1px 7px;border-radius:4px}
-.day-add-btn{font-size:12px;color:var(--text-light);background:none;border:1px solid var(--border);border-radius:4px;padding:3px 9px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;flex-shrink:0}
-.day-add-btn:hover{color:var(--navy);border-color:var(--navy)}
+.day-date{font-size:10.5px;color:var(--text-light);margin-bottom:1px;letter-spacing:.03em}
+.day-name{font-size:13.5px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.day-city-tag{font-size:10.5px;font-weight:400;color:var(--text-light);background:var(--cream-mid);padding:1px 7px;border-radius:4px}
+.day-add-btn{font-size:11.5px;color:var(--text-light);background:none;border:1px solid var(--border);border-radius:4px;padding:3px 9px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;flex-shrink:0}
+.day-add-btn:hover{color:var(--ink);border-color:var(--ink)}
 .day-chevron{font-size:11px;color:var(--text-light);transition:transform .2s;flex-shrink:0}
 .day-chevron.open{transform:rotate(180deg)}
 
-.day-body{background:var(--white);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;padding:4px 16px 10px 16px;display:none}
+.day-body{background:var(--white);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;padding:4px 16px 14px;display:none}
 .day-body.open{display:block}
 .timeline{position:relative;padding-left:26px}
 .timeline::before{content:'';position:absolute;left:6px;top:16px;bottom:8px;width:1px;background:var(--border)}
@@ -129,138 +139,178 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
 .tl-item{position:relative;padding:9px 0 9px 18px;display:flex;gap:12px;align-items:flex-start;border-radius:6px;transition:background .1s}
 .tl-item:hover{background:var(--cream)}
 .tl-item:hover .icon-btn{opacity:.6}
-.tl-dot{position:absolute;left:-26px;top:15px;width:13px;height:13px;border-radius:50%;border:2px solid var(--white);box-shadow:0 0 0 1px var(--border);flex-shrink:0;z-index:1}
-.tl-item[data-type="flight"] .tl-dot{background:var(--c-flight);box-shadow:0 0 0 1px #cddaf7}
-.tl-item[data-type="hotel"] .tl-dot{background:var(--c-hotel);box-shadow:0 0 0 1px #e0d4f5}
-.tl-item[data-type="transport"] .tl-dot{background:var(--c-transport);box-shadow:0 0 0 1px #cde8db}
-.tl-item[data-type="food"] .tl-dot{background:var(--c-food);box-shadow:0 0 0 1px #f5d8c4}
+.tl-dot{position:absolute;left:-26px;top:15px;width:12px;height:12px;border-radius:50%;border:2px solid var(--white);box-shadow:0 0 0 1px var(--border);flex-shrink:0;z-index:1}
+.tl-item[data-type="flight"] .tl-dot{background:var(--c-flight);box-shadow:0 0 0 1px #c8d8f0}
+.tl-item[data-type="hotel"] .tl-dot{background:var(--c-hotel);box-shadow:0 0 0 1px #ddd0f5}
+.tl-item[data-type="transport"] .tl-dot{background:var(--c-transport);box-shadow:0 0 0 1px #c8e8d8}
+.tl-item[data-type="food"] .tl-dot{background:var(--c-food);box-shadow:0 0 0 1px #f0d0b8}
 .tl-item[data-type="activity"] .tl-dot{background:var(--cream-dark);border:2px solid var(--border)}
-.tl-item[data-type="mustdo"] .tl-dot{background:var(--red);box-shadow:0 0 0 1px #f0c0c2}
-.tl-time{font-size:12px;color:var(--text-light);min-width:62px;padding-top:2px;flex-shrink:0}
+.tl-item[data-type="mustdo"] .tl-dot{background:var(--rose);box-shadow:0 0 0 1px #f0c0c0}
+.tl-time{font-size:11.5px;color:var(--text-light);min-width:62px;padding-top:2px;flex-shrink:0}
 .tl-content{flex:1;min-width:0}
-.tl-title{font-size:14px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px}
-.tl-desc{font-size:13px;color:var(--text-mid);line-height:1.4}
-.tl-note{font-size:12px;color:var(--text-light);background:var(--cream-mid);border-left:2px solid var(--border);padding:4px 10px;border-radius:0 4px 4px 0;margin-top:5px;line-height:1.4}
+.tl-title{font-size:13.5px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px}
+.tl-desc{font-size:12.5px;color:var(--text-mid);line-height:1.4}
+.tl-note{font-size:11.5px;color:var(--text-light);background:var(--cream-mid);border-left:2px solid var(--border);padding:4px 10px;border-radius:0 4px 4px 0;margin-top:5px;line-height:1.4}
+.tl-map-link{font-size:11px;color:var(--rose);text-decoration:none;opacity:.7;transition:opacity .15s;margin-left:4px;flex-shrink:0;align-self:flex-start;margin-top:3px}
+.tl-map-link:hover{opacity:1}
 .tl-actions{display:flex;gap:2px;flex-shrink:0}
 
 .add-tl-btn{display:flex;align-items:center;gap:5px;padding:7px 0;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-light);cursor:pointer;margin-top:2px;transition:color .15s}
-.add-tl-btn:hover{color:var(--navy)}
+.add-tl-btn:hover{color:var(--ink)}
+
+/* DAY TIP */
+.day-tip{margin:8px 0 4px;padding:10px 14px;background:var(--gold-bg);border:1px solid #EED9A8;border-radius:6px;font-size:12.5px;color:var(--text-mid);line-height:1.5}
+.day-tip strong{color:var(--text);font-weight:500}
 
 /* BUDGET */
 .budget-stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
 .stat-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
-.stat-card.primary{background:var(--navy);border-color:var(--navy)}
-.stat-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-light);margin-bottom:5px}
-.stat-card.primary .stat-label{color:rgba(255,255,255,.4)}
-.stat-value{font-family:'DM Serif Display',serif;font-size:24px;color:var(--navy);line-height:1}
+.stat-card.primary{background:var(--ink);border-color:var(--ink)}
+.stat-label{font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-light);margin-bottom:5px}
+.stat-card.primary .stat-label{color:rgba(255,255,255,.38)}
+.stat-value{font-family:'DM Serif Display',serif;font-size:24px;color:var(--ink);line-height:1}
 .stat-card.primary .stat-value{color:white}
-.stat-sub{font-size:12px;color:var(--text-light);margin-top:2px}
-.stat-card.primary .stat-sub{color:rgba(255,255,255,.35)}
-
+.stat-sub{font-size:11.5px;color:var(--text-light);margin-top:2px}
+.stat-card.primary .stat-sub{color:rgba(255,255,255,.3)}
 .currency-toggle{display:flex;background:var(--cream-mid);border-radius:6px;padding:2px;gap:2px}
 .cur-btn{border:none;cursor:pointer;border-radius:4px;padding:5px 12px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;background:none;color:var(--text-light);transition:all .15s}
-.cur-btn.active{background:var(--white);color:var(--navy);box-shadow:var(--shadow-sm)}
-
+.cur-btn.active{background:var(--white);color:var(--ink);box-shadow:var(--shadow-sm)}
 .split-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
 .split-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
 .split-name{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);margin-bottom:8px}
-.split-paid{font-family:'DM Serif Display',serif;font-size:22px;color:var(--navy);margin-bottom:2px}
+.split-paid{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink);margin-bottom:2px}
 .split-sub{font-size:12px;color:var(--text-light);margin-bottom:8px}
 .owed-tag{display:inline-block;font-size:12px;font-weight:500;padding:3px 9px;border-radius:4px}
-.owed-tag.owes{background:var(--red-bg);color:var(--red)}
+.owed-tag.owes{background:var(--red-bg);color:var(--rose)}
 .owed-tag.owed{background:var(--green-bg);color:var(--green)}
 .owed-tag.even{background:var(--cream-mid);color:var(--text-light)}
-
-.data-table{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:13.5px}
-.data-table th{text-align:left;padding:9px 13px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);background:var(--cream);border-bottom:1px solid var(--border)}
+.data-table{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:13px}
+.data-table th{text-align:left;padding:9px 13px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);background:var(--cream);border-bottom:1px solid var(--border)}
 .data-table td{padding:9px 13px;border-bottom:1px solid var(--border-soft);vertical-align:middle}
 .data-table tr:last-child td{border-bottom:none}
 .data-table tbody tr:hover td{background:var(--cream)}
-.data-table tfoot td{font-weight:600;background:var(--cream-mid);border-top:1px solid var(--border);font-size:14px}
-.cat-badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 7px;border-radius:4px}
+.data-table tfoot td{font-weight:600;background:var(--cream-mid);border-top:1px solid var(--border);font-size:13.5px}
+.cat-badge{display:inline-block;font-size:10.5px;font-weight:500;padding:2px 7px;border-radius:4px}
 .cat-Hotels{background:#f0ebf8;color:#5c35a0}
 .cat-Flights{background:#eaf1fd;color:#2a5fb5}
 .cat-Transport{background:var(--green-bg);color:var(--green)}
 .cat-Activities{background:#fff4ed;color:#b8521c}
-.cat-Food{background:#fff7ed;color:#c05c1e}
+.cat-Food{background:#fff0e8;color:#b85c2a}
 .cat-Shopping{background:#fdf0f5;color:#a0285a}
 .cat-Other{background:var(--cream-mid);color:var(--text-mid)}
 .unbooked-row td{color:var(--text-light)}
 .mono{font-variant-numeric:tabular-nums}
 
 /* CHECKLISTS */
-.checklist-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.checklist-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:28px}
 .cl-section{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .cl-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.cl-header-left h3{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:1px}
-.cl-header-left p{font-size:12px;color:var(--text-light)}
+.cl-header-left h3{font-size:14.5px;font-weight:600;color:var(--ink);margin-bottom:1px}
+.cl-header-left p{font-size:11.5px;color:var(--text-light)}
 .cl-prog-label{font-size:12px;color:var(--text-light);font-weight:500}
-.prog-bar{height:3px;background:var(--border-soft)}
-.prog-fill{height:100%;background:var(--navy);transition:width .4s ease}
-.cl-cat-header{padding:8px 18px 3px;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-light);background:var(--cream);border-bottom:1px solid var(--border-soft)}
+.prog-bar{height:2px;background:var(--border-soft)}
+.prog-fill{height:100%;background:var(--rose);transition:width .4s ease}
+.cl-cat-header{padding:7px 18px 3px;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);background:var(--cream);border-bottom:1px solid var(--border-soft)}
 .cl-item{display:flex;align-items:center;padding:9px 18px;border-bottom:1px solid var(--border-soft);gap:10px;transition:background .1s}
 .cl-item:last-child{border-bottom:none}
 .cl-item:hover{background:var(--cream)}
 .cl-item:hover .icon-btn{opacity:.5}
-.cl-label{flex:1;font-size:13.5px;color:var(--text);cursor:pointer}
+.cl-label{flex:1;font-size:13px;color:var(--text);cursor:pointer}
 .cl-label.done{text-decoration:line-through;color:var(--text-light)}
 .cl-checks{display:flex;gap:12px;flex-shrink:0}
 .check-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
 .check-wrap span{font-size:10px;color:var(--text-light);font-weight:500}
-.check-wrap input[type=checkbox]{width:15px;height:15px;accent-color:var(--navy);cursor:pointer}
+.check-wrap input[type=checkbox]{width:15px;height:15px;accent-color:var(--rose);cursor:pointer}
 .add-row{display:flex;gap:8px;padding:10px 18px;border-top:1px solid var(--border-soft)}
 .add-input{flex:1;border:1px solid var(--border);border-radius:5px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--cream);color:var(--text);outline:none;transition:border-color .15s}
-.add-input:focus{border-color:var(--navy);background:var(--white)}
+.add-input:focus{border-color:var(--ink);background:var(--white)}
 .add-cat-select{border:1px solid var(--border);border-radius:5px;padding:6px 8px;font-family:'DM Sans',sans-serif;font-size:12px;background:var(--cream);color:var(--text-mid);outline:none;cursor:pointer}
 
+/* TIPS */
+.tips-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px}
+.tip-card{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.tip-card-head{padding:12px 16px 10px;border-bottom:1px solid var(--border-soft)}
+.tip-card-title{font-size:13px;font-weight:600;color:var(--ink)}
+.tip-items{}
+.tip-item{padding:10px 16px;border-bottom:1px solid var(--border-soft)}
+.tip-item:last-child{border-bottom:none}
+.tip-item-title{font-size:12.5px;font-weight:500;color:var(--text);margin-bottom:3px}
+.tip-item-body{font-size:12px;color:var(--text-mid);line-height:1.5}
+.tip-item-body strong{color:var(--text);font-weight:500}
+.phrases-table{width:100%;border-collapse:collapse}
+.phrases-table td{padding:8px 16px;border-bottom:1px solid var(--border-soft);font-size:12.5px;vertical-align:top}
+.phrases-table tr:last-child td{border-bottom:none}
+.ph-jp{font-size:14px;color:var(--ink);width:44%;font-weight:400}
+.ph-rom{color:var(--text-mid);width:30%}
+.ph-en{color:var(--text-light);width:26%;font-size:12px}
+
+/* DRIVE */
+.drive-section{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:24px}
+.drive-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.drive-header h3{font-size:14.5px;font-weight:600;color:var(--ink)}
+.drive-header p{font-size:12px;color:var(--text-light);margin-top:1px}
+.drive-url-row{display:flex;gap:8px;padding:14px 18px;border-bottom:1px solid var(--border-soft)}
+.drive-url-input{flex:1;border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--cream);color:var(--text);outline:none;transition:border-color .15s}
+.drive-url-input:focus{border-color:var(--ink);background:var(--white)}
+.drive-frame-wrap{height:520px;background:var(--cream-mid)}
+.drive-frame-wrap iframe{width:100%;height:100%;border:none;display:block}
+.drive-empty{height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--text-light)}
+.drive-empty svg{opacity:.3}
+.drive-empty p{font-size:13px}
+.drive-empty small{font-size:12px;color:var(--text-light);opacity:.7}
+
 /* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(28,23,20,.4);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
 .modal-overlay.open{display:flex}
-.modal{background:var(--white);border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.12);max-width:450px;width:100%;max-height:90vh;overflow-y:auto}
+.modal{background:var(--white);border-radius:10px;box-shadow:0 8px 48px rgba(28,23,20,.14);max-width:450px;width:100%;max-height:90vh;overflow-y:auto}
 .modal-head{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.modal-head h2{font-size:16px;font-weight:600;color:var(--navy)}
+.modal-head h2{font-size:16px;font-weight:600;color:var(--ink)}
 .modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-light);padding:0 2px;line-height:1}
 .modal-close:hover{color:var(--text)}
 .modal-body{padding:18px 22px 22px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .fg{margin-bottom:13px}
-.fg label{display:block;font-size:12px;font-weight:500;color:var(--text-mid);margin-bottom:4px}
+.fg label{display:block;font-size:11.5px;font-weight:500;color:var(--text-mid);margin-bottom:4px}
 .fg input,.fg select,.fg textarea{width:100%;border:1px solid var(--border);border-radius:5px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--cream);outline:none;transition:border-color .15s}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--navy);background:var(--white)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--ink);background:var(--white)}
 .fg textarea{resize:vertical;min-height:60px}
 .modal-foot{display:flex;gap:8px;justify-content:flex-end;padding-top:2px}
-.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px 16px;border:1px solid var(--border);border-radius:7px;background:var(--white);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;transition:all .15s;margin-bottom:14px}
-.google-btn:hover{border-color:#aaa;background:var(--cream)}
-.auth-error{background:var(--red-bg);color:var(--red);border-radius:5px;padding:8px 12px;font-size:13px;margin-bottom:12px;display:none}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:7px;background:var(--white);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;transition:all .15s;margin-bottom:14px}
+.google-btn:hover{border-color:#999;background:var(--cream)}
+.auth-error{background:var(--red-bg);color:var(--rose);border-radius:5px;padding:10px 14px;font-size:13px;margin-bottom:12px;display:none;line-height:1.5}
 .auth-error.show{display:block}
+.auth-error a{color:var(--rose);font-weight:500}
 .auth-footnote{font-size:12px;color:var(--text-light);text-align:center;line-height:1.5}
 
 /* NOTICE */
-.notice{background:var(--gold-bg);border:1px solid #f0d9b0;border-radius:7px;padding:11px 16px;font-size:13.5px;color:var(--text-mid);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.notice{background:var(--gold-bg);border:1px solid #EED9A8;border-radius:7px;padding:11px 16px;font-size:13px;color:var(--text-mid);margin-bottom:20px;display:flex;align-items:center;gap:10px}
 
 /* TOAST */
-.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:white;padding:10px 18px;border-radius:6px;font-size:13px;font-weight:500;box-shadow:var(--shadow);z-index:300;transform:translateY(60px);opacity:0;transition:all .25s ease}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:var(--cream);padding:10px 18px;border-radius:6px;font-size:13px;font-weight:500;box-shadow:var(--shadow);z-index:300;transform:translateY(60px);opacity:0;transition:all .25s ease}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.ok{background:var(--green)}
 
 /* RESPONSIVE */
-@media(max-width:700px){
-  .trip-banner{padding:24px 20px}.trip-banner-title{font-size:26px}
-  .budget-stat-row,.split-row,.checklist-grid{grid-template-columns:1fr}
+@media(max-width:760px){
+  .trip-banner{padding:24px 20px}.trip-banner-title{font-size:30px}
+  .budget-stat-row,.split-row,.checklist-grid,.tips-grid{grid-template-columns:1fr}
   .city-row{flex-direction:column}.city-stop{border-right:none;border-bottom:1px solid var(--border)}.city-stop:last-child{border-bottom:none}
+  .tab-btn{padding:0 10px;font-size:12.5px}
 }
 .flex-between{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
 .mb12{margin-bottom:12px}.mb20{margin-bottom:20px}.mb28{margin-bottom:28px}
 </style>
 </head>
 <body>
+<canvas id="blossom-canvas"></canvas>
 
 <header>
   <div class="header-inner">
-    <a class="logo" href="#">Japan 2026 <span>· Gwendalynn & Christina</span></a>
+    <a class="logo" href="#">Japan 2026 <span>· G & C</span></a>
     <nav class="tabs" id="mainNav">
       <button class="tab-btn active" data-page="overview">Overview</button>
       <button class="tab-btn" data-page="itinerary">Itinerary</button>
+      <button class="tab-btn" data-page="tips">Tips</button>
       <button class="tab-btn locked" data-page="budget" id="budgetTab">Budget</button>
       <button class="tab-btn locked" data-page="pretrip" id="pretripTab">Pre-Trip</button>
     </nav>
@@ -269,14 +319,14 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
         <div class="avatar" id="userAvatar">G</div>
         <span id="userName"></span>
       </div>
-      <button class="btn btn-outline" id="authBtn" onclick="openAuthModal()">Sign in</button>
+      <button class="btn btn-outline" id="authBtn">Sign in</button>
     </div>
   </div>
 </header>
 
 <main>
 
-<!-- OVERVIEW -->
+<!-- ═══ OVERVIEW ═══ -->
 <div class="page active" id="page-overview">
   <div class="trip-banner">
     <div>
@@ -284,7 +334,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
       <div class="trip-banner-title">Japan</div>
       <div class="trip-banner-dates">Tokyo · Hakone · Kyoto · Kanazawa · Ginza</div>
     </div>
-    <div id="trip-countdown" class="trip-countdown-block"></div>
+    <div class="trip-countdown-block" id="trip-countdown"></div>
   </div>
 
   <div class="section-title mb12">Route</div>
@@ -300,57 +350,65 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
   <div class="highlights-grid mb28">
     <div class="highlight-item"><div class="hl-dot dot-confirmed"></div><div><div class="hl-title">Flights · United UA39 / UA38</div><div class="hl-desc">LAX → HND Apr 15, return Apr 29 · Economy Plus · 2 free checked bags each</div><span class="tag tag-conf">Confirmed</span></div></div>
     <div class="highlight-item"><div class="hl-dot dot-confirmed"></div><div><div class="hl-title">teamLab Borderless · Apr 17</div><div class="hl-desc">8:30 AM entry · Azabudai Hills, Minato-ku · Digital art museum</div><span class="tag tag-conf">Confirmed</span></div></div>
-    <div class="highlight-item"><div class="hl-dot dot-confirmed"></div><div><div class="hl-title">Fuji Excursion · Apr 20</div><div class="hl-desc">Fuji-Excursion 7 · Shinjuku 8:30 AM → Kawaguchiko 10:26 AM</div><span class="tag tag-conf">Confirmed</span></div></div>
-    <div class="highlight-item"><div class="hl-dot dot-confirmed"></div><div><div class="hl-title">Tensui Saryo · Hakone</div><div class="hl-desc">Apr 20–22 · Private onsen, kaiseki dinner and breakfast included</div><span class="tag tag-conf">Confirmed</span></div></div>
-    <div class="highlight-item"><div class="hl-dot dot-mustdo"></div><div><div class="hl-title">Nara Day Trip</div><div class="hl-desc">Deer park · Todai-ji Great Buddha · Kasuga Taisha Shrine</div><span class="tag tag-must">Must Do</span></div></div>
+    <div class="highlight-item"><div class="hl-dot dot-confirmed"></div><div><div class="hl-title">Tensui Saryo Ryokan · Hakone</div><div class="hl-desc">Apr 20–22 · Private onsen, kaiseki dinner and breakfast included</div><span class="tag tag-conf">Confirmed</span></div></div>
+    <div class="highlight-item"><div class="hl-dot dot-confirmed"></div><div><div class="hl-title">Fuji Excursion 7 · Apr 20</div><div class="hl-desc">Shinjuku 8:30 AM → Kawaguchiko 10:26 AM · Reserved seats</div><span class="tag tag-conf">Confirmed</span></div></div>
+    <div class="highlight-item"><div class="hl-dot dot-mustdo"></div><div><div class="hl-title">Nara Day Trip</div><div class="hl-desc">Free-roaming deer · Todai-ji Great Buddha · Kasuga Taisha Shrine</div><span class="tag tag-must">Must Do</span></div></div>
     <div class="highlight-item"><div class="hl-dot dot-mustdo"></div><div><div class="hl-title">Osaka Aquarium Kaiyukan</div><div class="hl-desc">One of the world's largest aquariums · Whale sharks · Osaka Castle day</div><span class="tag tag-must">Must Do</span></div></div>
-    <div class="highlight-item"><div class="hl-dot dot-neutral"></div><div><div class="hl-title">Fushimi Inari & Arashiyama</div><div class="hl-desc">Thousands of torii gates · Bamboo Grove · Best visited early morning</div></div></div>
+    <div class="highlight-item"><div class="hl-dot dot-neutral"></div><div><div class="hl-title">Fushimi Inari & Arashiyama</div><div class="hl-desc">10,000 torii gates · Bamboo Grove · Both best visited before 8 AM</div></div></div>
     <div class="highlight-item"><div class="hl-dot dot-neutral"></div><div><div class="hl-title">Kenroku-en · Kanazawa</div><div class="hl-desc">One of Japan's top 3 gardens · Higashi Chaya geisha district nearby</div></div></div>
   </div>
 
   <div class="section-title mb12">Key Info</div>
   <table class="info-table">
-    <tr><td>Flight confirmation</td><td>United F354LH · 2 passengers · Economy Plus · 2 free checked bags each (50 lbs)</td></tr>
-    <tr><td>Currency</td><td>Japanese Yen (¥). Carry cash — many temples and local spots are cash only</td></tr>
-    <tr><td>IC Card</td><td>Get Suica or PASMO at HND airport on arrival · Works for trains, buses, convenience stores</td></tr>
-    <tr><td>Pocket WiFi / SIM</td><td>Book before departure or pick up at Haneda · Recommend Sakura Mobile or IIJmio</td></tr>
-    <tr><td>Still to book</td><td>Kyoto → Kanazawa Thunderbird express (~¥7,120 each) · Kanazawa → Tokyo Hokuriku Shinkansen (~¥14,120 each)</td></tr>
-    <tr><td>HND departure</td><td>Be at gate by 5:40 PM · UA38 departs 6:10 PM · Apr 29 · Arrives LAX 12:15 PM same day</td></tr>
+    <tr><td>Flight confirmation</td><td>United F354LH · Economy Plus · Seats 31J & 31L · 2 free checked bags (50 lbs each)</td></tr>
+    <tr><td>Currency</td><td>Japanese Yen (¥) · Carry ¥15,000–20,000 cash at all times — many temples and local spots are cash-only</td></tr>
+    <tr><td>Suica IC Card</td><td>Add to Apple Wallet before departure, or pick up at HND · Covers trains, buses, convenience stores</td></tr>
+    <tr><td>WiFi / SIM</td><td>Book pocket WiFi before departure or pick up at Haneda · Sakura Mobile or IIJmio recommended</td></tr>
+    <tr><td>Still to book</td><td>Kyoto → Kanazawa Thunderbird (~¥7,120 each) · Kanazawa → Tokyo Hokuriku Shinkansen (~¥14,120 each)</td></tr>
+    <tr><td>HND departure</td><td>UA38 departs 6:10 PM Apr 29 · Be at gate by 5:40 PM · Arrives LAX 12:15 PM same day</td></tr>
   </table>
 </div>
 
-<!-- ITINERARY -->
+<!-- ═══ ITINERARY ═══ -->
 <div class="page" id="page-itinerary">
   <div class="page-header">
     <div>
       <div class="page-eyebrow">April 15–29, 2026</div>
       <div class="page-title">Itinerary</div>
-      <div class="page-sub">Click any day to expand. Confirmed bookings shown in green.</div>
+      <div class="page-sub">Click any day to expand. Map links open Google Maps. Confirmed bookings in green.</div>
     </div>
-    <div id="itin-controls"></div>
   </div>
   <div class="type-legend">
-    <span style="font-weight:500;color:var(--text-mid);margin-right:4px">Key:</span>
+    <span style="font-weight:500;color:var(--text-mid);margin-right:2px">Key:</span>
     <div class="legend-item"><div class="legend-dot" style="background:var(--c-flight)"></div>Flight</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--c-hotel)"></div>Hotel</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--c-transport)"></div>Transport</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--c-food)"></div>Food</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--cream-dark);border:1.5px solid var(--border)"></div>Activity</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Must Do</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--rose)"></div>Must Do</div>
   </div>
   <div id="itin-locked" class="notice" style="display:none">Sign in as Gwendalynn or Christina to add or edit activities.</div>
   <div id="itin-container"><div style="text-align:center;padding:48px;color:var(--text-light)">Loading…</div></div>
 </div>
 
-<!-- BUDGET -->
+<!-- ═══ TIPS ═══ -->
+<div class="page" id="page-tips">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Japan Know-How</div>
+      <div class="page-title">Travel Tips</div>
+      <div class="page-sub">Practical advice for navigating Japan like a local.</div>
+    </div>
+  </div>
+  <div class="tips-grid" id="tips-container"></div>
+</div>
+
+<!-- ═══ BUDGET ═══ -->
 <div class="page" id="page-budget">
   <div id="budget-gate" class="notice">Budget is private — sign in as Gwendalynn or Christina to view.</div>
   <div id="budget-inner" style="display:none">
     <div class="page-header">
-      <div>
-        <div class="page-eyebrow">Finances</div>
-        <div class="page-title">Trip Budget</div>
-      </div>
+      <div><div class="page-eyebrow">Finances</div><div class="page-title">Trip Budget</div></div>
       <div style="display:flex;gap:10px;align-items:center">
         <div class="currency-toggle">
           <button class="cur-btn active" onclick="setCurrency('JPY')" id="currJPY">¥ JPY</button>
@@ -360,23 +418,13 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
       </div>
     </div>
     <div class="budget-stat-row">
-      <div class="stat-card primary"><div class="stat-label">Total Trip Cost</div><div class="stat-value" id="stat-total">—</div><div class="stat-sub" id="stat-total-sub">confirmed & planned</div></div>
+      <div class="stat-card primary"><div class="stat-label">Total Trip Cost</div><div class="stat-value" id="stat-total">—</div><div class="stat-sub" id="stat-total-sub"></div></div>
       <div class="stat-card"><div class="stat-label">Gwendalynn's Share</div><div class="stat-value" id="stat-gwen">—</div><div class="stat-sub">her half of shared costs</div></div>
       <div class="stat-card"><div class="stat-label">Christina's Share</div><div class="stat-value" id="stat-christina">—</div><div class="stat-sub">her half of shared costs</div></div>
     </div>
     <div class="split-row mb20">
-      <div class="split-card">
-        <div class="split-name"><div class="avatar" style="background:#2e4a8a">G</div>Gwendalynn</div>
-        <div class="split-paid" id="sp-gwen-paid">—</div>
-        <div class="split-sub">paid so far</div>
-        <div id="sp-gwen-chip"></div>
-      </div>
-      <div class="split-card">
-        <div class="split-name"><div class="avatar" style="background:#a02060">C</div>Christina</div>
-        <div class="split-paid" id="sp-christina-paid">—</div>
-        <div class="split-sub">paid so far</div>
-        <div id="sp-christina-chip"></div>
-      </div>
+      <div class="split-card"><div class="split-name"><div class="avatar" style="background:#2e4a8a">G</div>Gwendalynn</div><div class="split-paid" id="sp-gwen-paid">—</div><div class="split-sub">paid so far</div><div id="sp-gwen-chip"></div></div>
+      <div class="split-card"><div class="split-name"><div class="avatar" style="background:#8B3A2E">C</div>Christina</div><div class="split-paid" id="sp-christina-paid">—</div><div class="split-sub">paid so far</div><div id="sp-christina-chip"></div></div>
     </div>
     <div class="section-title mb12">All Expenses</div>
     <div class="mb20" style="overflow:hidden;border-radius:8px">
@@ -390,22 +438,18 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
     <table class="info-table">
       <tr><td>Exchange rate</td><td>~¥150 per USD (estimated)</td></tr>
       <tr><td>Still to book</td><td>Kyoto → Kanazawa Thunderbird (~¥14,240 total) · Kanazawa → Tokyo Shinkansen (~¥28,240 total)</td></tr>
-      <tr><td>Accommodation tax</td><td>Paid separately at each hotel (¥4,000/pp/night in Kyoto for rooms over ¥50,000)</td></tr>
-      <tr><td>Daily estimate</td><td>~¥8,000–15,000 per person per day for food, local transport, entry fees</td></tr>
+      <tr><td>Accommodation tax</td><td>Paid separately at each hotel — ¥4,000/pp/night in Kyoto for rooms over ¥50,000</td></tr>
+      <tr><td>Daily budget</td><td>~¥8,000–15,000 per person per day for food, local transport, entry fees</td></tr>
     </table>
   </div>
 </div>
 
-<!-- PRE-TRIP -->
+<!-- ═══ PRE-TRIP ═══ -->
 <div class="page" id="page-pretrip">
   <div id="pretrip-gate" class="notice">Pre-trip planning is private — sign in as Gwendalynn or Christina to view.</div>
   <div id="pretrip-inner" style="display:none">
     <div class="page-header">
-      <div>
-        <div class="page-eyebrow">Preparation</div>
-        <div class="page-title">Pre-Trip Checklist</div>
-        <div class="page-sub">Both travelers check off their own items independently.</div>
-      </div>
+      <div><div class="page-eyebrow">Preparation</div><div class="page-title">Pre-Trip Checklist</div><div class="page-sub">Both travelers check off their own items independently.</div></div>
     </div>
     <div class="checklist-grid">
       <div class="cl-section">
@@ -429,6 +473,27 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
         </div>
       </div>
     </div>
+
+    <!-- DRIVE -->
+    <div class="section-title mb12">Trip Files</div>
+    <div class="drive-section">
+      <div class="drive-header">
+        <div><h3>Google Drive Folder</h3><p>Paste your shared Drive folder link to embed it here</p></div>
+      </div>
+      <div class="drive-url-row">
+        <input class="drive-url-input" type="text" id="drive-url-input" placeholder="https://drive.google.com/drive/folders/...">
+        <button class="btn btn-primary btn-sm" onclick="saveDriveUrl()">Load</button>
+        <button class="btn btn-outline btn-sm" onclick="clearDriveUrl()">Clear</button>
+      </div>
+      <div class="drive-frame-wrap" id="drive-frame-wrap">
+        <div class="drive-empty" id="drive-empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7l3-3h12l3 3v13a1 1 0 01-1 1H4a1 1 0 01-1-1V7z"/><path d="M8 21V11h8v10"/></svg>
+          <p>No folder linked yet</p>
+          <small>Paste a Google Drive folder URL above</small>
+        </div>
+        <iframe id="drive-iframe" style="display:none" allowfullscreen></iframe>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -444,7 +509,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
         <svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.909-2.259c-.806.54-1.837.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
         Continue with Google
       </button>
-      <p class="auth-footnote">ghstilson@gmail.com and cmelikian@gmail.com get edit access.<br>All other Google accounts can view the itinerary.</p>
+      <p class="auth-footnote">ghstilson@gmail.com and cmelikian@gmail.com get edit access.<br>All other Google accounts can view the itinerary.<br><br><strong style="color:var(--text-mid)">If sign-in fails:</strong> Go to Firebase Console → Authentication → Settings → Authorized Domains and add the domain where this file is hosted.</p>
     </div>
   </div>
 </div>
@@ -461,8 +526,9 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
       </div>
       <div class="fg"><label>Title</label><input type="text" id="act-title" placeholder="Activity title"></div>
       <div class="fg"><label>Description</label><input type="text" id="act-desc" placeholder="Details, address, etc."></div>
+      <div class="fg"><label>Maps address (optional)</label><input type="text" id="act-addr" placeholder="e.g. Senso-ji Temple, Asakusa, Tokyo"></div>
       <div class="fg"><label>Notes / Booking info</label><textarea id="act-notes" placeholder="Confirmation numbers, tips…"></textarea></div>
-      <div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="act-conf" style="width:15px;height:15px;accent-color:var(--navy)"><label for="act-conf" style="font-size:14px;cursor:pointer">Booking confirmed</label></div>
+      <div class="fg" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="act-conf" style="width:15px;height:15px;accent-color:var(--rose)"><label for="act-conf" style="font-size:14px;cursor:pointer">Booking confirmed</label></div>
       <div class="modal-foot"><button class="btn btn-outline" onclick="closeModal('actModal')">Cancel</button><button class="btn btn-primary" onclick="saveActivity()">Save</button></div>
     </div>
   </div>
@@ -494,35 +560,126 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
 
 <div class="toast" id="toast"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-const firebaseConfig={apiKey:"AIzaSyBCIaluRd8u7M88DbL59Cs_6_sfcb86f0E",authDomain:"japan-2026-gc.firebaseapp.com",projectId:"japan-2026-gc",storageBucket:"japan-2026-gc.firebasestorage.app",messagingSenderId:"661642949404",appId:"1:661642949404:web:c6a554f3c243171d5a00d9",measurementId:"G-BTCE13YE8R"};
+<script>
+// ── Firebase ──────────────────────────────────────────────────────────────────
+const firebaseConfig={apiKey:"AIzaSyBCIaluRd8u7M88DbL59Cs_6_sfcb86f0E",authDomain:"japan-2026-gc.firebaseapp.com",projectId:"japan-2026-gc",storageBucket:"japan-2026-gc.firebasestorage.app",messagingSenderId:"661642949404",appId:"1:661642949404:web:c6a554f3c243171d5a00d9"};
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.firestore();
 const EDITORS=['ghstilson@gmail.com','cmelikian@gmail.com'];
 const JPY=150;
 let S={user:null,isEditor:false,page:'overview',currency:'JPY',itin:[],budget:[],pretrip:[],packing:[],unsubs:[]};
 
+// ── Seed Data ─────────────────────────────────────────────────────────────────
+const mapLink=(addr,label)=>addr?`<a class="tl-map-link" href="https://maps.google.com/?q=${encodeURIComponent(addr)}" target="_blank" rel="noopener" title="Open in Maps">↗ Map</a>`:'';
+
 const ITIN=[
-  {id:'d0',dayNum:0,date:'Wed · Apr 15',title:'Departure Day',city:'Los Angeles',items:[{id:'i0a',time:'11:20 AM',type:'flight',title:'Depart LAX · UA39',desc:'United Economy Plus · Seats 31J / 31L',conf:true,notes:'Confirmation: F354LH · Check in 60 min before boarding'}]},
-  {id:'d1',dayNum:1,date:'Thu · Apr 16',title:'Arrive Tokyo',city:'Tokyo · Shinjuku',items:[{id:'i1a',time:'3:05 PM',type:'flight',title:'Arrive HND · Tokyo Haneda',desc:'Clear immigration and customs · Collect bags',conf:true,notes:'Pick up Suica IC card at airport · Take Keikyu line toward Shinjuku (~1 hr)'},{id:'i1b',time:'~5:00 PM',type:'hotel',title:'Check-in · Hotel Gracery Shinjuku',desc:'Kabukicho 1-19-1, Shinjuku · Standard Twin · 4 nights',conf:true,notes:'Conf: 5594.831.309 · PIN: 6506 · Check-in from 2:00 PM · +81 3 6833 1111'},{id:'i1c',time:'Evening',type:'food',title:'Dinner · Omoide Yokocho',desc:'Memory Lane — narrow alley of tiny yakitori stalls and local sake',conf:false}]},
-  {id:'d2',dayNum:2,date:'Fri · Apr 17',title:'teamLab Borderless',city:'Tokyo · Minato',items:[{id:'i2a',time:'8:30 AM',type:'mustdo',title:'teamLab Borderless',desc:'Digital art museum · Azabudai Hills B1 · 5-9 Toranomon, Minato-ku',conf:true,notes:'Ticket: A7YRA4LXWCN3-0001 · ¥11,200 for 2 · Download the teamLab app before you go'},{id:'i2b',time:'Afternoon',type:'activity',title:'Roppongi Hills · Mori Art Museum',desc:'Observation deck on 53F · City views · Contemporary art',conf:false},{id:'i2c',time:'Evening',type:'food',title:'Dinner · Shinjuku or Harajuku',desc:'Try a department store food basement (depachika) or conveyor belt sushi',conf:false}]},
-  {id:'d3',dayNum:3,date:'Sat · Apr 18',title:'Old Tokyo',city:'Tokyo · Asakusa / Ueno',items:[{id:'i3a',time:'Morning',type:'activity',title:'Senso-ji Temple · Asakusa',desc:'Tokyo\'s oldest temple · Nakamise-dori shopping street below · Kimono rental nearby',conf:false},{id:'i3b',time:'Midday',type:'activity',title:'Ueno Park',desc:'Cherry blossoms · Tokyo National Museum · Shinobazu Pond',conf:false},{id:'i3c',time:'Afternoon',type:'activity',title:'Akihabara',desc:'Electronics, anime, vintage games, arcades',conf:false},{id:'i3d',time:'Evening',type:'food',title:'Izakaya dinner',desc:'Shared plates, yakitori, draft beer — look for red lanterns outside',conf:false}]},
-  {id:'d4',dayNum:4,date:'Sun · Apr 19',title:'West Tokyo',city:'Tokyo · Harajuku / Shibuya',items:[{id:'i4a',time:'Morning',type:'activity',title:'Meiji Jingu Shrine',desc:'Forested shrine in central Tokyo · Free entry · Arrive early for quiet',conf:false},{id:'i4b',time:'Midday',type:'activity',title:'Harajuku · Takeshita Street',desc:'Youth fashion, crepes, quirky boutiques · Omotesando nearby for higher-end shopping',conf:false},{id:'i4c',time:'Afternoon',type:'activity',title:'Shibuya Crossing & Scramble Square',desc:'World\'s busiest pedestrian crossing · Observatory on 47F (¥2,000)',conf:false},{id:'i4d',time:'Evening',type:'food',title:'Dinner in Shinjuku · Golden Gai',desc:'Tiny themed bars in a labyrinth of alleys — each holds ~6 people',conf:false}]},
-  {id:'d5',dayNum:5,date:'Mon · Apr 20',title:'Mt. Fuji Views → Hakone',city:'Kawaguchiko · Hakone',items:[{id:'i5a',time:'8:30 AM',type:'transport',title:'Fuji-Excursion 7 · Shinjuku → Kawaguchiko',desc:'Reserved: Car 3, Seats 13-C & 13-D · ~2 hrs',conf:true,notes:'Res: E77821 · Pickup code: 24492390994521288 · Collect tickets before boarding'},{id:'i5b',time:'10:26 AM',type:'activity',title:'Lake Kawaguchi · Fuji views',desc:'Walk along the lake · Best Mt. Fuji reflection · Chureito Pagoda (30 min hike)',conf:false},{id:'i5c',time:'~1:00 PM',type:'transport',title:'Bus · Kawaguchiko → Hakone',desc:'Fujikyu Hakone Bus via Gotemba · ~1.5–2 hrs · Tickets at Kawaguchiko station',conf:false},{id:'i5d',time:'3:00 PM',type:'hotel',title:'Check-in · Tensui Saryo · Gora, Hakone',desc:'1320-276 Gora · Private onsen room with outdoor bath · 2 nights',conf:true,notes:'Res: IK1516984808 · Check-in 3:00–9:30 PM · 2-3 min walk from Gora Station · TEL: +81-570-062-302'},{id:'i5e',time:'7:45 PM',type:'food',title:'Kaiseki dinner · Tensui Saryo',desc:'Traditional multi-course dinner · Included in stay',conf:true}]},
-  {id:'d6',dayNum:6,date:'Tue · Apr 21',title:'Hakone',city:'Hakone',items:[{id:'i6a',time:'Morning',type:'food',title:'Japanese breakfast · Tensui Saryo',desc:'Included · Take your time',conf:true},{id:'i6b',time:'Midday',type:'activity',title:'Hakone Open Air Museum',desc:'Outdoor sculpture park · Fuji views · Picasso collection · ¥1,800',conf:false},{id:'i6c',time:'Afternoon',type:'activity',title:'Owakudani Volcanic Valley',desc:'Active volcanic area · Black eggs (kuro-tamago) · Ropeway · Fuji views',conf:false},{id:'i6d',time:'Late Afternoon',type:'activity',title:'Hakone Shrine · Lake Ashi',desc:'Torii gate at the water\'s edge · Short boat ride across the lake',conf:false},{id:'i6e',time:'Evening',type:'food',title:'Dinner included · Tensui Saryo',desc:'Relax in private onsen before or after',conf:true}]},
-  {id:'d7',dayNum:7,date:'Wed · Apr 22',title:'Shinkansen to Kyoto',city:'Hakone → Kyoto',items:[{id:'i7a',time:'By 10:00 AM',type:'hotel',title:'Check-out · Tensui Saryo',desc:'Breakfast included · Check-out by 10:00 AM',conf:true},{id:'i7b',time:'~10:00 AM',type:'transport',title:'Hakone → Odawara Station',desc:'Hakone Tozan Railway: Gora → Hakone-Yumoto → Odakyu to Odawara · ~40 min',conf:false},{id:'i7c',time:'10:11 AM',type:'transport',title:'Shinkansen HIKARI 637 · Odawara → Kyoto',desc:'Series N700 · 2 adults · Arrives Kyoto 12:12 PM',conf:true,notes:'Res: 2002 · Smart EX · ¥23,800 total · Seats confirmed by email 1 month before'},{id:'i7d',time:'12:12 PM',type:'hotel',title:'Check-in · Hotel Granvia Kyoto',desc:'Directly connected to Kyoto Station · Granvia Deluxe Twin · 4 nights',conf:true,notes:'Conf: #23151SF060529 · Check-in from 3:00 PM · +81-75-344-8888'},{id:'i7e',time:'Afternoon',type:'activity',title:'Nishiki Market',desc:'Covered 600-year-old market 5 min from hotel · Street food, snacks, pickles',conf:false},{id:'i7f',time:'Evening',type:'food',title:'Pontocho Alley',desc:'Narrow lantern-lit geisha district · Riverside restaurants above the Kamo River',conf:false}]},
-  {id:'d8',dayNum:8,date:'Thu · Apr 23',title:'Kyoto Temples',city:'Kyoto',items:[{id:'i8a',time:'7:00 AM',type:'mustdo',title:'Fushimi Inari Taisha',desc:'10,000 torii gates winding up the mountain · Free · Go early to beat crowds',conf:false,notes:'40 min to summit and back · JR Nara Line from Kyoto Stn, 5 min ride'},{id:'i8b',time:'Midday',type:'activity',title:'Arashiyama District',desc:'Bamboo Grove · Tenryu-ji Zen Garden (¥1,000) · Sagano Scenic Railway',conf:false},{id:'i8c',time:'Afternoon',type:'activity',title:'Kinkaku-ji · The Golden Pavilion',desc:'Zen temple covered in gold leaf · ¥500 · Beautiful pond reflection',conf:false},{id:'i8d',time:'Evening',type:'food',title:'Kyoto kaiseki or tofu cuisine',desc:'Yudofu (tofu hotpot) near Nanzen-ji · Kaiseki from ~¥8,000 pp',conf:false}]},
-  {id:'d9',dayNum:9,date:'Fri · Apr 24',title:'Nara Day Trip',city:'Nara',items:[{id:'i9a',time:'8:30 AM',type:'transport',title:'Train to Nara',desc:'Kintetsu Kyoto Line: Kyoto → Kintetsu-Nara · ~35 min · ¥640 each',conf:false},{id:'i9b',time:'9:30 AM',type:'mustdo',title:'Nara Park · Sacred Deer',desc:'~1,200 free-roaming deer · Buy shika-senbei crackers (¥200) and they will bow for them',conf:false,notes:'Must Do — do not skip this'},{id:'i9c',time:'10:30 AM',type:'mustdo',title:'Todai-ji · Great Buddha Hall',desc:'World\'s largest wooden building · 15m bronze Great Buddha inside · ¥600',conf:false},{id:'i9d',time:'12:30 PM',type:'food',title:'Lunch · Naramachi',desc:'Old merchant district · Kakigori, mochi, local noodles',conf:false},{id:'i9e',time:'2:00 PM',type:'activity',title:'Kasuga Taisha Grand Shrine',desc:'3,000 stone and bronze lanterns lining the path · ¥500 for treasure hall',conf:false},{id:'i9f',time:'4:30 PM',type:'transport',title:'Return to Kyoto',desc:'Kintetsu from Kintetsu-Nara back to Kyoto',conf:false}]},
-  {id:'d10',dayNum:10,date:'Sat · Apr 25',title:'Osaka Day Trip',city:'Osaka',items:[{id:'i10a',time:'9:00 AM',type:'transport',title:'Train to Osaka',desc:'JR Shinkaisoku from Kyoto · ~30 min · ¥580 each',conf:false},{id:'i10b',time:'10:00 AM',type:'mustdo',title:'Osaka Aquarium Kaiyukan',desc:'One of the world\'s largest aquariums · Whale sharks, manta rays, giant spider crabs · ¥2,700',conf:false,notes:'Open 10:00–20:00 · Tempozan, Osakako Station (Chuo Line) · Book tickets in advance to skip lines'},{id:'i10c',time:'12:30 PM',type:'activity',title:'Osaka Castle',desc:'16th century castle · Museum inside (¥600) · Beautiful castle grounds',conf:false},{id:'i10d',time:'2:00 PM',type:'food',title:'Dotonbori · Street food',desc:'Takoyaki, okonomiyaki, kushikatsu · Glico Running Man sign',conf:false},{id:'i10e',time:'3:30 PM',type:'activity',title:'Shinsaibashi & Kuromon Market',desc:'580m covered shopping arcade · Kuromon market for fresh seafood',conf:false},{id:'i10f',time:'6:00 PM',type:'transport',title:'Return to Kyoto',desc:'JR Shinkaisoku from Osaka back to Kyoto',conf:false}]},
-  {id:'d11',dayNum:11,date:'Sun · Apr 26',title:'Kyoto → Kanazawa',city:'Kyoto → Kanazawa',items:[{id:'i11a',time:'Morning',type:'activity',title:'Philosopher\'s Path',desc:'2 km canal walk lined with cherry trees · Nanzen-ji temple at the end',conf:false},{id:'i11b',time:'11:00 AM',type:'hotel',title:'Check-out · Hotel Granvia Kyoto',desc:'Check-out by noon · Store bags at station coin lockers if still exploring',conf:true},{id:'i11c',time:'~12:30 PM',type:'transport',title:'Thunderbird Express · Kyoto → Kanazawa',desc:'~2 hr 15 min · Thunderbird 21 departs ~12:24 → Kanazawa 14:43 · ~¥7,120 each',conf:false,notes:'NOT YET BOOKED — book at JR Ticket office or smart-ex.jp · Total ~¥14,240 for 2'},{id:'i11d',time:'3:00 PM',type:'hotel',title:'Check-in · Hotel Intergate Kanazawa',desc:'2-5 Takaokamachi, Kanazawa · Superior Twin · Breakfast buffet · 2 nights',conf:true,notes:'Conf: 20260125110822242 · Pay at property · Free cancel until Apr 22'},{id:'i11e',time:'Evening',type:'activity',title:'Higashi Chaya District',desc:'Kanazawa\'s preserved geisha quarter · Evening is atmospheric · Traditional teahouses',conf:false}]},
-  {id:'d12',dayNum:12,date:'Mon · Apr 27',title:'Kanazawa',city:'Kanazawa',items:[{id:'i12a',time:'Morning',type:'food',title:'Breakfast buffet · Hotel Intergate',desc:'Included in stay',conf:true},{id:'i12b',time:'9:00 AM',type:'activity',title:'Kenroku-en Garden',desc:'One of Japan\'s Top 3 gardens · 25 acres · ¥320 entry · Iconic stone lantern',conf:false},{id:'i12c',time:'11:00 AM',type:'activity',title:'Kanazawa Castle Park',desc:'Adjacent to Kenroku-en · Free entry to grounds · Beautiful stone walls',conf:false},{id:'i12d',time:'1:00 PM',type:'food',title:'Omicho Market lunch',desc:'Fresh crab, sushi, sashimi · Kanazawa\'s best seafood market',conf:false},{id:'i12e',time:'2:30 PM',type:'activity',title:'21st Century Museum of Contemporary Art',desc:'World-class contemporary art · Famous "Swimming Pool" installation · ¥1,000',conf:false}]},
-  {id:'d13',dayNum:13,date:'Tue · Apr 28',title:'Kanazawa → Tokyo Ginza',city:'Kanazawa → Tokyo',items:[{id:'i13a',time:'Morning',type:'food',title:'Breakfast · Hotel Intergate',desc:'Included · Check-out by 11:00 AM',conf:true},{id:'i13b',time:'~11:30 AM',type:'transport',title:'Hokuriku Shinkansen · Kanazawa → Tokyo',desc:'Kagayaki: Kanazawa 11:27 → Tokyo 13:56 · ~2.5 hrs · ~¥14,120 each',conf:false,notes:'NOT YET BOOKED — book soon · Kagayaki is fastest (no stops) · Total ~¥28,240 for 2'},{id:'i13c',time:'3:00 PM',type:'hotel',title:'Check-in · Quintessa Hotel Tokyo Ginza',desc:'Ginza 4-11-4, Chuo-ku · Hollywood Twin · Breakfast included · 1 night',conf:true,notes:'Conf: 6519361226 · PIN: 9235 · Check-in 3:00 PM · Free cancel until Apr 26 · +81 3-6264-1351'},{id:'i13d',time:'Afternoon',type:'activity',title:'Ginza',desc:'Shopping, galleries · Itoya stationery · Ginza Six · Matsuya department store',conf:false},{id:'i13e',time:'Evening',type:'food',title:'Tsukiji Outer Market or Ginza dinner',desc:'Tsukiji (10 min walk) for fresh sushi · Or splurge on Ginza fine dining for last night',conf:false}]},
-  {id:'d14',dayNum:14,date:'Wed · Apr 29',title:'Departure Day',city:'Tokyo → Los Angeles',items:[{id:'i14a',time:'Morning',type:'food',title:'Breakfast · Quintessa Hotel',desc:'Included · Check-out by 11:00 AM',conf:true},{id:'i14b',time:'Midday',type:'activity',title:'Last shopping or Tsukiji',desc:'Souvenir matcha, cosmetics, sweets · Tsukiji for a farewell sushi breakfast',conf:false},{id:'i14c',time:'~4:00 PM',type:'transport',title:'Head to HND Airport',desc:'Keikyu Line from Shinbashi → Haneda · ~30 min · ¥330 · Allow extra time',conf:false},{id:'i14d',time:'6:10 PM',type:'flight',title:'Depart HND · UA38 → LAX',desc:'United Economy Plus · Seats 31J / 31L · Arrives LAX 12:15 PM',conf:true,notes:'Conf: F354LH · Must be at gate by 5:40 PM'}]}
+  {id:'d0',dayNum:0,date:'Wed · Apr 15',title:'Departure Day',city:'Los Angeles',tip:'Get to LAX by 8:30 AM. Check in online the night before. Grab food airside — international departures have good options past security.',items:[
+    {id:'i0a',time:'11:20 AM',type:'flight',title:'Depart LAX · UA39',desc:'United Economy Plus · Seats 31J & 31L · Boeing 787',conf:true,notes:'Conf: F354LH · Check in online night before · Arrive LAX by 8:30 AM'}
+  ]},
+  {id:'d1',dayNum:1,date:'Thu · Apr 16',title:'Arrive Tokyo',city:'Tokyo · Shinjuku',tip:'Jet lag will hit in waves. Keep tonight light — you have four full days ahead. The walk through Kabukicho and a few yakitori stalls is the perfect soft landing.',items:[
+    {id:'i1a',time:'3:05 PM',type:'flight',title:'Arrive HND · Tokyo Haneda',desc:'Clear immigration and collect bags — allow ~90 min',conf:true,notes:'Pick up Suica IC card at airport or add to Apple Wallet · Take Keikyu Line toward Shinjuku (~1 hr)',addr:'Tokyo Haneda International Airport, Ota City, Tokyo'},
+    {id:'i1b',time:'~5:30 PM',type:'hotel',title:'Check-in · Hotel Gracery Shinjuku',desc:'Kabukicho 1-19-1, Shinjuku · Standard Twin · 4 nights',conf:true,notes:'Conf: 5594.831.309 · PIN: 6506 · Check-in from 2:00 PM · +81 3 6833 1111',addr:'Hotel Gracery Shinjuku, 1-19-1 Kabukicho, Shinjuku, Tokyo'},
+    {id:'i1c',time:'Evening',type:'food',title:'Dinner · Omoide Yokocho',desc:'Memory Lane — tiny yakitori stalls, cold beer, smoke and neon · 5 min walk from hotel',conf:false,addr:'Omoide Yokocho, Nishi-Shinjuku, Shinjuku, Tokyo'}
+  ]},
+  {id:'d2',dayNum:2,date:'Fri · Apr 17',title:'teamLab Borderless',city:'Tokyo · Minato',tip:'teamLab is best before 11 AM — crowds arrive fast. Wear pants (mirrored floors). Download the teamLab app beforehand. Hit Bubble Universe and Infinite Crystal World first.',items:[
+    {id:'i2a',time:'8:30 AM',type:'mustdo',title:'teamLab Borderless',desc:'Digital art museum · Azabudai Hills B1 · 5-9 Toranomon, Minato-ku',conf:true,notes:'Ticket: A7YRA4LXWCN3-0001 · ¥11,200 for 2 · No re-entry · Download teamLab app first',addr:'teamLab Borderless, Azabudai Hills, 4-1 Toranomon, Minato, Tokyo'},
+    {id:'i2b',time:'Afternoon',type:'activity',title:'Roppongi Hills · Mori Art Museum',desc:'City views from 53F observatory · Contemporary art · ¥2,000',conf:false,addr:'Mori Art Museum, 6-10-1 Roppongi, Minato, Tokyo'},
+    {id:'i2c',time:'Evening',type:'food',title:'Dinner · Shinjuku',desc:'Department store food basement (depachika) or conveyor belt sushi — perfect low-key night',conf:false}
+  ]},
+  {id:'d3',dayNum:3,date:'Sat · Apr 18',title:'Old Tokyo',city:'Tokyo · Asakusa / Yanaka',tip:'Tour buses fill Senso-ji by 10 AM — arrive before 8 AM for early-morning incense smoke and near-empty gates. Yanaka is the most authentically preserved old neighborhood in Tokyo.',items:[
+    {id:'i3a',time:'7:30 AM',type:'activity',title:'Senso-ji Temple · Asakusa',desc:'Tokyo\'s oldest temple · Nakamise-dori shopping street · Arrive before 8 AM',conf:false,addr:'Senso-ji Temple, 2-3-1 Asakusa, Taito, Tokyo'},
+    {id:'i3b',time:'9:30 AM',type:'activity',title:'Yanaka neighborhood',desc:'Tokyo\'s best-preserved traditional area · Yanaka Cemetery · Yanaka Ginza covered shopping street',conf:false,addr:'Yanaka Ginza, Taito, Tokyo'},
+    {id:'i3c',time:'Afternoon',type:'activity',title:'Akihabara',desc:'Electronics, retro games, arcade floors, anime',conf:false,addr:'Akihabara, Chiyoda, Tokyo'},
+    {id:'i3d',time:'Evening',type:'food',title:'Fuunji Ramen + Golden Gai',desc:'Exceptional tsukemen at Fuunji · then Golden Gai — tiny themed bars, just wander in',conf:false,addr:'Fuunji Ramen, 2-14-3 Nishi-Shinjuku, Shinjuku, Tokyo'}
+  ]},
+  {id:'d4',dayNum:4,date:'Sun · Apr 19',title:'Kamakura Day Trip',city:'Tokyo → Kamakura',tip:'Weekends in Kamakura are busy — arriving before 10 AM puts you well ahead of tour groups. The whitebait (shirasu) dishes near Hase Station are a local specialty worth seeking out.',items:[
+    {id:'i4a',time:'8:00 AM',type:'transport',title:'Train to Kita-Kamakura',desc:'JR Shonan-Shinjuku Line from Shinjuku → Kita-Kamakura · ~1 hr · ¥920 each',conf:false,addr:'Kita-Kamakura Station, Kamakura, Kanagawa'},
+    {id:'i4b',time:'9:15 AM',type:'activity',title:'Engaku-ji Temple',desc:'Cedar forest, zen garden · peaceful arrival walk',conf:false,addr:'Engaku-ji, 409 Yamanouchi, Kamakura, Kanagawa'},
+    {id:'i4c',time:'11:00 AM',type:'mustdo',title:'Kotoku-in · Great Buddha',desc:'Giant bronze Amida Buddha · ¥300 · You can enter the hollow statue',conf:false,addr:'Kotoku-in Great Buddha, 4-2-28 Hase, Kamakura, Kanagawa'},
+    {id:'i4d',time:'12:00 PM',type:'activity',title:'Hase-dera Temple',desc:'Ocean views · cave system · 11,000 Jizo statues · ¥400',conf:false,addr:'Hase-dera Temple, 3-11-2 Hase, Kamakura, Kanagawa'},
+    {id:'i4e',time:'1:00 PM',type:'food',title:'Lunch · shirasu dishes near Hase Station',desc:'Whitebait rice bowl is a Kamakura specialty — try Shirasu-don',conf:false,addr:'Hase Station, Kamakura, Kanagawa'},
+    {id:'i4f',time:'3:00 PM',type:'activity',title:'Tsurugaoka Hachimangu Shrine',desc:'Main shrine of Kamakura · tree-lined approach · free entry',conf:false,addr:'Tsurugaoka Hachimangu, 2-1-31 Yukinoshita, Kamakura'},
+    {id:'i4g',time:'~5:00 PM',type:'transport',title:'Return to Shinjuku',desc:'JR Shonan-Shinjuku Line back · arrive ~6:30 PM',conf:false}
+  ]},
+  {id:'d5',dayNum:5,date:'Mon · Apr 20',title:'Mt. Fuji Views → Hakone',city:'Kawaguchiko · Hakone',tip:'Morning is the best window for Fuji views before clouds build. The train ride itself often offers Fuji sightlines on the right side of the car.',items:[
+    {id:'i5a',time:'8:30 AM',type:'transport',title:'Fuji-Excursion 7 · Shinjuku → Kawaguchiko',desc:'Car 3, Seats 13-C & 13-D · ~2 hrs',conf:true,notes:'Res: E77821 · Pickup code: 24492390994521288 · Collect tickets before boarding'},
+    {id:'i5b',time:'10:30 AM',type:'activity',title:'Oishi Park · Lake Kawaguchi',desc:'North shore · best Fuji reflection + late cherry blossoms',conf:false,addr:'Oishi Park, Kawaguchiko, Fujikawaguchiko, Yamanashi'},
+    {id:'i5c',time:'12:00 PM',type:'activity',title:'Optional: Chureito Pagoda',desc:'Iconic 5-story pagoda framing Fuji · ~400 steps · 30 min from Kawaguchiko',conf:false,addr:'Chureito Pagoda, Fujiyoshida, Yamanashi'},
+    {id:'i5d',time:'~1:30 PM',type:'transport',title:'Bus · Kawaguchiko → Hakone Gora',desc:'Fujikyu Hakone Bus via Gotemba · ~2.5 hrs · day bags only',conf:false},
+    {id:'i5e',time:'4:00 PM',type:'hotel',title:'Check-in · Tensui Saryo · Gora, Hakone',desc:'1320-276 Gora · Private onsen room with outdoor bath · 2 nights',conf:true,notes:'Res: IK1516984808 · Check-in 3:00–9:30 PM · TEL: +81-570-062-302',addr:'Tensui Saryo, 1320-276 Gora, Hakone-machi, Ashigarashimo-gun, Kanagawa'},
+    {id:'i5f',time:'7:45 PM',type:'food',title:'Kaiseki dinner · Tensui Saryo',desc:'10-course traditional kaiseki · included in stay',conf:true}
+  ]},
+  {id:'d6',dayNum:6,date:'Tue · Apr 21',title:'The Hakone Loop',city:'Hakone',tip:'Buy the Hakone Free Pass at Gora Station — covers the Tozan Railway, ropeway, and Lake Ashi boat. ~¥4,000 for 2 days. Use the private onsen at midnight — it\'s the best.',items:[
+    {id:'i6a',time:'Morning',type:'food',title:'Japanese breakfast · Tensui Saryo',desc:'Included · take your time',conf:true},
+    {id:'i6b',time:'9:00 AM',type:'activity',title:'Hakone Open Air Museum',desc:'Outdoor sculptures · Picasso Pavilion (300+ works) · foot onsen inside · ¥2,000',conf:false,addr:'Hakone Open Air Museum, 1121 Ninotaira, Hakone, Kanagawa'},
+    {id:'i6c',time:'11:15 AM',type:'activity',title:'Owakudani Ropeway',desc:'Active volcanic valley · sulfur vents · black eggs · best Fuji views before clouds',conf:false,addr:'Owakudani, Hakone, Ashigarashimo-gun, Kanagawa'},
+    {id:'i6d',time:'1:30 PM',type:'activity',title:'Lake Ashi boat → Hakone Shrine',desc:'Sightseeing boat to Moto-Hakone · Torii gate rising from the water',conf:false,addr:'Hakone Shrine, 80-1 Motohakone, Hakone, Kanagawa'},
+    {id:'i6e',time:'Evening',type:'food',title:'Dinner included · Tensui Saryo',desc:'Relax in private outdoor onsen before or after',conf:true}
+  ]},
+  {id:'d7',dayNum:7,date:'Wed · Apr 22',title:'Shinkansen to Kyoto',city:'Hakone → Kyoto',tip:'Check out by 9 AM is essential for the Odawara connection. The full Fushimi Inari hike is tomorrow at 6 AM — the single most important timing call of the Kyoto trip.',items:[
+    {id:'i7a',time:'By 9:00 AM',type:'hotel',title:'Check-out · Tensui Saryo',desc:'Breakfast included · Check-out by 9:00–10:00 AM',conf:true},
+    {id:'i7b',time:'~9:45 AM',type:'transport',title:'Hakone → Odawara Station',desc:'Hakone Tozan Railway: Gora → Hakone-Yumoto → Odakyu to Odawara · ~50 min',conf:false},
+    {id:'i7c',time:'10:11 AM',type:'transport',title:'Shinkansen HIKARI 637 · Odawara → Kyoto',desc:'Series N700 · Arrives Kyoto 12:12 PM',conf:true,notes:'Res: 2002 · Smart EX · ¥23,800 total'},
+    {id:'i7d',time:'12:12 PM',type:'hotel',title:'Check-in · Hotel Granvia Kyoto',desc:'Connected directly to Kyoto Station · Granvia Deluxe Twin · 4 nights',conf:true,notes:'Conf: #23151SF060529 · Check-in from 3:00 PM · +81-75-344-8888',addr:'Hotel Granvia Kyoto, JR Kyoto Station, Shimogyo-ku, Kyoto'},
+    {id:'i7e',time:'Afternoon',type:'activity',title:'Nishiki Market',desc:'600-year-old covered market 5 min from hotel · closes ~5:30 PM · street food, pickles, sweets',conf:false,addr:'Nishiki Market, Nishikikoji Street, Nakagyo-ku, Kyoto'},
+    {id:'i7f',time:'Evening',type:'food',title:'Pontocho Alley',desc:'Lantern-lit geisha district · riverside restaurants above the Kamo River',conf:false,addr:'Pontocho, Nakagyo-ku, Kyoto'}
+  ]},
+  {id:'d8',dayNum:8,date:'Thu · Apr 23',title:'Fushimi Inari + Higashiyama',city:'Kyoto',tip:'6 AM at Fushimi Inari is the single best timing call of the Kyoto trip. By 8 AM it\'s crowded, by 10 AM shoulder-to-shoulder. The difference is serene vs a crush of tourists.',items:[
+    {id:'i8a',time:'6:00 AM',type:'mustdo',title:'Fushimi Inari Taisha',desc:'10,000 torii gates · full hike to summit ~2 hrs · FREE · JR Nara Line, 5 min from Kyoto Stn',conf:false,addr:'Fushimi Inari Taisha, 68 Fukakusa Yabunouchicho, Fushimi-ku, Kyoto'},
+    {id:'i8b',time:'10:30 AM',type:'activity',title:'Ninenzaka & Kiyomizudera',desc:'Preserved stone lanes · Kiyomizudera temple ¥500 · wooden stage over the hillside',conf:false,addr:'Kiyomizudera, 1-294 Kiyomizu, Higashiyama-ku, Kyoto'},
+    {id:'i8c',time:'1:00 PM',type:'activity',title:'Gion district · Hanamikoji Street',desc:'Watch for geiko and maiko in the early evening · best photo at dusk',conf:false,addr:'Hanamikoji Street, Gion, Higashiyama-ku, Kyoto'},
+    {id:'i8d',time:'3:00 PM',type:'activity',title:'Philosopher\'s Path',desc:'2 km canal walk lined with cherry trees · Nanzen-ji temple at the end',conf:false,addr:"Philosopher's Path, Sakyo-ku, Kyoto"},
+    {id:'i8e',time:'Evening',type:'food',title:'Dinner · Kyoto kaiseki or tofu',desc:'Yudofu near Nanzen-ji · Kaiseki from ~¥8,000 pp',conf:false}
+  ]},
+  {id:'d9',dayNum:9,date:'Fri · Apr 24',title:'Arashiyama + Kinkaku-ji',city:'Kyoto',tip:'Arashiyama bamboo grove at 7:30 AM is dramatically quieter than 9 AM. Kinkaku-ji is worth seeing once despite crowds — best on a clear afternoon for the gold reflection.',items:[
+    {id:'i9a',time:'7:30 AM',type:'activity',title:'Arashiyama Bamboo Grove',desc:'FREE · arrive at 7:30 AM before tour groups · 10 min walk from Arashiyama Station',conf:false,addr:'Arashiyama Bamboo Grove, Sagatenryuji, Ukyo-ku, Kyoto'},
+    {id:'i9b',time:'8:30 AM',type:'activity',title:'Tenryu-ji Garden',desc:'Zen garden · ¥500 · opens at 8:30 AM',conf:false,addr:'Tenryu-ji, 68 Sagatenryuji Susukinobabacho, Ukyo-ku, Kyoto'},
+    {id:'i9c',time:'10:00 AM',type:'food',title:'Nishiki Market',desc:'Go before 3 PM when it\'s best · matcha soft serve, pickles, Kyoto sweets',conf:false,addr:'Nishiki Market, Nishikikoji Street, Nakagyo-ku, Kyoto'},
+    {id:'i9d',time:'3:00 PM',type:'activity',title:'Kinkaku-ji · The Golden Pavilion',desc:'Gold leaf Zen temple · ¥500 · beautiful reflection in the pond',conf:false,addr:'Kinkaku-ji, 1 Kinkakujicho, Kita-ku, Kyoto'},
+    {id:'i9e',time:'Evening',type:'food',title:'Dinner · izakaya in Gion',desc:'Shared plates, sake, craft beer',conf:false,addr:'Gion, Higashiyama-ku, Kyoto'}
+  ]},
+  {id:'d10',dayNum:10,date:'Sat · Apr 25',title:'Nara Day Trip',city:'Nara',tip:'Nara\'s deer have learned to bow for crackers — hold them up and wait. Todai-ji is genuinely awe-inspiring; the scale of the Great Buddha is hard to comprehend until you\'re inside.',items:[
+    {id:'i10a',time:'8:30 AM',type:'transport',title:'Train to Nara',desc:'Kintetsu Kyoto Line: Kyoto → Kintetsu-Nara · ~35 min · ¥640 each',conf:false},
+    {id:'i10b',time:'9:30 AM',type:'mustdo',title:'Nara Park · Sacred Deer',desc:'~1,200 free-roaming deer · Buy shika-senbei crackers (¥200) — they bow for them',conf:false,addr:'Nara Park, Zoshicho, Nara'},
+    {id:'i10c',time:'10:00 AM',type:'mustdo',title:'Todai-ji · Great Buddha Hall',desc:'World\'s largest wooden building · 15m bronze Great Buddha · ¥600',conf:false,addr:'Todai-ji, 406-1 Zoshicho, Nara'},
+    {id:'i10d',time:'11:30 AM',type:'activity',title:'Kasuga Taisha Grand Shrine',desc:'3,000 stone and bronze lanterns lining the path · ¥500 for treasure hall',conf:false,addr:'Kasuga Taisha, 160 Kasuganocho, Nara'},
+    {id:'i10e',time:'1:00 PM',type:'food',title:'Lunch · Naramachi',desc:'Old merchant district · kakigori, mochi, local noodles',conf:false,addr:'Naramachi, Nara'},
+    {id:'i10f',time:'3:30 PM',type:'transport',title:'Return to Kyoto',desc:'Kintetsu from Kintetsu-Nara back to Kyoto',conf:false}
+  ]},
+  {id:'d11',dayNum:11,date:'Sun · Apr 26',title:'Osaka Day Trip → Kanazawa',city:'Osaka → Kanazawa',tip:'Book Kaiyukan tickets in advance online to skip the entrance line. The whale shark tank is central and massive — worth the extra time to circle back twice.',items:[
+    {id:'i11a',time:'9:00 AM',type:'transport',title:'Train to Osaka',desc:'JR Shinkaisoku from Kyoto · ~30 min · ¥580 each',conf:false},
+    {id:'i11b',time:'10:00 AM',type:'mustdo',title:'Osaka Aquarium Kaiyukan',desc:'One of the world\'s largest aquariums · Whale sharks, manta rays, spider crabs · ¥2,700',conf:false,notes:'Book tickets in advance · Open 10:00–20:00',addr:'Osaka Aquarium Kaiyukan, 1-1-10 Kaigandori, Minato-ku, Osaka'},
+    {id:'i11c',time:'12:30 PM',type:'activity',title:'Osaka Castle',desc:'16th century castle · Museum inside ¥600 · Beautiful grounds',conf:false,addr:'Osaka Castle, 1-1 Osakajo, Chuo-ku, Osaka'},
+    {id:'i11d',time:'2:00 PM',type:'food',title:'Dotonbori · Street food',desc:'Takoyaki, okonomiyaki, kushikatsu · Glico Running Man sign',conf:false,addr:'Dotonbori, Chuo-ku, Osaka'},
+    {id:'i11e',time:'~4:30 PM',type:'transport',title:'Thunderbird Express · Osaka/Kyoto → Kanazawa',desc:'~2 hr 15 min · ~¥7,120 each',conf:false,notes:'NOT YET BOOKED — book at JR Ticket office or smart-ex.jp'},
+    {id:'i11f',time:'~7:00 PM',type:'hotel',title:'Check-in · Hotel Intergate Kanazawa',desc:'2-5 Takaokamachi, Kanazawa · Superior Twin · Breakfast buffet',conf:true,notes:'Conf: 20260125110822242 · Pay at property',addr:'Hotel Intergate Kanazawa, 2-5 Takaokamachi, Kanazawa, Ishikawa'}
+  ]},
+  {id:'d12',dayNum:12,date:'Mon · Apr 27',title:'Kanazawa',city:'Kanazawa',tip:'Arrive at Kenroku-en at 7 AM — the garden is peaceful and the light is beautiful. Kaiyukan at Omicho is best before noon when the best seafood sells out.',items:[
+    {id:'i12a',time:'Morning',type:'food',title:'Breakfast buffet · Hotel Intergate',desc:'Included',conf:true},
+    {id:'i12b',time:'9:00 AM',type:'activity',title:'Kenroku-en Garden',desc:'One of Japan\'s top 3 gardens · 25 acres · ¥320 · Iconic lantern and pond',conf:false,addr:'Kenroku-en, 1 Kenrokumachi, Kanazawa, Ishikawa'},
+    {id:'i12c',time:'11:00 AM',type:'activity',title:'Kanazawa Castle Park',desc:'Adjacent to Kenroku-en · Free grounds · Beautiful stone walls',conf:false,addr:'Kanazawa Castle, 1-1 Marunouchi, Kanazawa, Ishikawa'},
+    {id:'i12d',time:'1:00 PM',type:'food',title:'Omicho Market lunch',desc:'Fresh crab, sushi, sashimi · Kanazawa\'s best seafood market',conf:false,addr:'Omicho Market, Kanazawa, Ishikawa'},
+    {id:'i12e',time:'2:30 PM',type:'activity',title:'21st Century Museum of Contemporary Art',desc:'Famous "Swimming Pool" installation · ¥1,000',conf:false,addr:'21st Century Museum of Contemporary Art, 1-2-1 Hirosaka, Kanazawa, Ishikawa'},
+    {id:'i12f',time:'Evening',type:'activity',title:'Higashi Chaya District',desc:'Most atmospheric at dusk · preserved geisha quarter · traditional teahouses',conf:false,addr:'Higashi Chaya District, Higashiyama, Kanazawa, Ishikawa'}
+  ]},
+  {id:'d13',dayNum:13,date:'Tue · Apr 28',title:'Kanazawa → Tokyo Ginza',city:'Kanazawa → Tokyo',tip:'Kagayaki Shinkansen is the fastest option (no stops). Book as soon as possible — popular train.',items:[
+    {id:'i13a',time:'Morning',type:'food',title:'Breakfast · Hotel Intergate',desc:'Included · Check-out by 11:00 AM',conf:true},
+    {id:'i13b',time:'~11:30 AM',type:'transport',title:'Hokuriku Shinkansen · Kanazawa → Tokyo',desc:'Kagayaki: Kanazawa 11:27 → Tokyo 13:56 · ~2.5 hrs · ~¥14,120 each',conf:false,notes:'NOT YET BOOKED — book soon · Total ~¥28,240 for 2'},
+    {id:'i13c',time:'3:00 PM',type:'hotel',title:'Check-in · Quintessa Hotel Tokyo Ginza',desc:'Ginza 4-11-4, Chuo-ku · Hollywood Twin · Breakfast included · 1 night',conf:true,notes:'Conf: 6519361226 · PIN: 9235 · Free cancel until Apr 26 · +81 3-6264-1351',addr:'Quintessa Hotel Tokyo Ginza, 4-11-4 Ginza, Chuo-ku, Tokyo'},
+    {id:'i13d',time:'Afternoon',type:'activity',title:'Ginza',desc:'Itoya stationery · Ginza Six · Matsuya department store · gallery-hopping',conf:false,addr:'Ginza, Chuo-ku, Tokyo'},
+    {id:'i13e',time:'Evening',type:'food',title:'Tsukiji Outer Market or Ginza fine dining',desc:'Tsukiji (10 min walk) for fresh sushi · or splurge on last night in Japan',conf:false,addr:'Tsukiji Outer Market, Tsukiji, Chuo-ku, Tokyo'}
+  ]},
+  {id:'d14',dayNum:14,date:'Wed · Apr 29',title:'Departure Day',city:'Tokyo → Los Angeles',tip:'Leave the hotel by 12:30 PM at the latest. Allow extra time at HND — long immigration queues are common at departure.',items:[
+    {id:'i14a',time:'Morning',type:'food',title:'Breakfast · Quintessa Hotel',desc:'Included · Check-out by 11:00 AM',conf:true},
+    {id:'i14b',time:'Midday',type:'activity',title:'Tsukiji Outer Market · farewell breakfast',desc:'Fresh sushi, tamagoyaki, matcha · go before 10 AM · 10 min walk from hotel',conf:false,addr:'Tsukiji Outer Market, Tsukiji, Chuo-ku, Tokyo'},
+    {id:'i14c',time:'~4:00 PM',type:'transport',title:'Head to HND Airport',desc:'Keikyu Line from Shinbashi → Haneda · ~30 min · ¥330',conf:false},
+    {id:'i14d',time:'6:10 PM',type:'flight',title:'Depart HND · UA38 → LAX',desc:'United Economy Plus · Seats 31J & 31L · Arrives LAX 12:15 PM',conf:true,notes:'Conf: F354LH · Be at gate by 5:40 PM'}
+  ]}
 ];
 
 const BUDGET=[
   {id:'b1',category:'Flights',title:'United Airlines round trip — both passengers (UA39/UA38)',amount:1796.86,currency:'USD',paid_by:'Gwendalynn',split:'even',date:'Dec 22, 2025',confirmed:true},
-  {id:'b2',category:'Flights',title:'Economy Plus seats — both pax, all 4 segments',amount:400,currency:'USD',paid_by:'Gwendalynn',split:'even',date:'Dec 22, 2025',confirmed:true},
+  {id:'b2',category:'Flights',title:'Economy Plus seats — both pax, all segments',amount:400,currency:'USD',paid_by:'Gwendalynn',split:'even',date:'Dec 22, 2025',confirmed:true},
   {id:'b3',category:'Hotels',title:'Hotel Gracery Shinjuku — 4 nights (Apr 16–20)',amount:200692,currency:'JPY',paid_by:'Gwendalynn',split:'even',date:'Jan 25, 2026',confirmed:true},
   {id:'b4',category:'Hotels',title:'Tensui Saryo Hakone — 2 nights incl meals (Apr 20–22)',amount:126340,currency:'JPY',paid_by:'Gwendalynn',split:'even',date:'Jan 22, 2026',confirmed:true},
   {id:'b5',category:'Hotels',title:'Hotel Granvia Kyoto — 4 nights (Apr 22–26)',amount:268256,currency:'JPY',paid_by:'Gwendalynn',split:'even',date:'Jan 25, 2026',confirmed:true},
@@ -531,7 +688,7 @@ const BUDGET=[
   {id:'b8',category:'Transport',title:'Shinkansen HIKARI 637 — Odawara → Kyoto (Apr 22, 2 pax)',amount:23800,currency:'JPY',paid_by:'Gwendalynn',split:'even',date:'Mar 20, 2026',confirmed:true},
   {id:'b9',category:'Transport',title:'Fuji-Excursion 7 — Shinjuku → Kawaguchiko (Apr 20)',amount:8400,currency:'JPY',paid_by:'Gwendalynn',split:'even',date:'Mar 20, 2026',confirmed:true},
   {id:'b10',category:'Activities',title:'teamLab Borderless — 2 adults (Apr 17)',amount:11200,currency:'JPY',paid_by:'Gwendalynn',split:'even',date:'Mar 21, 2026',confirmed:true},
-  {id:'b11',category:'Transport',title:'Thunderbird — Kyoto → Kanazawa (Apr 26, 2 pax, est)',amount:14240,currency:'JPY',paid_by:'TBD',split:'even',date:'TBD',confirmed:false},
+  {id:'b11',category:'Transport',title:'Thunderbird — Kyoto/Osaka → Kanazawa (Apr 26, 2 pax, est)',amount:14240,currency:'JPY',paid_by:'TBD',split:'even',date:'TBD',confirmed:false},
   {id:'b12',category:'Transport',title:'Hokuriku Shinkansen — Kanazawa → Tokyo (Apr 28, 2 pax, est)',amount:28240,currency:'JPY',paid_by:'TBD',split:'even',date:'TBD',confirmed:false}
 ];
 
@@ -572,40 +729,76 @@ const PACKING=[
   {id:'pk16',category:'Other',item:'Reusable tote bag for market shopping',done_g:false,done_c:false}
 ];
 
-auth.onAuthStateChanged(user=>{S.user=user;S.isEditor=user&&EDITORS.includes(user.email);updateAuthUI();setupListeners();});
+const TIPS_DATA=[
+  {title:'Money & Cash',items:[
+    {t:'Always carry cash',b:'Japan is still largely cash-based. <strong>Carry ¥15,000–20,000 on you at all times.</strong> Small restaurants, temples, shrine entry fees, and neighborhood shops are often cash-only. Coin purses are useful — you\'ll accumulate ¥100 and ¥500 coins quickly.'},
+    {t:'7-Eleven ATMs',b:'<strong>7-Eleven ATMs are the most reliable for international cards</strong>, with clear English menus. FamilyMart and post office ATMs also work. Expect a ¥220 fee plus your bank\'s foreign transaction fee.'},
+    {t:'Add Suica to Apple Wallet',b:'<strong>Add Suica before you leave</strong> (Wallet app → + → Transit Card → Suica). Top up with Apple Pay. Tap in and out at every train and bus gate. Also works at 7-Eleven, vending machines, and lockers.'},
+    {t:'No tipping — ever',b:'Tipping is not just unusual in Japan, <strong>it can be considered confusing or offensive.</strong> Do not tip at restaurants, hotels, or taxis. Service is always included. Excellent service is standard and expected.'},
+    {t:'Cash tray etiquette',b:'There will be a small tray at every register. <strong>Place your cash on the tray</strong>, not in the cashier\'s hand. Receive change the same way. This is standard practice everywhere.'},
+  ]},
+  {title:'Getting Around',items:[
+    {t:'Trains are always on time',b:'<strong>Google Maps gives exact platform numbers and exit information</strong> — always check which exit to use at a station. Delays of more than a minute or two are genuinely rare.'},
+    {t:'Quiet on trains',b:'<strong>No phone calls on trains.</strong> Keep your voice low. Eating is fine on Shinkansen, not on local trains. Earphones are expected for music or video.'},
+    {t:'Shinkansen boarding',b:'<strong>Board at exactly the right car number</strong> — marked on the platform floor with painted lines. Doors close precisely on time. Eating and drinking are fine on the Shinkansen.'},
+    {t:'Takkyubin (luggage forwarding)',b:'<strong>Japan\'s takkyubin service is one of the best travel perks in the world.</strong> Drop bags at your hotel and they arrive at your next hotel the next day for ~¥1,500–2,500 per bag. Yamato (black cat logo) is the most common.'},
+  ]},
+  {title:'Etiquette & Culture',items:[
+    {t:'Bowing',b:'A gentle <strong>head nod or small bow</strong> is appropriate for most interactions — entering a hotel, thanking a shopkeeper, acknowledging a greeting. You don\'t need to do deep formal bows.'},
+    {t:'Shoes at temples and ryokan',b:'<strong>Remove shoes whenever you see a step up at an entrance</strong>, or when you see a row of shoes near the door. At the ryokan, wear provided slippers indoors. Never outdoor shoes on tatami.'},
+    {t:'Eating while walking',b:'<strong>Eating while walking is generally frowned upon</strong> in Japan. Find a spot to stop and eat, or eat at the stall. Street food areas like Nishiki Market are exceptions.'},
+    {t:'Always queue',b:'<strong>Lines form on the left side of escalators in Tokyo</strong> (stand, don\'t walk). Board trains in order. Japanese people are patient and orderly even in enormous crowds.'},
+  ]},
+  {title:'Onsen at Tensui Saryo',items:[
+    {t:'Your room has a private rotenburo',b:'Tensui Saryo\'s room includes a <strong>private outdoor onsen (rotenburo) on your own deck</strong> plus a foot bath — so any tattoo concerns are completely irrelevant. Use it at midnight.'},
+    {t:'Shower thoroughly first',b:'<strong>Rinse completely before entering any bath.</strong> Use the small stool and shower station — this is essential, not optional. Keep your small towel out of the water.'},
+    {t:'Temperature & time',b:'Onsen water is hot — often <strong>40–42°C (104–108°F).</strong> Ease in slowly. Limit each soak to about 15–20 minutes. Hydrate before and after.'},
+    {t:'Yukata robe',b:'Your ryokan will provide a <strong>yukata</strong> (light cotton robe) and slippers. Wear it to meals, to the onsen, and to wander the property. Perfectly normal even outside briefly in Gora.'},
+  ]},
+  {title:'Emergency Info',items:[
+    {t:'Emergency numbers',b:'<strong>Police: 110 · Ambulance & Fire: 119.</strong> Japan Tourism Agency English emergency line: 050-3816-2787 (24/7). US Embassy Tokyo: +81-3-3224-5000.'},
+    {t:'Japan is extremely safe',b:'Japan consistently ranks among the world\'s safest countries. <strong>Lost items are almost always turned in.</strong> If you lose something, check with the nearest koban (police box) or station lost-and-found.'},
+    {t:'Apps to download',b:'<strong>Google Maps</strong> (offline maps), <strong>Google Translate</strong> (camera translation for menus), <strong>Hyperdia</strong> (train planning), <strong>teamLab app</strong> (for Apr 17). Optionally: Yurekuru Call for earthquake alerts.'},
+  ]},
+  {title:'Useful Phrases',phrases:[
+    {jp:'ありがとうございます',rom:'Arigatou gozaimasu',en:'Thank you (polite)'},
+    {jp:'すみません',rom:'Sumimasen',en:'Excuse me / Sorry'},
+    {jp:'いただきます',rom:'Itadakimasu',en:'Before eating'},
+    {jp:'ごちそうさまでした',rom:'Gochisosama deshita',en:'After eating'},
+    {jp:'これをください',rom:'Kore wo kudasai',en:'I\'ll have this, please'},
+    {jp:'いくらですか',rom:'Ikura desu ka',en:'How much is this?'},
+    {jp:'英語のメニューはありますか',rom:'Eigo no menyu wa arimasu ka',en:'English menu?'},
+    {jp:'トイレはどこですか',rom:'Toire wa doko desu ka',en:'Where is the bathroom?'},
+    {jp:'写真を撮ってもいいですか',rom:'Shashin wo totte mo ii desu ka',en:'May I take a photo?'},
+  ]},
+];
 
-// Render itinerary immediately from seed so it's never blank
+// ── Auth ──────────────────────────────────────────────────────────────────────
+auth.onAuthStateChanged(user=>{
+  S.user=user;S.isEditor=user&&EDITORS.includes(user.email);
+  updateAuthUI();setupListeners();
+});
+
+// Render immediately from seed
 S.itin=[...ITIN];
 renderItinerary();
 updateCountdown();
+renderTips();
 
-function updateCountdown(){
-  const el=document.getElementById('trip-countdown');if(!el)return;
-  const now=new Date();
-  const depart=new Date('2026-04-15T11:20:00-07:00'); // LAX departure
-  const arrive=new Date('2026-04-16T15:05:00+09:00');  // HND arrival (Day 1)
-  const tripEnd=new Date('2026-04-29T23:59:00+09:00'); // last day in Japan
-  const msDay=86400000;
-  if(now<depart){
-    const days=Math.ceil((depart-now)/msDay);
-    el.innerHTML=`<span class="countdown-num">${days}</span><span class="countdown-label">Days until departure</span><span class="countdown-sub">Apr 15 · LAX 11:20 AM</span>`;
-  } else if(now>=arrive&&now<=tripEnd){
-    // In Japan — calculate which day
-    const dayNum=Math.floor((now-arrive)/msDay)+1;
-    const capped=Math.min(dayNum,14);
-    el.innerHTML=`<div class="day-of-wrap"><span class="day-of-num">${capped}</span><span class="day-of-denom">&thinsp;/ 14</span></div><span class="countdown-label">Day in Japan</span><span class="countdown-sub">Enjoy every moment</span>`;
-  } else if(now>depart&&now<arrive){
-    el.innerHTML=`<span class="countdown-num">✈</span><span class="countdown-label">In the air!</span><span class="countdown-sub">UA39 · arriving Apr 16</span>`;
-  } else {
-    const days=Math.floor((now-tripEnd)/msDay);
-    el.innerHTML=`<span class="countdown-num">${days}</span><span class="countdown-label">Days since Japan</span><span class="countdown-sub">April 15–29, 2026</span>`;
-  }
-}
+// Load Drive URL
+try{const u=localStorage.getItem('japan-drive-url');if(u)applyDriveUrl(u);}catch(e){}
 
 function updateAuthUI(){
   const btn=document.getElementById('authBtn'),pill=document.getElementById('userPill');
-  if(S.user){const n=S.user.displayName||S.user.email.split('@')[0];const short=n.split(' ')[0];document.getElementById('userName').textContent=short;document.getElementById('userAvatar').textContent=short[0].toUpperCase();pill.style.display='flex';btn.textContent='Sign out';btn.onclick=()=>auth.signOut();}
-  else{pill.style.display='none';btn.textContent='Sign in';btn.onclick=openAuthModal;}
+  if(S.user){
+    const n=S.user.displayName||S.user.email.split('@')[0];
+    const short=n.split(' ')[0];
+    document.getElementById('userName').textContent=short;
+    document.getElementById('userAvatar').textContent=short[0].toUpperCase();
+    pill.style.display='flex';btn.textContent='Sign out';btn.onclick=()=>auth.signOut();
+  } else {
+    pill.style.display='none';btn.textContent='Sign in';btn.onclick=openAuthModal;
+  }
   ['budgetTab','pretripTab'].forEach(id=>document.getElementById(id).classList.toggle('locked',!S.isEditor));
   document.getElementById('budget-gate').style.display=S.isEditor?'none':'flex';
   document.getElementById('budget-inner').style.display=S.isEditor?'block':'none';
@@ -616,24 +809,45 @@ function updateAuthUI(){
 }
 
 async function doGoogleSignIn(){
-  const provider=new firebase.auth.GoogleAuthProvider();
-  try{await auth.signInWithPopup(provider);closeModal('authModal');toast('Signed in','ok');}
-  catch(e){const el=document.getElementById('auth-err');el.textContent=e.message;el.classList.add('show');}
+  const errEl=document.getElementById('auth-err');
+  errEl.classList.remove('show');
+  try{
+    const provider=new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+    closeModal('authModal');toast('Signed in','ok');
+  } catch(e){
+    let msg=e.message;
+    if(e.code==='auth/unauthorized-domain'){
+      msg='This domain isn\'t authorized in Firebase. Go to <strong>Firebase Console → Authentication → Settings → Authorized Domains</strong> and add the domain or <code>localhost</code> where this file is hosted.';
+    } else if(e.code==='auth/popup-blocked'){
+      msg='Popup was blocked by your browser. Allow popups for this site and try again.';
+    } else if(e.code==='auth/popup-closed-by-user'){
+      return; // silent
+    }
+    errEl.innerHTML=msg;errEl.classList.add('show');
+  }
 }
-function showAuthErr(msg){const e=document.getElementById('auth-err');e.textContent=msg;e.classList.add('show');}
 
 async function setupListeners(){
   S.unsubs.forEach(u=>u());S.unsubs=[];
-  // Try to seed — silently skip if Firestore rules block it
-  try{await seedIfEmpty();}catch(e){console.warn('Firestore seed skipped (check rules):',e.code);}
-  // Firestore listeners — fall back to seed data if they fail
-  try{S.unsubs.push(db.collection('itinerary').orderBy('dayNum').onSnapshot(s=>{S.itin=s.docs.map(d=>({id:d.id,...d.data()}));if(S.page==='itinerary')renderItinerary();},e=>console.warn('itin snapshot:',e.code)));}catch(e){}
-  try{S.unsubs.push(db.collection('budget').orderBy('category').onSnapshot(s=>{S.budget=s.docs.map(d=>({id:d.id,...d.data()}));if(S.page==='budget')renderBudget();},e=>console.warn('budget snapshot:',e.code)));}catch(e){}
-  try{S.unsubs.push(db.collection('pretrip').orderBy('category').onSnapshot(s=>{S.pretrip=s.docs.map(d=>({id:d.id,...d.data()}));if(S.page==='pretrip')renderChecklist('pretrip');},e=>{}));}catch(e){}
-  try{S.unsubs.push(db.collection('packing').orderBy('category').onSnapshot(s=>{S.packing=s.docs.map(d=>({id:d.id,...d.data()}));if(S.page==='pretrip')renderChecklist('packing');},e=>{}));}catch(e){}
+  try{await seedIfEmpty();}catch(e){console.warn('Seed:',e.code);}
+  const trySnap=(col,cb)=>{try{S.unsubs.push(db.collection(col).orderBy(col==='itinerary'?'dayNum':'category').onSnapshot(s=>{cb(s.docs.map(d=>({id:d.id,...d.data()})));},e=>console.warn(col,e.code)));}catch(e){}};
+  trySnap('itinerary',d=>{S.itin=d;if(S.page==='itinerary')renderItinerary();});
+  trySnap('budget',d=>{S.budget=d;if(S.page==='budget')renderBudget();});
+  trySnap('pretrip',d=>{S.pretrip=d;if(S.page==='pretrip')renderChecklist('pretrip');});
+  trySnap('packing',d=>{S.packing=d;if(S.page==='pretrip')renderChecklist('packing');});
 }
-async function seedIfEmpty(){const snap=await db.collection('itinerary').limit(1).get();if(!snap.empty)return;const b=db.batch();ITIN.forEach(d=>b.set(db.collection('itinerary').doc(d.id),d));BUDGET.forEach(x=>b.set(db.collection('budget').doc(x.id),x));PRETRIP.forEach(p=>b.set(db.collection('pretrip').doc(p.id),p));PACKING.forEach(p=>b.set(db.collection('packing').doc(p.id),p));await b.commit();}
+async function seedIfEmpty(){
+  const snap=await db.collection('itinerary').limit(1).get();if(!snap.empty)return;
+  const b=db.batch();
+  ITIN.forEach(d=>b.set(db.collection('itinerary').doc(d.id),d));
+  BUDGET.forEach(x=>b.set(db.collection('budget').doc(x.id),x));
+  PRETRIP.forEach(p=>b.set(db.collection('pretrip').doc(p.id),p));
+  PACKING.forEach(p=>b.set(db.collection('packing').doc(p.id),p));
+  await b.commit();
+}
 
+// ── Nav ───────────────────────────────────────────────────────────────────────
 document.getElementById('mainNav').addEventListener('click',e=>{
   const btn=e.target.closest('.tab-btn');if(!btn||btn.classList.contains('locked'))return;
   const page=btn.dataset.page;
@@ -645,6 +859,43 @@ document.getElementById('mainNav').addEventListener('click',e=>{
   if(page==='pretrip'){renderChecklist('pretrip');renderChecklist('packing');}
 });
 
+// ── Countdown ─────────────────────────────────────────────────────────────────
+function updateCountdown(){
+  const el=document.getElementById('trip-countdown');if(!el)return;
+  const now=new Date();
+  const depart=new Date('2026-04-15T11:20:00-07:00');
+  const arrive=new Date('2026-04-16T15:05:00+09:00');
+  const tripEnd=new Date('2026-04-29T23:59:00+09:00');
+  const msDay=86400000;
+  const p=n=>String(n).padStart(2,'0');
+  if(now<depart){
+    const ms=depart-now,days=Math.floor(ms/msDay),hrs=Math.floor((ms%msDay)/3600000),mins=Math.floor((ms%3600000)/60000),secs=Math.floor((ms%60000)/1000);
+    if(days>0){el.innerHTML=`<span class="countdown-num">${days}</span><span class="countdown-label">Days until departure</span><span class="countdown-sub">Apr 15 · LAX 11:20 AM</span>`;}
+    else{el.innerHTML=`<span class="countdown-num">${p(hrs)}:${p(mins)}:${p(secs)}</span><span class="countdown-label">Until departure</span><span class="countdown-sub">Today is the day!</span>`;setTimeout(updateCountdown,1000);}
+  } else if(now>=arrive&&now<=tripEnd){
+    const dayNum=Math.min(Math.floor((now-arrive)/msDay)+1,14);
+    el.innerHTML=`<div class="day-of-wrap"><span class="day-of-num">${dayNum}</span><span class="day-of-denom">&thinsp;/&thinsp;14</span></div><span class="countdown-label"><span class="cdot-live"></span>Day in Japan</span><span class="countdown-sub">Enjoy every moment</span>`;
+  } else if(now>depart&&now<arrive){
+    el.innerHTML=`<span class="countdown-num" style="font-size:36px">✈</span><span class="countdown-label">In the air!</span><span class="countdown-sub">UA39 · arriving Apr 16</span>`;
+  } else {
+    const days=Math.floor((now-tripEnd)/msDay);
+    el.innerHTML=`<span class="countdown-num">${days}</span><span class="countdown-label">Days since Japan</span><span class="countdown-sub">April 15–29, 2026</span>`;
+  }
+}
+setInterval(()=>{if(document.getElementById('page-overview').classList.contains('active'))updateCountdown();},1000);
+
+// ── Tips ──────────────────────────────────────────────────────────────────────
+function renderTips(){
+  const c=document.getElementById('tips-container');
+  c.innerHTML=TIPS_DATA.map(section=>{
+    if(section.phrases){
+      return`<div class="tip-card"><div class="tip-card-head"><div class="tip-card-title">${section.title}</div></div><table class="phrases-table">${section.phrases.map(p=>`<tr><td class="ph-jp">${p.jp}</td><td class="ph-rom">${p.rom}</td><td class="ph-en">${p.en}</td></tr>`).join('')}</table></div>`;
+    }
+    return`<div class="tip-card"><div class="tip-card-head"><div class="tip-card-title">${section.title}</div></div><div class="tip-items">${section.items.map(i=>`<div class="tip-item"><div class="tip-item-title">${i.t}</div><div class="tip-item-body">${i.b}</div></div>`).join('')}</div></div>`;
+  }).join('');
+}
+
+// ── Itinerary ─────────────────────────────────────────────────────────────────
 function renderItinerary(){
   const c=document.getElementById('itin-container');
   if(!S.itin.length)return;
@@ -663,7 +914,7 @@ function renderItinerary(){
               <div class="tl-dot"></div>
               <div class="tl-time">${item.time||''}</div>
               <div class="tl-content">
-                <div class="tl-title">${item.title}${item.conf?'<span class="tag tag-conf" style="font-size:11px">Confirmed</span>':''}${item.type==='mustdo'?'<span class="tag tag-must" style="font-size:11px">Must Do</span>':''}</div>
+                <div class="tl-title">${item.title}${item.conf?'<span class="tag tag-conf" style="font-size:10.5px">Confirmed</span>':''}${item.type==='mustdo'?'<span class="tag tag-must" style="font-size:10.5px">Must Do</span>':''}${item.addr?`<a class="tl-map-link" href="https://maps.google.com/?q=${encodeURIComponent(item.addr)}" target="_blank" rel="noopener">↗ Map</a>`:''}</div>
                 ${item.desc?`<div class="tl-desc">${item.desc}</div>`:''}
                 ${item.notes?`<div class="tl-note">${item.notes}</div>`:''}
               </div>
@@ -672,6 +923,7 @@ function renderItinerary(){
           `).join('')}
           ${S.isEditor?`<button class="add-tl-btn" onclick="openAddAct('${day.id}')">+ Add activity</button>`:''}
         </div>
+        ${day.tip?`<div class="day-tip"><strong>Tip:</strong> ${day.tip}</div>`:''}
       </div>
     </div>
   `).join('');
@@ -679,31 +931,68 @@ function renderItinerary(){
 
 function toggleDay(id){const b=document.getElementById('db-'+id),l=document.getElementById('dl-'+id),c=document.getElementById('dc-'+id),o=b.classList.toggle('open');l.classList.toggle('open',o);c.classList.toggle('open',o);}
 
-function openAddAct(dayId){document.getElementById('act-modal-title').textContent='Add activity';document.getElementById('act-day-id').value=dayId;document.getElementById('act-item-id').value='';['act-time','act-title','act-desc','act-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('act-type').value='activity';document.getElementById('act-conf').checked=false;openModal('actModal');}
-function openEditAct(dayId,itemId){const day=S.itin.find(d=>d.id===dayId),item=day&&(day.items||[]).find(i=>i.id===itemId);if(!item)return;document.getElementById('act-modal-title').textContent='Edit activity';document.getElementById('act-day-id').value=dayId;document.getElementById('act-item-id').value=itemId;document.getElementById('act-time').value=item.time||'';document.getElementById('act-type').value=item.type||'activity';document.getElementById('act-title').value=item.title||'';document.getElementById('act-desc').value=item.desc||'';document.getElementById('act-notes').value=item.notes||'';document.getElementById('act-conf').checked=!!item.conf;openModal('actModal');}
-async function saveActivity(){const dayId=document.getElementById('act-day-id').value,itemId=document.getElementById('act-item-id').value,type=document.getElementById('act-type').value,newItem={id:itemId||'i_'+Date.now(),time:document.getElementById('act-time').value,type,title:document.getElementById('act-title').value,desc:document.getElementById('act-desc').value,notes:document.getElementById('act-notes').value,conf:document.getElementById('act-conf').checked};if(!newItem.title)return;const day=S.itin.find(d=>d.id===dayId),items=[...(day.items||[])];if(itemId){const idx=items.findIndex(i=>i.id===itemId);if(idx>=0)items[idx]=newItem;}else items.push(newItem);await db.collection('itinerary').doc(dayId).update({items});closeModal('actModal');toast('Saved','ok');}
-async function delAct(dayId,itemId){if(!confirm('Remove this activity?'))return;const day=S.itin.find(d=>d.id===dayId);await db.collection('itinerary').doc(dayId).update({items:(day.items||[]).filter(i=>i.id!==itemId)});toast('Removed','');}
+function openAddAct(dayId){document.getElementById('act-modal-title').textContent='Add activity';document.getElementById('act-day-id').value=dayId;document.getElementById('act-item-id').value='';['act-time','act-title','act-desc','act-addr','act-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('act-type').value='activity';document.getElementById('act-conf').checked=false;openModal('actModal');}
+function openEditAct(dayId,itemId){const day=S.itin.find(d=>d.id===dayId),item=day&&(day.items||[]).find(i=>i.id===itemId);if(!item)return;document.getElementById('act-modal-title').textContent='Edit activity';document.getElementById('act-day-id').value=dayId;document.getElementById('act-item-id').value=itemId;document.getElementById('act-time').value=item.time||'';document.getElementById('act-type').value=item.type||'activity';document.getElementById('act-title').value=item.title||'';document.getElementById('act-desc').value=item.desc||'';document.getElementById('act-addr').value=item.addr||'';document.getElementById('act-notes').value=item.notes||'';document.getElementById('act-conf').checked=!!item.conf;openModal('actModal');}
+async function saveActivity(){const dayId=document.getElementById('act-day-id').value,itemId=document.getElementById('act-item-id').value,type=document.getElementById('act-type').value,newItem={id:itemId||'i_'+Date.now(),time:document.getElementById('act-time').value,type,title:document.getElementById('act-title').value,desc:document.getElementById('act-desc').value,addr:document.getElementById('act-addr').value,notes:document.getElementById('act-notes').value,conf:document.getElementById('act-conf').checked};if(!newItem.title)return;const day=S.itin.find(d=>d.id===dayId),items=[...(day.items||[])];if(itemId){const idx=items.findIndex(i=>i.id===itemId);if(idx>=0)items[idx]=newItem;}else items.push(newItem);try{await db.collection('itinerary').doc(dayId).update({items});closeModal('actModal');toast('Saved','ok');}catch(e){toast('Sign in to save edits','');};}
+async function delAct(dayId,itemId){if(!confirm('Remove this activity?'))return;const day=S.itin.find(d=>d.id===dayId);try{await db.collection('itinerary').doc(dayId).update({items:(day.items||[]).filter(i=>i.id!==itemId)});toast('Removed','');}catch(e){toast('Sign in to save edits','');}}
 
+// ── Budget ────────────────────────────────────────────────────────────────────
 const toJPY=i=>i.currency==='JPY'?i.amount:i.amount*JPY;
 const fmt=j=>S.currency==='JPY'?'¥'+Math.round(j).toLocaleString():'$'+(j/JPY).toFixed(0).toLocaleString();
 function setCurrency(c){S.currency=c;document.getElementById('currJPY').classList.toggle('active',c==='JPY');document.getElementById('currUSD').classList.toggle('active',c==='USD');renderBudget();}
 function renderBudget(){if(!S.isEditor||!S.budget.length)return;const items=S.budget,total=items.reduce((s,i)=>s+toJPY(i),0),gwS=items.reduce((s,i)=>s+(i.split==='even'?toJPY(i)/2:i.split==='gwen'?toJPY(i):0),0),cS=items.reduce((s,i)=>s+(i.split==='even'?toJPY(i)/2:i.split==='christina'?toJPY(i):0),0),gwP=items.filter(i=>i.paid_by==='Gwendalynn').reduce((s,i)=>s+toJPY(i),0),cP=items.filter(i=>i.paid_by==='Christina').reduce((s,i)=>s+toJPY(i),0);
   document.getElementById('stat-total').textContent=fmt(total);document.getElementById('stat-total-sub').textContent=items.length+' items';document.getElementById('stat-gwen').textContent=fmt(gwS);document.getElementById('stat-christina').textContent=fmt(cS);document.getElementById('sp-gwen-paid').textContent=fmt(gwP);document.getElementById('sp-christina-paid').textContent=fmt(cP);
   const diff=gwP-gwS,df=fmt(Math.abs(diff));document.getElementById('sp-gwen-chip').innerHTML=Math.abs(diff)<500?'<span class="owed-tag even">Settled</span>':diff>0?`<span class="owed-tag owed">Owed ${df}</span>`:`<span class="owed-tag owes">Owes ${df} to Christina</span>`;document.getElementById('sp-christina-chip').innerHTML=Math.abs(diff)<500?'<span class="owed-tag even">Settled</span>':diff>0?`<span class="owed-tag owes">Owes ${df} to Gwendalynn</span>`:`<span class="owed-tag owed">Owed ${df}</span>`;
-  document.getElementById('budget-tbody').innerHTML=items.map(item=>`<tr class="${item.confirmed?'':'unbooked-row'}"><td><span class="cat-badge cat-${item.category}">${item.category}</span></td><td>${!item.confirmed?'<span style="font-size:11px;color:var(--red);font-weight:500;margin-right:4px">Not booked</span>':''}${item.title}${item.date&&item.date!=='TBD'?`<span style="font-size:11px;color:var(--text-light);margin-left:8px">${item.date}</span>`:''}</td><td class="mono">${fmt(toJPY(item))}</td><td>${item.paid_by}</td><td style="font-size:12px;color:var(--text-light)">${item.split==='even'?'50/50':item.split}</td><td><div style="display:flex;gap:2px">${S.isEditor?`<button class="icon-btn" style="opacity:.5" onclick="openEditExp('${item.id}')">✎</button><button class="icon-btn" style="opacity:.5" onclick="delExp('${item.id}')">✕</button>`:''}</div></td></tr>`).join('');
+  document.getElementById('budget-tbody').innerHTML=items.map(item=>`<tr class="${item.confirmed?'':'unbooked-row'}"><td><span class="cat-badge cat-${item.category}">${item.category}</span></td><td>${!item.confirmed?'<span style="font-size:10.5px;color:var(--rose);font-weight:500;margin-right:4px">Not booked</span>':''}${item.title}${item.date&&item.date!=='TBD'?`<span style="font-size:11px;color:var(--text-light);margin-left:8px">${item.date}</span>`:''}</td><td class="mono">${fmt(toJPY(item))}</td><td>${item.paid_by}</td><td style="font-size:11.5px;color:var(--text-light)">${item.split==='even'?'50/50':item.split}</td><td><div style="display:flex;gap:2px">${S.isEditor?`<button class="icon-btn" style="opacity:.5" onclick="openEditExp('${item.id}')">✎</button><button class="icon-btn" style="opacity:.5" onclick="delExp('${item.id}')">✕</button>`:''}</div></td></tr>`).join('');
   document.getElementById('budget-total-cell').textContent=fmt(total);}
-
 function openExpenseModal(){document.getElementById('exp-modal-title').textContent='Add expense';document.getElementById('exp-id').value='';['exp-title','exp-amount','exp-date'].forEach(id=>document.getElementById(id).value='');document.getElementById('exp-cat').value='Other';document.getElementById('exp-paid').value='Gwendalynn';document.getElementById('exp-currency').value='JPY';document.getElementById('exp-split').value='even';openModal('expModal');}
 function openEditExp(id){const item=S.budget.find(b=>b.id===id);if(!item)return;document.getElementById('exp-modal-title').textContent='Edit expense';document.getElementById('exp-id').value=id;document.getElementById('exp-cat').value=item.category||'Other';document.getElementById('exp-paid').value=item.paid_by||'Gwendalynn';document.getElementById('exp-title').value=item.title||'';document.getElementById('exp-amount').value=item.amount||'';document.getElementById('exp-currency').value=item.currency||'JPY';document.getElementById('exp-split').value=item.split||'even';document.getElementById('exp-date').value=item.date||'';openModal('expModal');}
 async function saveExpense(){const id=document.getElementById('exp-id').value||'b_'+Date.now(),data={category:document.getElementById('exp-cat').value,title:document.getElementById('exp-title').value,amount:parseFloat(document.getElementById('exp-amount').value)||0,currency:document.getElementById('exp-currency').value,paid_by:document.getElementById('exp-paid').value,split:document.getElementById('exp-split').value,date:document.getElementById('exp-date').value,confirmed:document.getElementById('exp-paid').value!=='TBD'};if(!data.title)return;await db.collection('budget').doc(id).set(data);closeModal('expModal');toast('Saved','ok');}
 async function delExp(id){if(!confirm('Remove?'))return;await db.collection('budget').doc(id).delete();toast('Removed','');}
 
+// ── Checklists ────────────────────────────────────────────────────────────────
 function renderChecklist(type){const items=type==='pretrip'?S.pretrip:S.packing,bodyEl=document.getElementById(type+'-body'),barEl=document.getElementById(type+'-prog-bar'),lblEl=document.getElementById(type+'-prog-label');if(!items.length)return;const total=items.length*2,done=items.reduce((s,i)=>s+(i.done_g?1:0)+(i.done_c?1:0),0);barEl.style.width=(done/total*100)+'%';lblEl.textContent=done+' / '+total;const cats=[...new Set(items.map(i=>i.category))];bodyEl.innerHTML=cats.map(cat=>{const ci=items.filter(i=>i.category===cat);return`<div class="cl-cat-header">${cat}</div>`+ci.map(item=>`<div class="cl-item"><label class="cl-label${item.done_g&&item.done_c?' done':''}" for="cg-${item.id}">${item.item}</label><div class="cl-checks"><div class="check-wrap"><input type="checkbox" id="cg-${item.id}" ${item.done_g?'checked':''} ${S.isEditor?'':'disabled'} onchange="toggleCheck('${type}','${item.id}','g',this.checked)"><span>Gwen</span></div><div class="check-wrap"><input type="checkbox" id="cc-${item.id}" ${item.done_c?'checked':''} ${S.isEditor?'':'disabled'} onchange="toggleCheck('${type}','${item.id}','c',this.checked)"><span>Christina</span></div></div>${S.isEditor?`<button class="icon-btn" style="opacity:.4" onclick="delCheckItem('${type}','${item.id}')">✕</button>`:''}</div>`).join('');}).join('');}
-async function toggleCheck(type,id,person,val){await db.collection(type).doc(id).update({[person==='g'?'done_g':'done_c']:val});}
-async function addItem(type){const inputEl=document.getElementById(type+'-add-input'),catEl=document.getElementById(type+'-add-cat'),text=inputEl.value.trim();if(!text)return;await db.collection(type).doc(type+'_'+Date.now()).set({category:catEl.value,item:text,done_g:false,done_c:false});inputEl.value='';toast('Added','ok');}
-async function delCheckItem(type,id){await db.collection(type).doc(id).delete();}
+async function toggleCheck(type,id,person,val){try{await db.collection(type).doc(id).update({[person==='g'?'done_g':'done_c']:val});}catch(e){}}
+async function addItem(type){const inputEl=document.getElementById(type+'-add-input'),catEl=document.getElementById(type+'-add-cat'),text=inputEl.value.trim();if(!text)return;try{await db.collection(type).doc(type+'_'+Date.now()).set({category:catEl.value,item:text,done_g:false,done_c:false});inputEl.value='';toast('Added','ok');}catch(e){toast('Sign in to add items','');}}
+async function delCheckItem(type,id){try{await db.collection(type).doc(id).delete();}catch(e){}}
 
+// ── Drive ─────────────────────────────────────────────────────────────────────
+function saveDriveUrl(){const url=document.getElementById('drive-url-input').value.trim();if(!url)return;try{localStorage.setItem('japan-drive-url',url);}catch(e){}applyDriveUrl(url);}
+function clearDriveUrl(){document.getElementById('drive-url-input').value='';document.getElementById('drive-iframe').style.display='none';document.getElementById('drive-empty').style.display='flex';try{localStorage.removeItem('japan-drive-url');}catch(e){}}
+function applyDriveUrl(url){
+  document.getElementById('drive-url-input').value=url;
+  // Convert folder URL to embed URL
+  let embedUrl=url;
+  const folderMatch=url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  const fileMatch=url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(folderMatch){embedUrl=`https://drive.google.com/embeddedfolderview?id=${folderMatch[1]}#list`;}
+  else if(fileMatch){embedUrl=`https://drive.google.com/file/d/${fileMatch[1]}/preview`;}
+  document.getElementById('drive-empty').style.display='none';
+  const iframe=document.getElementById('drive-iframe');
+  iframe.src=embedUrl;iframe.style.display='block';
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-function openAuthModal(){openModal('authModal');switchAuthTab('in');}
-document.querySelecto
+function openAuthModal(){openModal('authModal');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));});
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let toastT;
+function toast(msg,type){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2800);}
+
+// ── Cherry Blossoms ───────────────────────────────────────────────────────────
+(function(){
+  const cv=document.getElementById('blossom-canvas'),ctx=cv.getContext('2d');
+  let P=[];
+  function resize(){cv.width=innerWidth;cv.height=innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  function mk(){return{x:Math.random()*cv.width,y:-40-Math.random()*100,r:2.5+Math.random()*2.5,rot:Math.random()*Math.PI*2,rv:(Math.random()-.5)*.014,vx:(Math.random()-.5)*.18,vy:.17+Math.random()*.26,sw:Math.random()*Math.PI*2,sws:.004+Math.random()*.005,a:.4+Math.random()*.4};}
+  for(let i=0;i<14;i++){const p=mk();p.y=Math.random()*innerHeight;P.push(p);}
+  (function draw(){ctx.clearRect(0,0,cv.width,cv.height);P.forEach((p,i)=>{p.sw+=p.sws;p.x+=p.vx+Math.sin(p.sw)*.18;p.y+=p.vy;p.rot+=p.rv;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=p.a;ctx.fillStyle='#C8909A';ctx.beginPath();ctx.ellipse(0,0,p.r*1.5,p.r*.7,0,0,Math.PI*2);ctx.fill();ctx.restore();if(p.y>cv.height+20)P[i]=mk();});requestAnimationFrame(draw);})();
+})();
+</script>
+</body>
+</html>
