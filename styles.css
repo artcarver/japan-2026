@@ -65,6 +65,7 @@
   --cat-transport: #3B82F6;
   --cat-hotel:     #8B5CF6;
   --cat-food:      #F59E0B;
+  --cat-drinks:    #B8842A;
   --cat-shopping:  #EC4899;
   --cat-other:     #9CA3AF;
 }
@@ -327,7 +328,8 @@ header {
 /* Section labels */
 .ov-section-label {
   font-family: var(--serif); font-size: var(--fs-lg); font-weight: var(--fw-normal);
-  letter-spacing: 0; color: var(--text); margin-bottom: 16px;
+  letter-spacing: 0; color: var(--text);
+  padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px;
 }
 
 /* Route timeline */
@@ -803,6 +805,7 @@ body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
 .cat-stripe-transport { background: var(--cat-transport); }
 .cat-stripe-hotel     { background: var(--cat-hotel); }
 .cat-stripe-food      { background: var(--cat-food); }
+.cat-stripe-drinks    { background: var(--cat-drinks); }
 .cat-stripe-shopping  { background: var(--cat-shopping); }
 .cat-stripe-other     { background: var(--cat-other); }
 
@@ -933,7 +936,7 @@ body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
 
 /* Urgent */
 .urgent-wrap {
-  background: var(--card); border: 1.5px solid var(--amber-bd);
+  background: var(--card); border: 1px solid var(--amber-bd);
   border-radius: var(--r-lg); overflow: hidden; margin-bottom: 20px;
   box-shadow: var(--sh);
 }
@@ -1001,15 +1004,16 @@ body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
 /* Tips */
 .tips-section { margin-bottom: 20px; }
 .tips-section-title {
-  font-size: var(--fs-xs); font-weight: var(--fw-medium); text-transform: uppercase;
-  letter-spacing: 0.06em; color: var(--light); margin-bottom: 8px;
+  font-family: var(--serif); font-size: var(--fs-lg); font-weight: var(--fw-normal);
+  letter-spacing: 0; color: var(--text);
+  padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 10px;
 }
 .tip-card {
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--r-lg); overflow: hidden; margin-bottom: 6px; box-shadow: var(--sh);
 }
 .tip-card-title {
-  font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text);
+  font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--text);
   padding: 10px 14px 8px; border-bottom: 1px solid var(--border-lt);
 }
 .tip-card-body { font-size: var(--fs-sm); color: var(--muted); padding: 10px 14px; line-height: 1.65; }
@@ -1070,6 +1074,7 @@ body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
 .budget-header {
   display: flex; align-items: flex-start; justify-content: space-between;
   margin-bottom: 18px; gap: 12px; flex-wrap: wrap;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
 }
 .budget-eyebrow { display: none; }
 .budget-title { font-family: var(--serif); font-size: var(--fs-2xl); font-weight: var(--fw-normal); color: var(--text); }
@@ -1127,8 +1132,8 @@ body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
   display: flex; align-items: center; justify-content: center;
   font-size: var(--fs-sm); font-weight: var(--fw-bold); color: #fff; flex-shrink: 0;
 }
-.b-avatar-g { background: #2E4A8A; }
-.b-avatar-c { background: #7A3020; }
+.b-avatar-g { background: #3D6B9A; }
+.b-avatar-c { background: var(--red-d); }
 .b-person-name { font-size: var(--fs-base); font-weight: var(--fw-medium); color: var(--text); }
 .b-person-paid { font-family: var(--serif); font-size: var(--fs-xl); color: var(--text); margin-bottom: 2px; }
 .b-person-sub { font-size: var(--fs-xs); color: var(--light); margin-bottom: 8px; }
@@ -1183,7 +1188,7 @@ body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
   display: inline-block; font-size: var(--fs-xs); font-weight: var(--fw-medium);
   padding: 2px 7px; border-radius: var(--r);
 }
-.b-cat-flights   { background: #EAF1FD; color: #2A5FB5; }
+.b-cat-flights   { background: #EAF1FD; color: var(--cat-transport); }
 .b-cat-hotels    { background: #EDE9FE; color: #5B21B6; }
 .b-cat-transport { background: var(--green-bg); color: var(--green); }
 .b-cat-activities { background: #FEF3C7; color: #92400E; }
@@ -1231,7 +1236,6 @@ body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
   font-size: var(--fs-xs); font-weight: var(--fw-medium); padding: 1px 6px; border-radius: 10px;
   background: var(--card-2); color: var(--muted);
 }
-.exp-tag.split { background: var(--green-bg); color: var(--green); }
 .exp-delete {
   background: none; border: none; cursor: pointer;
   padding: 0 12px; color: var(--xlight); font-size: var(--fs-base);
