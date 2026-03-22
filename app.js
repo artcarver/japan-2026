@@ -315,10 +315,14 @@ function buildDestPills(){
   updatePillsOffset();
   const el=$('destPills'); if(!el)return;
   el.innerHTML=GROUPS.map((g,i)=>'<button class="dest-pill" data-group="'+i+'">'+esc(g.label)+'</button>').join('');
+  let clickedPill=null, clickLockTimer=null;
   el.querySelectorAll('.dest-pill').forEach(pill=>{
     pill.addEventListener('click',()=>{
       el.querySelectorAll('.dest-pill').forEach(p=>p.classList.remove('active'));
       pill.classList.add('active');
+      clickedPill=parseInt(pill.dataset.group);
+      clearTimeout(clickLockTimer);
+      clickLockTimer=setTimeout(()=>{clickedPill=null;},1200);
       const sec=document.getElementById('section-'+pill.dataset.group);
       if(sec){
         const hH=document.querySelector('header')?.offsetHeight||0;
@@ -327,14 +331,28 @@ function buildDestPills(){
       }
     });
   });
+  window._destPillClickedRef=()=>clickedPill;
 }
 let pillRafPending=false;
 function updateActivePill(){
   const el=$('destPills'); if(!el)return;
+  // If a pill was just clicked, respect that choice
+  const clicked=window._destPillClickedRef?.();
+  if(clicked!==null&&clicked!==undefined){
+    el.querySelectorAll('.dest-pill').forEach((p,i)=>{
+      p.classList.toggle('active',i===clicked);
+      if(i===clicked)p.scrollIntoView({inline:'nearest',block:'nearest'});
+    });
+    return;
+  }
   const hH=document.querySelector('header')?.offsetHeight||0;
   const pH=$('destPillsWrap')?.offsetHeight||0;
   const off=hH+pH+20; let active=0;
-  GROUPS.forEach((_,i)=>{const s=document.getElementById('section-'+i); if(s&&s.getBoundingClientRect().top<off)active=i;});
+  // For the last section, check if we're near the bottom of the page
+  const atBottom=window.innerHeight+window.scrollY>=document.body.scrollHeight-50;
+  const lastIdx=GROUPS.length-1;
+  if(atBottom){active=lastIdx;}
+  else{GROUPS.forEach((_,i)=>{const s=document.getElementById('section-'+i); if(s&&s.getBoundingClientRect().top<off)active=i;});}
   el.querySelectorAll('.dest-pill').forEach((p,i)=>{
     p.classList.toggle('active',i===active);
     if(i===active)p.scrollIntoView({inline:'nearest',block:'nearest'});
