@@ -298,7 +298,7 @@ header {
 /* Terracotta accent strip */
 .ov-accent {
   background: var(--red); color: #fff;
-  padding: 20px 40px; border-radius: 0;
+  padding: 20px 40px; border-radius: 0 0 var(--r-xl) var(--r-xl);
   margin-bottom: 28px; margin-left: -20px; margin-right: -20px; display: flex;
   align-items: center; justify-content: space-between; gap: 16px;
   position: relative; overflow: hidden;
@@ -585,22 +585,29 @@ body.edit-mode .notes-dot.has-notes { display: block; }
 .act.clickable { cursor: pointer; border-radius: var(--r); transition: background var(--speed); }
 .act.clickable:hover { background: var(--card-2); }
 
-/* Chevron indicator */
+/* Expand indicator — subtle dot that becomes a line when expanded */
 .act-chevron {
-  font-size: var(--fs-xs); color: var(--xlight); flex-shrink: 0; margin-top: 3px;
-  transition: transform 0.2s ease, color var(--speed);
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--border); flex-shrink: 0; margin-top: 8px;
+  transition: background var(--speed), border-radius var(--speed), height var(--speed);
 }
-.act.expanded .act-chevron { transform: rotate(90deg); color: var(--red); }
+.act.clickable:hover .act-chevron { background: var(--light); }
+.act.expanded .act-chevron {
+  background: var(--red); border-radius: 2px;
+  height: 14px; margin-top: 4px;
+}
 
-/* Edit button — appears inside detail panel when expanded, editors only */
-.act-edit-btn {
-  display: inline-block; background: none; border: 1px solid var(--border-lt);
-  cursor: pointer; font-size: var(--fs-xs); color: var(--light); font-family: var(--sans);
-  padding: 3px 10px; border-radius: var(--r); margin-top: 6px;
-  transition: color var(--speed), border-color var(--speed);
+/* Edit button — only visible when row is expanded, editors only */
+.act-edit-inline {
+  display: none;
+  background: none; border: none; cursor: pointer;
+  font-size: var(--fs-xs); font-weight: var(--fw-normal);
+  color: var(--light); font-family: var(--sans);
+  padding: 0; flex-shrink: 0; white-space: nowrap;
+  transition: color var(--speed);
 }
-body:not(.edit-mode) .act-edit-btn { display: none; }
-.act-edit-btn:hover { color: var(--red); border-color: var(--red); }
+body.edit-mode .act.expanded .act-edit-inline { display: inline-block; }
+.act-edit-inline:hover { color: var(--red); }
 
 /* Expand all button */
 .expand-all-wrap { display: flex; justify-content: flex-end; margin-bottom: 4px; }

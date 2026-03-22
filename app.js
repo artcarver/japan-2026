@@ -1308,7 +1308,7 @@ function renderFsItem(dayId,act,isEdit){
     +time
     +'<div class="act-body">'
     +'<div class="act-main"><div class="act-text">'+esc(act.title)+tag+'</div>'
-    +(hasDetails?'<span class="act-chevron">\u25B8</span>':'')
+    +(hasDetails?'<span class="act-chevron"></span>':'')
     +editBtn
     +'</div>'
     +detailHtml
@@ -1344,7 +1344,7 @@ function renderStaticItem(item,dayId,isEdit){
   return '<div class="act'+(isExp?' expanded':'')+(item.type==='booked'?' booked':'')+(hasDetails?' clickable':'')+'" data-item-id="'+itemId+'"'+clickAttr+'>'
     +time
     +'<div class="act-body">'
-    +'<div class="act-main"><div class="act-text">'+esc(item.text||'')+tag+'</div>'+(hasDetails?'<span class="act-chevron">\u25B8</span>':'')+'</div>'
+    +'<div class="act-main"><div class="act-text">'+esc(item.text||'')+tag+'</div>'+(hasDetails?'<span class="act-chevron"></span>':'')+'</div>'
     +detailHtml
     +'</div></div>';
 }
