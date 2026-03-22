@@ -1660,6 +1660,7 @@ function renderBudget(){
 function openEditExpense(id){
   const exp=expenses.find(e=>e.id===id); if(!exp)return;
   editExpId=id;
+  if($('expModalTitle'))$('expModalTitle').textContent='Edit expense';
   // Remove quick macros section — not relevant when editing
   document.getElementById('quickMacros')?.remove();
   if($('expAmount'))$('expAmount').value=exp.amount||'';
@@ -1681,6 +1682,7 @@ function openEditExpense(id){
 
 function openExpenseModal(){
   editExpId=null;
+  if($('expModalTitle'))$('expModalTitle').textContent='Log expense';
   const saveBtn=$('expSaveBtn'); if(saveBtn)saveBtn.textContent='Add expense';
   // Show quick macros
   renderQuickMacros();

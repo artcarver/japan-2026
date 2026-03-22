@@ -4,7 +4,7 @@
    own offline persistence separately.
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'japan-2026-202603221824';
+const CACHE_NAME = 'japan-2026-202603231200';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -13,6 +13,8 @@ const SHELL_FILES = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  // SortableJS — cached for offline drag-and-drop
+  'https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js',
   // Google Fonts — cache the CSS (font files get cached on first use)
   'https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap',
 ];
