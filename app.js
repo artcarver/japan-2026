@@ -1135,7 +1135,7 @@ function renderItinerary(){
     return '<div class="dest-section" id="section-'+i+'"><div class="dest-header"><span class="dest-name">'+esc(g.label)+'</span><span class="dest-dates-label">'+esc(g.dates)+'</span></div>'+vis.map(id=>renderDay(DAYS[id])).join('')+'</div>';
   }).join('');
 
-  el.innerHTML=summaryBar+toolbar+sections;
+  el.innerHTML=toolbar+sections;
 
   el.querySelectorAll('.day-header').forEach(h=>{
     h.addEventListener('click',()=>{
