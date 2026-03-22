@@ -720,35 +720,53 @@ const CONFIRMATIONS = {
 };
 
 
-// ── Checklist ─────────────────────────────────────────────────────────────────
+// ── Pre-trip data ─────────────────────────────────────────────────────────────
+
+// Urgent items — still need action before departure
+const URGENT = [
+  {id:'u1', label:'Book Thunderbird Limited Express — Kyoto → Kanazawa',
+    sub:'Apr 26 · ~¥7,120/person · book at smart-ex.jp or JR ticket office · fills up on weekends',
+    link:'https://smart-ex.jp/en/', linkLabel:'Book at smart-ex.jp'},
+  {id:'u2', label:'Book Hokuriku Shinkansen — Kanazawa → Tokyo',
+    sub:'Apr 28 · ~¥14,120/person · Kagayaki is fastest (no stops) · ~2.5 hrs',
+    link:'https://smart-ex.jp/en/', linkLabel:'Book at smart-ex.jp'},
+];
+
+// Booked — confirmed reservations for reference
+const BOOKED = [
+  {id:'b01', label:'United flights both ways (UA 39 / UA 38)',  sub:'Conf: F354LH · seats 31L & 31J'},
+  {id:'b02', label:'Hotel Gracery Shinjuku',                    sub:'4 nights · Apr 16–20 · Conf: 5594.831.309'},
+  {id:'b03', label:'teamLab Borderless tickets',                sub:'Apr 17 · 8:30 AM · 2 tickets · ¥5,600/person'},
+  {id:'b04', label:'Fuji-Excursion 7 — Shinjuku → Kawaguchiko',sub:'Apr 20 · Car 3, Seats 13-C & 13-D · Res: E77821'},
+  {id:'b05', label:'Tensui Saryo Ryokan, Hakone',               sub:'2 nights · Apr 20–22 · Res: IK1516984808'},
+  {id:'b06', label:'Shinkansen HIKARI 637 — Odawara → Kyoto',  sub:'Apr 22 · 10:11 AM · Res: 2002'},
+  {id:'b07', label:'Hotel Granvia Kyoto',                       sub:'4 nights · Apr 22–26 · Conf: #23151SF060529'},
+  {id:'b08', label:'Hotel Intergate Kanazawa',                  sub:'2 nights · Apr 26–28 · Conf: 20260125110822242'},
+  {id:'b09', label:'Quintessa Hotel Tokyo Ginza',               sub:'1 night · Apr 28–29 · Conf: 6519361226'},
+];
+
+// Before-you-leave checklist
 const CHECKLIST = [
-  {id:'booked', title:'BOOKED — all done', booked:true, items:[
-    {id:'c1', label:'United flights (UA 39 + UA 38)',             sub:'Conf: F354LH · seats 31L/31J'},
-    {id:'c2', label:'Hotel Gracery Shinjuku',                     sub:'4 nights · Apr 16–20'},
-    {id:'c3', label:'teamLab Borderless tickets',                 sub:'Apr 17 · 8:30 AM · ¥5,600/person'},
-    {id:'c4', label:'Fuji-Excursion 7 train tickets',             sub:'Apr 20 · Res: E77821'},
-    {id:'c5', label:'Tensui Saryo ryokan, Hakone',                sub:'2 nights · Apr 20–22 · IK1516984808'},
-    {id:'c6', label:'Shinkansen HIKARI 637 (Odawara → Kyoto)',   sub:'Apr 22 · Res: 2002'},
-    {id:'c7', label:'Hotel Granvia Kyoto',                        sub:'4 nights · Apr 22–26'},
-    {id:'c8', label:'Hotel Intergate Kanazawa',                   sub:'2 nights · Apr 26–28'},
-    {id:'c9', label:'Quintessa Hotel Tokyo Ginza',                sub:'1 night · Apr 28–29'},
+  {id:'before', title:'Before you leave', items:[
+    {id:'c01', label:'Check shinkansen seat assignment email',    sub:'HIKARI 637 — notification after Mar 22 at 8:00 AM Japan time'},
+    {id:'c02', label:'Download teamLab app',                     sub:'Required for Infinite Crystal World on Apr 17 — get numbered tickets in-app'},
+    {id:'c03', label:'Set up Suica on Apple Wallet',             sub:'Wallet → + → Transit Card → Suica · works at every train gate and convenience store'},
+    {id:'c04', label:'Download Google Maps offline',             sub:'Save offline maps for Tokyo, Kyoto, Hakone, Kanazawa, Nara, Osaka before leaving'},
+    {id:'c05', label:'Set up international data or get SIM',     sub:'Pocket WiFi at HND arrival · or eSIM (Airalo, Ubigi) set up before flight'},
+    {id:'c06', label:'Notify credit cards of travel dates',      sub:'Call or use app · prevent card blocks in Japan'},
+    {id:'c07', label:'Get yen cash before departure',            sub:'Bring ¥20,000–30,000 · or withdraw at 7-Eleven ATM on arrival · many places cash-only'},
+    {id:'c08', label:'Download Google Translate Japanese pack',  sub:'Camera mode reads menus and signs in real time — save it offline'},
+    {id:'c09', label:'Confirm 21st Century Museum hours',        sub:'Apr 27 is Monday — check kanazawa21.jp in case of closure'},
+    {id:'c10', label:'Screenshot all QR codes and PINs',         sub:'Offline backup: teamLab ticket, Fuji-Excursion pickup code, hotel PINs'},
+    {id:'c11', label:'Confirm travel insurance is active',       sub:'Have policy number saved offline'},
+    {id:'c12', label:'Add this site to iPhone home screen',      sub:'Safari → Share → Add to Home Screen'},
   ]},
-  {id:'before', title:'BEFORE YOU LEAVE', items:[
-    {id:'c10', label:'Check shinkansen seat email',               sub:'Expected after Mar 22 at 8:00 AM'},
-    {id:'c11', label:'Download teamLab app',                      sub:'Needed for Infinite Crystal World numbered tickets'},
-    {id:'c12', label:'Set up Suica on Apple Wallet',              sub:'iPhone: Wallet app → + → add transit card → Suica. Works at all gates.'},
-    {id:'c13', label:'Confirm 21st Century Museum hours',         sub:'Apr 27 is Monday — verify not closed · kanazawa21.jp'},
-    {id:'c14', label:'Download Google Maps offline',              sub:'Tokyo, Kyoto, Kanazawa, Hakone — essential for weak signal'},
-    {id:'c15', label:'Set up international data plan',            sub:'Or get pocket WiFi at HND · eSIM is another option'},
-    {id:'c16', label:'Notify credit card companies of travel',    sub:'Prevent card blocks abroad'},
-    {id:'c17', label:'Get yen cash',                              sub:'7-Eleven ATMs accept international cards · have ¥20,000–30,000 on hand at all times'},
-    {id:'c18', label:'Add this site to iPhone home screen',       sub:'Safari → Share → Add to Home Screen'},
-  ]},
-  {id:'ontrip', title:'ON-TRIP TASKS', items:[
-    {id:'c19', label:'Arrange takkyubin at Hotel Gracery',        sub:'Night of Apr 19 — send luggage to Hotel Granvia Kyoto'},
-    {id:'c20', label:'Buy Hakone Free Pass at Gora Station',      sub:'Apr 20 or 21 · covers ropeway, railway, Lake Ashi boat'},
-    {id:'c21', label:'Pick up Fuji-Excursion tickets before Apr 20', sub:'Pickup code: 24492390994521288'},
-    {id:'c22', label:'Confirm Tensui Saryo QR code for check-in', sub:'Via SMS from the ryokan before arrival'},
+  {id:'ontrip', title:'During the trip', items:[
+    {id:'c13', label:'Pick up Fuji-Excursion tickets',           sub:'Before Apr 20 · use QR code or pickup code: 24492390994521288 at any JR machine'},
+    {id:'c14', label:'Arrange takkyubin at Hotel Gracery',       sub:'Night of Apr 19 · send luggage to Hotel Granvia Kyoto · ~¥1,500/bag · arrives Apr 21'},
+    {id:'c15', label:'Get Hakone Free Pass at Gora Station',     sub:'¥4,000 for 2 days · covers Tozan Railway, ropeway, and Lake Ashi boat'},
+    {id:'c16', label:'Confirm Tensui Saryo check-in QR code',   sub:'Arrives via SMS from ryokan before arrival · needed at gate'},
+    {id:'c17', label:'Osaka Aquarium — consider booking ahead',  sub:'Kaiyukan gets long queues · kaiyukan.com/language/eng/'},
   ]},
 ];
 
@@ -1323,12 +1341,56 @@ function renderConfirmations() {
 
 // ── Render: Checklist ─────────────────────────────────────────────────────────
 function renderChecklist() {
-  checklistEl.innerHTML = CHECKLIST.map(section => {
+  // ── Active sub-tab state ────────────────────────────────────────────────────
+  const activePtTab = window._ptTab || 'tasks';
+
+  const tabBar = `
+    <div class="pt-tabs">
+      <button class="pt-tab${activePtTab==='tasks'?' pt-tab-on':''}" data-pt="tasks">Checklist</button>
+      <button class="pt-tab${activePtTab==='tips'?' pt-tab-on':''}"  data-pt="tips">Japan Tips</button>
+      <button class="pt-tab${activePtTab==='packing'?' pt-tab-on':''}" data-pt="packing">Packing</button>
+    </div>`;
+
+  // ── TASKS panel ─────────────────────────────────────────────────────────────
+  const urgentHtml = `
+    <div class="pt-urgent-wrap">
+      <div class="pt-urgent-hd">
+        <span class="pt-urgent-label">&#9888; Still needs booking</span>
+      </div>
+      ${URGENT.map(u => `
+        <div class="pt-urgent-item">
+          <div class="pt-urgent-title">${u.label}</div>
+          <div class="pt-urgent-sub">${u.sub}</div>
+          ${u.link ? `<a href="${u.link}" target="_blank" rel="noopener" class="pt-urgent-link">${u.linkLabel} ↗</a>` : ''}
+        </div>`).join('')}
+    </div>`;
+
+  const bookedHtml = `
+    <div class="checklist-section booked-section" id="cl-booked">
+      <div class="checklist-section-hd" onclick="toggleChecklistSection('booked')">
+        <span class="checklist-title">Booked &amp; confirmed</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="checklist-progress"><span style="color:var(--green-text)">${BOOKED.length}</span> / ${BOOKED.length}</span>
+          <span class="checklist-toggle">&#9660;</span>
+        </div>
+      </div>
+      <div class="checklist-items">
+        ${BOOKED.map(item => `
+          <div class="check-item done">
+            <div class="check-box checked"></div>
+            <div>
+              <div class="check-label">${item.label}</div>
+              ${item.sub?`<div class="check-sub">${item.sub}</div>`:''}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  const checklistHtml = CHECKLIST.map(section => {
     const total = section.items.length;
     const done  = section.items.filter(i => checks[i.id]).length;
-    const isBooked = !!section.booked;
     return `
-      <div class="checklist-section${isBooked?' booked-section':''}" id="cl-${section.id}">
+      <div class="checklist-section" id="cl-${section.id}">
         <div class="checklist-section-hd" onclick="toggleChecklistSection('${section.id}')">
           <span class="checklist-title">${section.title}</span>
           <div style="display:flex;align-items:center;gap:8px">
@@ -1344,32 +1406,50 @@ function renderChecklist() {
                 <div class="check-label">${item.label}</div>
                 ${item.sub?`<div class="check-sub">${item.sub}</div>`:''}
               </div>
-            </div>
-          `).join('')}
+            </div>`).join('')}
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 
-  // Booked section collapsed by default
-  const bookedSec = document.getElementById('cl-booked');
-  if (bookedSec) bookedSec.classList.remove('expanded');
-  // Others expanded by default
-  document.querySelectorAll('.checklist-section:not(.booked-section)').forEach(s => s.classList.add('expanded'));
+  const tasksPanel = `
+    <div class="pt-panel" id="pt-tasks" ${activePtTab !== 'tasks' ? 'style="display:none"' : ''}>
+      ${urgentHtml}
+      ${checklistHtml}
+      ${bookedHtml}
+    </div>`;
 
+  // ── TIPS panel ──────────────────────────────────────────────────────────────
+  const tipsPanel = `
+    <div class="pt-panel" id="pt-tips" ${activePtTab !== 'tips' ? 'style="display:none"' : ''}>
+      <div id="checklist-tips"></div>
+    </div>`;
+
+  // ── PACKING panel ───────────────────────────────────────────────────────────
+  const packingPanel = `
+    <div class="pt-panel" id="pt-packing" ${activePtTab !== 'packing' ? 'style="display:none"' : ''}>
+      <div id="pt-packing-list"></div>
+    </div>`;
+
+  checklistEl.innerHTML = tabBar + tasksPanel + tipsPanel + packingPanel;
+
+  // Wire sub-tab buttons
+  checklistEl.querySelectorAll('.pt-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      window._ptTab = btn.dataset.pt;
+      renderChecklist();
+    });
+  });
+
+  // Expand/collapse wiring
+  document.querySelectorAll('.checklist-section').forEach(s => s.classList.add('expanded'));
+  document.querySelector('#cl-booked')?.classList.remove('expanded');
   document.querySelectorAll('.check-item').forEach(item => {
     item.addEventListener('click', () => toggleCheck(item.dataset.check));
   });
 
-  // Append Japan Tips + Packing List sections below checklist
-  const existing = document.getElementById('checklist-tips');
-  if (!existing) {
-    const tipDiv = document.createElement('div');
-    tipDiv.id = 'checklist-tips';
-    tipDiv.style.marginTop = '36px';
-    checklistEl.appendChild(tipDiv);
-  }
+  // Render tips and packing into their panels
   renderTips();
+  renderPackingList();
 }
 
 window.toggleChecklistSection = function(id) {
@@ -1474,26 +1554,17 @@ const PACKING = [
 ];
 
 function renderPackingList() {
-  const container = document.getElementById('checklist-tips');
+  const container = document.getElementById('pt-packing-list');
   if (!container) return;
-
-  const packHtml = `
-    <div class="tips-section" style="margin-top:28px">
-      <div class="tips-section-title">Packing List — April Japan</div>
-      ${PACKING.map(group => `
-        <div class="tip-card" style="margin-bottom:8px">
-          <div class="tip-card-title">${group.cat}</div>
-          <div class="tip-card-body">
-            <ul style="padding-left:16px;margin-top:6px">
-              ${group.items.map(i => `<li style="margin-bottom:4px;line-height:1.5">${i}</li>`).join('')}
-            </ul>
-          </div>
-        </div>
-      `).join('')}
-    </div>`;
-
-  // Append after tips (tips renders first, then this)
-  container.insertAdjacentHTML('beforeend', packHtml);
+  container.innerHTML = PACKING.map(group => `
+    <div class="tip-card" style="margin-bottom:10px">
+      <div class="tip-card-title">${group.cat}</div>
+      <div class="tip-card-body">
+        <ul style="padding-left:16px;margin-top:6px">
+          ${group.items.map(i => `<li style="margin-bottom:5px;line-height:1.55">${i}</li>`).join('')}
+        </ul>
+      </div>
+    </div>`).join('');
 }
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
@@ -1527,15 +1598,16 @@ const CAT_COLORS = {
 // Booked costs for reference
 // Pre-booked costs — stored in Firestore when signed in, editable per item
 const DEFAULT_BOOKED = [
-  {id:'b1', label:'Flights (both)',                  jpy:null,   usd:null,  paidBy:'split'},
-  {id:'b2', label:'Hotel Gracery Shinjuku',          jpy:200692, usd:1261,  paidBy:'gwen'},
-  {id:'b3', label:'teamLab Borderless (2 tickets)',  jpy:11200,  usd:70,    paidBy:'gwen'},
-  {id:'b4', label:'Fuji-Excursion 7 train',          jpy:8400,   usd:53,    paidBy:'gwen'},
-  {id:'b5', label:'Tensui Saryo, Hakone',            jpy:126340, usd:794,   paidBy:'gwen'},
-  {id:'b6', label:'Shinkansen (Odawara→Kyoto)',      jpy:23800,  usd:150,   paidBy:'gwen'},
-  {id:'b7', label:'Hotel Granvia Kyoto',             jpy:268256, usd:1686,  paidBy:'gwen'},
-  {id:'b8', label:'Hotel Intergate Kanazawa',        jpy:39004,  usd:245,   paidBy:'gwen'},
-  {id:'b9', label:'Quintessa Hotel Ginza',           jpy:24713,  usd:155,   paidBy:'gwen'},
+  // Flights: $1,796.86 airfare + $400 Economy Plus seats = $2,196.86 total · Gwen paid · split 50/50
+  {id:'b1', label:'United flights + Economy Plus seats (both)',  jpy:349100, usd:2197, paidBy:'gwen'},
+  {id:'b2', label:'Hotel Gracery Shinjuku · 4 nights',          jpy:200692, usd:1261, paidBy:'gwen'},
+  {id:'b3', label:'teamLab Borderless · 2 tickets Apr 17',      jpy:11200,  usd:70,   paidBy:'gwen'},
+  {id:'b4', label:'Fuji-Excursion 7 · Shinjuku→Kawaguchiko',    jpy:8400,   usd:53,   paidBy:'gwen'},
+  {id:'b5', label:'Tensui Saryo Ryokan · 2 nights incl. meals', jpy:126340, usd:794,  paidBy:'gwen'},
+  {id:'b6', label:'Shinkansen HIKARI 637 · Odawara→Kyoto',      jpy:23800,  usd:150,  paidBy:'gwen'},
+  {id:'b7', label:'Hotel Granvia Kyoto · 4 nights',             jpy:268256, usd:1686, paidBy:'gwen'},
+  {id:'b8', label:'Hotel Intergate Kanazawa · 2 nights',        jpy:39004,  usd:245,  paidBy:'gwen'},
+  {id:'b9', label:'Quintessa Hotel Ginza · 1 night',            jpy:24713,  usd:155,  paidBy:'gwen'},
 ];
 let bookedCosts = DEFAULT_BOOKED.map(b => ({...b})); // mutable copy
 
@@ -1615,42 +1687,61 @@ async function deleteExpense(id) {
 
 // ── Budget calculations ───────────────────────────────────────────────────────
 function calcBudget() {
-  const total = expenses.reduce((s, e) => s + (e.amount || 0), 0);
+  // ── On-trip expenses (logged in real time) ──────────────────────────────────
+  const onTripTotal = expenses.reduce((s, e) => s + (e.amount || 0), 0);
 
-  // Per-person net spend (what each person actually spent / their share)
-  let gwenNet = 0, christinaNet = 0;
-  // Settlement: positive = christina owes gwen, negative = gwen owes christina
+  let gwenOnTrip = 0, christinaOnTrip = 0;
   let settlement = 0;
 
   expenses.forEach(e => {
     const amt = e.amount || 0;
     if (e.split) {
       if (e.paidBy === 'gwen') {
-        gwenNet      += amt;
-        settlement   += amt / 2; // christina owes gwen half
+        gwenOnTrip += amt;
+        settlement += amt / 2; // christina owes gwen half
       } else {
-        christinaNet += amt;
-        settlement   -= amt / 2; // gwen owes christina half
+        christinaOnTrip += amt;
+        settlement -= amt / 2; // gwen owes christina half
       }
     } else {
-      if (e.paidBy === 'gwen') gwenNet += amt;
-      else christinaNet += amt;
+      if (e.paidBy === 'gwen') gwenOnTrip += amt;
+      else christinaOnTrip += amt;
     }
   });
 
-  // Category totals
+  // ── Pre-booked costs (Gwen fronted everything) ──────────────────────────────
+  // All items are split 50/50 — if paidBy=gwen, christina owes gwen half
+  let bookedGwenPaid = 0, bookedChristinaPaid = 0;
+  bookedCosts.forEach(c => {
+    if (!c.jpy) return;
+    if (c.paidBy === 'gwen') {
+      bookedGwenPaid += c.jpy;
+      settlement += c.jpy / 2;        // christina owes gwen half of each booked item
+    } else if (c.paidBy === 'christina') {
+      bookedChristinaPaid += c.jpy;
+      settlement -= c.jpy / 2;        // gwen owes christina half
+    }
+    // paidBy='split' means they each paid their own share — no settlement adjustment
+  });
+
+  // ── Totals ──────────────────────────────────────────────────────────────────
+  const bookedTotal  = bookedCosts.filter(c => c.jpy).reduce((s, c) => s + c.jpy, 0);
+  const grandTotal   = bookedTotal + onTripTotal;
+  const gwenNet      = bookedGwenPaid + gwenOnTrip;
+  const christinaNet = bookedChristinaPaid + christinaOnTrip;
+
+  // Category totals (on-trip only)
   const byCat = {};
   Object.keys(CAT_COLORS).forEach(c => byCat[c] = 0);
   expenses.forEach(e => { if (byCat[e.category] !== undefined) byCat[e.category] += e.amount || 0; });
 
-  // By date
   const byDate = {};
   expenses.forEach(e => {
     if (!byDate[e.date]) byDate[e.date] = 0;
     byDate[e.date] += e.amount || 0;
   });
 
-  return { total, gwenNet, christinaNet, settlement, byCat, byDate };
+  return { grandTotal, bookedTotal, onTripTotal, gwenNet, christinaNet, settlement, byCat, byDate };
 }
 
 // ── Render: Budget ────────────────────────────────────────────────────────────
@@ -1672,14 +1763,14 @@ function renderBudget() {
     return;
   }
 
-  const { total, gwenNet, christinaNet, settlement, byCat, byDate } = calcBudget();
+  const { grandTotal, bookedTotal, onTripTotal, gwenNet, christinaNet, settlement, byCat, byDate } = calcBudget();
   const maxCat = Math.max(...Object.values(byCat), 1);
 
-  // Settlement card style
-  const settled = Math.abs(settlement) < 1;
+  // Settlement
+  const settled = Math.abs(settlement) < 100;
   let settlementText = '', settleClass = '';
   if (settled) {
-    settlementText = 'All settled up';
+    settlementText = 'All settled up ✓';
     settleClass = 'settlement';
   } else if (settlement > 0) {
     settlementText = `Christina owes Gwen ¥${Math.round(settlement).toLocaleString()}`;
@@ -1689,36 +1780,42 @@ function renderBudget() {
     settleClass = 'settlement owed';
   }
 
+  const settleUSD = `~$${Math.round(Math.abs(settlement) / exchRate).toLocaleString()} USD`;
+
   // Filter expenses
   const displayed = expFilter === 'all' ? expenses : expenses.filter(e => e.category === expFilter);
 
-  // Booked costs total
-  const bookedTotal = bookedCosts.filter(c=>c.jpy).reduce((s,c) => s + c.jpy, 0);
-
   budgetEl.innerHTML = `
     <div class="budget-header">
-      <div class="budget-title">Trip Expenses</div>
-      <div class="budget-sub">${currentUser ? 'Real-time sync active' : 'Sign in to sync with Christina'}</div>
+      <div class="budget-title">Trip Budget</div>
+      <div class="budget-sub">${currentUser ? 'Synced · both travelers' : 'Sign in to sync with Christina'}</div>
+    </div>
+
+    <!-- Settlement banner — always front and center -->
+    <div class="settlement-banner ${settleClass}">
+      <div class="settlement-main">${settlementText}</div>
+      ${!settled ? `<div class="settlement-sub">${settleUSD} · includes all pre-booked + on-trip expenses</div>` : ''}
     </div>
 
     <!-- Stats -->
     <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total On-Trip Spent</div>
-        <div class="stat-jpy">¥${total.toLocaleString()}</div>
-        <div class="stat-usd">~$${Math.round(total / exchRate).toLocaleString()} USD</div>
-      </div>
-      <div class="stat-card ${settleClass}">
-        <div class="stat-label">Settlement</div>
-        <div class="stat-jpy">${settlementText}</div>
+      <div class="stat-card stat-card-primary">
+        <div class="stat-label">Total Trip Cost</div>
+        <div class="stat-jpy">¥${grandTotal.toLocaleString()}</div>
+        <div class="stat-usd">~$${Math.round(grandTotal / exchRate).toLocaleString()} USD</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Gwen Paid</div>
+        <div class="stat-label">Pre-booked</div>
+        <div class="stat-jpy">¥${bookedTotal.toLocaleString()}</div>
+        <div class="stat-usd">~$${Math.round(bookedTotal / exchRate).toLocaleString()} USD</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Gwen fronted</div>
         <div class="stat-jpy">¥${gwenNet.toLocaleString()}</div>
         <div class="stat-usd">~$${Math.round(gwenNet / exchRate).toLocaleString()}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Christina Paid</div>
+        <div class="stat-label">Christina fronted</div>
         <div class="stat-jpy">¥${christinaNet.toLocaleString()}</div>
         <div class="stat-usd">~$${Math.round(christinaNet / exchRate).toLocaleString()}</div>
       </div>
@@ -1776,7 +1873,7 @@ function renderBudget() {
         <span class="booked-ref-total-val">¥${bookedTotal.toLocaleString()}</span>
       </div>
       <div style="font-size:11px;color:var(--light);margin-top:6px">
-        Total trip (booked + on-trip): ¥${(bookedTotal + total).toLocaleString()} &nbsp;·&nbsp; ~$${Math.round((bookedTotal + total)/exchRate).toLocaleString()}
+        On-trip expenses logged: ¥${onTripTotal.toLocaleString()} &nbsp;·&nbsp; Total with pre-booked: ¥${grandTotal.toLocaleString()}
       </div>
     </div>
 
