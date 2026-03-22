@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Japan 2026">
+  <meta name="theme-color" content="#F0EAE0" id="themeColorMeta">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Japan 2026 &middot; Gwendalynn &amp; Christina</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<canvas id="blc" class="blossom"></canvas>
+
+<div id="app">
+
+  <!-- ═══ HEADER ═══ -->
+  <header id="siteHeader">
+    <div class="header-inner">
+      <div class="header-left">
+        <a class="logo" href="#" onclick="switchTab('overview');return false;">
+          <span class="logo-serif">Japan 2026</span>
+          <span class="logo-sub">Gwendalynn &amp; Christina</span>
+        </a>
+      </div>
+      <div class="header-mid" id="headerMid">
+        <span class="trip-status" id="tripStatus"></span>
+        <span class="jst-clock" id="jstClock"></span>
+      </div>
+      <div class="header-right">
+        <button class="hdr-btn" id="darkToggleBtn" title="Toggle dark mode" aria-label="Toggle dark mode">&#9790;</button>
+        <button class="auth-btn" id="authBtn">Sign&nbsp;in</button>
+      </div>
+    </div>
+    <!-- Top tabs — desktop only -->
+    <div class="top-tabs" id="topTabs">
+      <button class="tab-btn active" data-tab="overview">Overview</button>
+      <button class="tab-btn" data-tab="itinerary">Itinerary</button>
+      <button class="tab-btn" data-tab="bookings">Bookings</button>
+      <button class="tab-btn" data-tab="plan">Plan</button>
+      <button class="tab-btn" data-tab="budget">Budget</button>
+    </div>
+  </header>
+
+  <!-- Destination pills (itinerary only) -->
+  <div class="dest-pills-wrap hidden" id="destPillsWrap">
+    <div class="dest-pills" id="destPills"></div>
+  </div>
+
+  <!-- ═══ MAIN PANELS ═══ -->
+  <main id="mainContent">
+    <div class="tab-panel active" id="panel-overview"></div>
+    <div class="tab-panel" id="panel-itinerary"></div>
+    <div class="tab-panel" id="panel-bookings"></div>
+    <div class="tab-panel" id="panel-plan"></div>
+    <div class="tab-panel" id="panel-budget"></div>
+  </main>
+
+  <!-- ═══ BOTTOM NAV — mobile only ═══ -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="bnav-btn active" data-tab="overview">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h3a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h3a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+      <span>Overview</span>
+    </button>
+    <button class="bnav-btn" data-tab="itinerary">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+      <span>Itinerary</span>
+    </button>
+    <button class="bnav-btn" data-tab="bookings">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"/><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+      <span>Bookings</span>
+    </button>
+    <button class="bnav-btn" data-tab="plan">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+      <span>Plan</span>
+    </button>
+    <button class="bnav-btn" data-tab="budget">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/></svg>
+      <span>Budget</span>
+    </button>
+  </nav>
+
+  <!-- Expense FAB — always visible when signed in -->
+  <button class="exp-fab hidden" id="expFab" title="Log an expense">
+    <span class="exp-fab-icon">&#165;</span>
+  </button>
+
+  <!-- Currency converter -->
+  <div class="currency-widget hidden" id="currencyWidget">
+    <div class="cw-hd">
+      <span class="cw-title">Currency</span>
+      <button class="cw-close" id="cwClose">&times;</button>
+    </div>
+    <div class="cw-body">
+      <div class="cw-row">
+        <span class="cw-flag">&#165;</span>
+        <input type="number" class="cw-input" id="jpyIn" placeholder="0" inputmode="decimal">
+        <span class="cw-code">JPY</span>
+      </div>
+      <div class="cw-swap">&#8645;</div>
+      <div class="cw-row">
+        <span class="cw-flag">$</span>
+        <input type="number" class="cw-input" id="usdIn" placeholder="0" inputmode="decimal">
+        <span class="cw-code">USD</span>
+      </div>
+      <div class="cw-rate" id="cwRate">Loading rate&hellip;</div>
+    </div>
+  </div>
+  <button class="cw-fab" id="cwFab" title="Currency converter">&#165;/$</button>
+
+</div><!-- #app -->
+
+<!-- ═══ AUTH MODAL ═══ -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal-card modal-sm">
+    <button class="modal-x" onclick="closeModal('authModal')">&times;</button>
+    <div class="auth-logo">Japan 2026</div>
+    <div class="auth-sub">Gwendalynn &amp; Christina &middot; Apr 15&ndash;29</div>
+    <button class="google-btn" id="googleSignInBtn">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Sign in with Google
+    </button>
+    <p class="auth-note">Gwendalynn &amp; Christina get full edit access.<br>Everyone else can view the itinerary.</p>
+    <div class="auth-err hidden" id="authErr"></div>
+  </div>
+</div>
+
+<!-- ═══ ACTIVITY MODAL ═══ -->
+<div class="modal-overlay" id="activityModal">
+  <div class="modal-card">
+    <div class="modal-hd">
+      <h2 class="modal-title" id="actModalTitle">Add activity</h2>
+      <button class="modal-x" onclick="closeModal('activityModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="actDayId">
+      <input type="hidden" id="actItemId">
+      <div class="form-row">
+        <div class="form-group half">
+          <label class="form-label">Time</label>
+          <input type="text" class="form-input" id="actTime" placeholder="e.g. 9:00 AM">
+        </div>
+        <div class="form-group half">
+          <label class="form-label">Category</label>
+          <select class="form-input form-select" id="actCategory">
+            <option value="activity">Activity</option>
+            <option value="food">Food</option>
+            <option value="transport">Transport</option>
+            <option value="hotel">Hotel</option>
+            <option value="shopping">Shopping</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input type="text" class="form-input" id="actTitle" placeholder="e.g. Dinner at Ichiran Ramen">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input form-textarea" id="actNotes" placeholder="Details, confirmation numbers, reminders&hellip;"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group half">
+          <label class="form-label">Cost</label>
+          <input type="number" class="form-input" id="actCost" placeholder="0" min="0" inputmode="decimal">
+        </div>
+        <div class="form-group half">
+          <label class="form-label">Currency</label>
+          <select class="form-input form-select" id="actCurrency">
+            <option value="JPY">JPY &yen;</option>
+            <option value="USD">USD $</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Google Drive photo <span class="form-hint">optional</span></label>
+        <input type="url" class="form-input" id="actPhoto" placeholder="Paste a Google Drive share link&hellip;">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('activityModal')">Cancel</button>
+      <button class="btn-primary" id="actSaveBtn">Save</button>
+    </div>
+    <div class="modal-err hidden" id="actErr"></div>
+  </div>
+</div>
+
+<!-- ═══ EXPENSE MODAL ═══ -->
+<div class="modal-overlay" id="expenseModal">
+  <div class="modal-card modal-sm">
+    <div class="modal-hd">
+      <h2 class="modal-title">Log expense</h2>
+      <button class="modal-x" onclick="closeModal('expenseModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Amount <span class="form-hint">&yen; JPY</span></label>
+        <input type="number" class="form-input form-input-lg" id="expAmount" placeholder="0" min="0" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <div class="chip-row" id="expCatChips">
+          <button class="chip active" data-cat="food">Food</button>
+          <button class="chip" data-cat="drinks">Drinks</button>
+          <button class="chip" data-cat="transport">Transport</button>
+          <button class="chip" data-cat="shopping">Shopping</button>
+          <button class="chip" data-cat="activities">Activities</button>
+          <button class="chip" data-cat="other">Other</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Paid by</label>
+        <div class="chip-row" id="expPayerChips">
+          <button class="chip payer-chip active" data-payer="gwen">Gwendalynn</button>
+          <button class="chip payer-chip" data-payer="christina">Christina</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label exp-split-label">
+          <input type="checkbox" id="expSplit" checked>
+          Split 50/50
+        </label>
+        <div class="exp-split-hint" id="expSplitHint"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <div class="quick-dates" id="expQuickDates">
+          <button class="qd-btn active" data-offset="0">Today</button>
+          <button class="qd-btn" data-offset="-1">Yesterday</button>
+          <button class="qd-btn" id="expPickDate">Pick date</button>
+          <input type="date" class="form-input" id="expDate" style="display:none">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note <span class="form-hint">optional</span></label>
+        <input type="text" class="form-input" id="expNote" placeholder="e.g. Ramen at Ichiran, Shinjuku">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('expenseModal')">Cancel</button>
+      <button class="btn-primary" id="expSaveBtn">Add expense</button>
+    </div>
+    <div class="modal-err hidden" id="expErr"></div>
+  </div>
+</div>
+
+<!-- ═══ LIGHTBOX ═══ -->
+<div class="lightbox-overlay hidden" id="lightbox" onclick="closeLightbox()">
+  <div class="lightbox-inner" onclick="event.stopPropagation()">
+    <img class="lightbox-img" id="lightboxImg" src="" alt="">
+    <div class="lightbox-bar">
+      <a class="lightbox-link" id="lightboxLink" href="#" target="_blank" rel="noopener">Open in Drive</a>
+      <button class="lightbox-close" onclick="closeLightbox()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
