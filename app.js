@@ -34,6 +34,7 @@ let rateIsLive     = false;
 let budgetCur      = 'JPY';
 let expFilter      = 'all';
 let hidePastDays   = false;
+try{hidePastDays=localStorage.getItem('japan-hidePast')==='1';}catch{}
 const expandedCards = new Set();
 const notes        = {};
 const checks       = {};
@@ -331,6 +332,7 @@ function buildDestPills(){
     });
   });
 }
+let pillRafPending=false;
 function updateActivePill(){
   const el=$('destPills'); if(!el)return;
   const hH=document.querySelector('header')?.offsetHeight||0;
@@ -342,7 +344,7 @@ function updateActivePill(){
     if(i===active)p.scrollIntoView({inline:'nearest',block:'nearest'});
   });
 }
-window.addEventListener('scroll',updateActivePill,{passive:true});
+window.addEventListener('scroll',()=>{if(!pillRafPending){pillRafPending=true;requestAnimationFrame(()=>{updateActivePill();pillRafPending=false;});}},{passive:true});
 
 
 // ═══════════════════════════════════════════════════════════
@@ -540,7 +542,7 @@ const DAYS = {
       {time:'9:05 AM',text:'Tozan Railway: Gora \u2192 Hakone-Yumoto',dur:'~35 min'},
       {time:'9:45 AM',text:'Local train: Hakone-Yumoto \u2192 Odawara',dur:'~15 min'},
       {time:'10:11 AM',text:'HIKARI 637 \u00b7 Odawara \u2192 Kyoto',type:'booked',
-       notes:'Res: 2002 \u00b7 Smart EX: 9007241665 \u00b7 \u00a523,800 total (~$150)\nSeries N700 \u00b7 Ordinary class \u00b7 Seats TBD by email notification'},
+       notes:'Res: 2002 \u00b7 Smart EX: 9007241665 \u00b7 \u00a523,800 total (~$150)\nSeries N700 \u00b7 Ordinary class \u00b7 Car 11, Seats 10-D & 10-E \u00b7 Board via QR-Ticket'},
       {time:'12:12 PM',text:'Arrive Kyoto Station'},
     ]},
     {label:'Afternoon',items:[
@@ -656,8 +658,8 @@ const DAYS = {
        notes:'~30 min'},
     ]},
     {label:'Late Afternoon',items:[
-      {time:'5:30 PM',text:'Kinkaku-ji \u00b7 Golden Pavilion',cost:500,
-       notes:'Late afternoon light on the gold leaf is the best time to visit. Closes 5 PM \u2014 aim for 4:45 PM.\nExtremely crowded but genuinely worth seeing once.',
+      {time:'4:30 PM',text:'Kinkaku-ji \u00b7 Golden Pavilion',cost:500,
+       notes:'Late afternoon light on the gold leaf is the best time to visit. Closes 5 PM \u2014 arrive by 4:30.\nExtremely crowded but genuinely worth seeing once.',
        addr:'Kinkaku-ji, 1 Kinkakujicho, Kita-ku, Kyoto'},
     ]},
     {label:'Evening',items:[
@@ -889,7 +891,8 @@ const CONFIRMATIONS = {
       {k:'Route',v:'Odawara 10:11 AM \u2192 Kyoto 12:12 PM'},
       {k:'Smart EX',v:'9007241665',mono:true},
       {k:'Fare',v:'\u00a523,800 (~$150) total \u00b7 Smart EX'},
-      {k:'Seats',v:'TBD \u00b7 email notification after Mar 22, 2026'},
+      {k:'Seats',v:'Car 11, Seat 10-D & 10-E'},
+      {k:'Boarding',v:'QR-Ticket (display from Smart EX app)'},
     ]},
   ],
 };
@@ -909,7 +912,7 @@ const BOOKED_LIST = [
   {id:'b03',label:'teamLab Borderless tickets',                 sub:'Apr 17 \u00b7 8:30 AM \u00b7 Conf: A7YRA4LXWCN3-0001'},
   {id:'b04',label:'Fuji-Excursion 7 \u2014 Shinjuku \u2192 Kawaguchiko', sub:'Apr 20 \u00b7 Res: E77821'},
   {id:'b05',label:'Tensui Saryo Ryokan, Hakone',                sub:'2 nights \u00b7 Apr 20\u201322 \u00b7 Res: IK1516984808'},
-  {id:'b06',label:'Shinkansen HIKARI 637 \u2014 Odawara \u2192 Kyoto', sub:'Apr 22 \u00b7 10:11 AM \u00b7 Res: 2002'},
+  {id:'b06',label:'Shinkansen HIKARI 637 \u2014 Odawara \u2192 Kyoto', sub:'Apr 22 \u00b7 10:11 AM \u00b7 Res: 2002 \u00b7 Car 11, 10-D & 10-E'},
   {id:'b07',label:'Hotel Granvia Kyoto',                        sub:'4 nights \u00b7 Apr 22\u201326 \u00b7 Conf: #23151SF060529'},
   {id:'b08',label:'Hotel Intergate Kanazawa',                   sub:'2 nights \u00b7 Apr 26\u201328 \u00b7 Conf: 20260125110822242'},
   {id:'b09',label:'Quintessa Hotel Tokyo Ginza',                sub:'1 night \u00b7 Apr 28\u201329 \u00b7 Conf: 6519361226'},
@@ -917,7 +920,7 @@ const BOOKED_LIST = [
 
 const CHECKLIST = [
   {id:'before',title:'Before you leave',items:[
-    {id:'c01',label:'Check shinkansen seat assignment email',    sub:'HIKARI 637 \u2014 notification after Mar 22 at 8:00 AM Japan time'},
+    {id:'c01',label:'Shinkansen seats assigned \u2014 Car 11, 10-D & 10-E', sub:'HIKARI 637 \u00b7 Board via QR-Ticket from Smart EX app'},
     {id:'c02',label:'Download teamLab app',                     sub:'Required for Infinite Crystal World \u2014 get numbered tickets in-app'},
     {id:'c03',label:'Set up Suica on Apple Wallet',             sub:'Wallet \u2192 + \u2192 Transit Card \u2192 Suica \u00b7 works at every train and convenience store'},
     {id:'c04',label:'Download Google Maps offline',             sub:'Tokyo, Kyoto, Hakone, Kanazawa, Nara, Osaka before leaving'},
@@ -962,7 +965,7 @@ const TIPS_DATA = [
     {jp:'\u82f1\u8a9e\u30e1\u30cb\u30e5\u30fc\u306f\u3042\u308a\u307e\u3059\u304b',rom:'Eigo menyu wa arimasu ka?',en:'Do you have an English menu?'},
     {jp:'\u3053\u308c\u3092\u304f\u3060\u3055\u3044',rom:'Kore wo kudasai',en:'I\'ll have this'},
     {jp:'\u30c8\u30a4\u30ec\u306f\u3069\u3053\u3067\u3059\u304b',rom:'Toire wa doko desu ka?',en:'Where is the toilet?'},
-    {jp:'\u6d77\u8001\u306f\u3069\u3053\u3067\u3059\u304b',rom:'Kairo wa doko desu ka?',en:'Where is the station?'},
+    {jp:'\u99c5\u306f\u3069\u3053\u3067\u3059\u304b',rom:'Eki wa doko desu ka?',en:'Where is the station?'},
   ]},
 ];
 
@@ -1065,15 +1068,51 @@ function renderOverview(){
 
   const now=new Date(), inTrip=now>=TRIP_START&&now<=TRIP_END;
   const todayId=getTodayDayId(), todayDay=todayId?DAYS[todayId]:null;
-  const hotelGrid=OVERVIEW_DATA.filter(s=>!s.waypoint).map(s=>'<div class="hotel-cell"><div class="hotel-cell-city">'+esc(s.city.split('\u00b7')[0].trim())+'</div><div class="hotel-cell-name">'+esc(s.hotel.split('\u00b7')[0].trim())+'</div>'+(s.phone?'<div class="hotel-cell-phone">'+esc(s.phone)+'</div>':'')+'<div class="hotel-cell-dates">'+esc(s.dates)+'</div></div>').join('');
+
+  // Hotel grid with tappable phone numbers
+  const hotelGrid=OVERVIEW_DATA.filter(s=>!s.waypoint).map(s=>{
+    const phoneHtml=s.phone?'<a class="hotel-cell-phone" href="tel:'+ea(s.phone.replace(/[\s\-]/g,''))+'">'+esc(s.phone)+'</a>':'';
+    return '<div class="hotel-cell"><div class="hotel-cell-city">'+esc(s.city.split('\u00b7')[0].trim())+'</div><div class="hotel-cell-name">'+esc(s.hotel.split('\u00b7')[0].trim())+'</div>'+phoneHtml+'<div class="hotel-cell-dates">'+esc(s.dates)+'</div></div>';
+  }).join('');
+
+  // Flights card
+  const flightsHtml='<div class="ov-info-card">'
+    +'<div class="ov-info-title">Flights</div>'
+    +'<div class="ov-flight-row"><div class="ov-flight-leg"><span class="ov-flight-dir">Depart</span><span class="ov-flight-detail">Wed Apr 15 \u00b7 LAX 11:20 AM \u2192 Tokyo HND</span><span class="ov-flight-sub">UA 39 \u00b7 Arrives Apr 16, 3:05 PM Japan time</span></div>'
+    +'<div class="ov-flight-leg"><span class="ov-flight-dir">Return</span><span class="ov-flight-detail">Wed Apr 29 \u00b7 Tokyo HND 6:10 PM \u2192 LAX</span><span class="ov-flight-sub">UA 38 \u00b7 Arrives same day 12:15 PM California time</span></div></div></div>';
+
+  // Timezone + contact card
+  const infoHtml='<div class="ov-info-card">'
+    +'<div class="ov-info-title">Time zone &amp; contact</div>'
+    +'<div class="ov-info-body">'
+    +'<p>Japan is <strong>16 hours ahead</strong> of California. When it\u2019s 8 AM at home, it\u2019s midnight in Japan.</p>'
+    +'<p>Our US phone numbers work in Japan via eSIM. Best way to reach us: <strong>iMessage or WhatsApp</strong>. We may be slow to respond during flights and in areas with spotty signal (Hakone mountains, subway tunnels).</p>'
+    +'</div></div>';
+
+  // Today's plan (only shown during trip)
+  let todayPlanHtml='';
+  if(inTrip&&todayDay){
+    const items=todayDay.periods.flatMap(p=>p.items).filter(i=>!i.sub).slice(0,5);
+    const bullets=items.map(i=>'<li class="ov-today-item">'+(i.time?'<span class="ov-today-time">'+i.time+'</span>':'')+esc(i.text)+'</li>').join('');
+    const hotel=OVERVIEW_DATA.find(s=>!s.waypoint&&todayDay.location.includes(s.city.split('\u00b7')[0].trim()));
+    todayPlanHtml='<div class="ov-today-card">'
+      +'<div class="ov-today-hd"><span class="ov-today-badge">Today\u2019s plan</span><span class="ov-today-title">'+esc(todayDay.title)+'</span></div>'
+      +'<ul class="ov-today-list">'+bullets+'</ul>'
+      +(hotel?'<div class="ov-today-hotel">Staying at <strong>'+esc(hotel.hotel.split('\u00b7')[0].trim())+'</strong>'+(hotel.phone?' \u00b7 <a href="tel:'+ea(hotel.phone.replace(/[\s\-]/g,''))+'">'+esc(hotel.phone)+'</a>':'')+'</div>':'')
+      +'</div>';
+  }
 
   el.innerHTML=
     '<div class="ov-hero"><div class="ov-hero-top"><div><div class="ov-eyebrow">April 15\u201329, 2026 &middot; 15 days</div><div class="ov-title">Japan</div><div class="ov-who">Gwendalynn &amp; Christina</div></div><div class="ov-cd" id="ovCd">'+cdHtml()+'</div></div>'
     +(inTrip&&todayDay?'<div class="ov-in-japan"><div class="ov-currently-label">Currently in</div><div class="ov-currently-city">'+esc(todayDay.location)+'</div></div>':'')
     +'</div>'
+    +todayPlanHtml
+    +flightsHtml
+    +infoHtml
     +'<div class="ov-section-label">The route</div><div class="ov-route">'+journeyHtml+'</div>'
-    +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">View full itinerary \u2192</button></div>'
+    +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">View detailed day-by-day plan \u2192</button></div>'
     +'<div class="ov-section-label" style="margin-top:32px">Hotels &amp; emergency contacts</div>'
+    +'<div class="ov-info-note">Dial +81 numbers as shown from any US phone. Tap to call.</div>'
     +'<div class="family-strip"><div class="hotel-grid">'+hotelGrid+'</div></div>';
 
   if(ovTimer)clearInterval(ovTimer);
@@ -1149,7 +1188,7 @@ function renderItinerary(){
       window.scrollTo({top:card.getBoundingClientRect().top+window.scrollY-hH-pH-12,behavior:'smooth'});
     },300);
   }
-  $('pastToggleBtn')?.addEventListener('click',()=>{hidePastDays=!hidePastDays;renderItinerary();buildDestPills();});
+  $('pastToggleBtn')?.addEventListener('click',()=>{hidePastDays=!hidePastDays;try{localStorage.setItem('japan-hidePast',hidePastDays?'1':'0');}catch{}renderItinerary();buildDestPills();});
 }
 
 function renderDay(d){
@@ -1297,7 +1336,7 @@ function findConfForItem(text){
   if(t.includes('tensui')&&t.includes('check in'))return 'Res: IK1516984808 \u00b7 Verify: 0F35443D931C12B \u00b7 +81-570-062-302';
   if(t.includes('kaiseki'))return 'Dinner at 19:45 \u00b7 10-course kaiseki \u00b7 included';
   if(t.includes('fuji-excursion')||t.includes('fuji excursion'))return 'Res: E77821 \u00b7 Pickup: 24492390994521288 \u00b7 Car 3, 13-C & 13-D';
-  if(t.includes('hikari 637'))return 'Res: 2002 \u00b7 Smart EX: 9007241665 \u00b7 \u00a523,800 total';
+  if(t.includes('hikari 637'))return 'Res: 2002 \u00b7 Car 11, 10-D & 10-E \u00b7 Smart EX: 9007241665';
   if(t.includes('granvia')&&t.includes('check'))return 'Conf: #23151SF060529 \u00b7 +81-75-344-8888';
   if(t.includes('intergate')&&t.includes('check'))return 'Conf: 20260125110822242 \u00b7 Expedia: 73356721260247';
   if(t.includes('quintessa')&&t.includes('check'))return 'Conf: 6519361226 \u00b7 PIN: 9235 \u00b7 +81 3-6264-1351';
@@ -2295,12 +2334,14 @@ window.closeLightbox=function(){$('lightbox')?.classList.add('hidden');};
 // ── Cherry blossoms ───────────────────────────────────────────
 (function(){
   const cv=$('blc'); if(!cv)return;
-  const ctx=cv.getContext('2d'); let P=[];
+  const ctx=cv.getContext('2d'); let P=[]; let blossomPaused=false;
   function rs(){cv.width=innerWidth;cv.height=innerHeight;}
   rs(); window.addEventListener('resize',rs);
+  document.addEventListener('visibilitychange',()=>{blossomPaused=document.hidden; if(!blossomPaused)requestAnimationFrame(draw);});
   function mk(){return{x:Math.random()*cv.width,y:-40-Math.random()*80,r:2.5+Math.random()*2.5,rot:Math.random()*Math.PI*2,rv:(Math.random()-.5)*.013,vx:(Math.random()-.5)*.16,vy:.16+Math.random()*.24,sw:Math.random()*Math.PI*2,sws:.004+Math.random()*.005,a:.4+Math.random()*.35};}
   for(let i=0;i<14;i++){const p=mk();p.y=Math.random()*innerHeight;P.push(p);}
-  (function draw(){
+  function draw(){
+    if(blossomPaused)return;
     ctx.clearRect(0,0,cv.width,cv.height);
     P.forEach((p,i)=>{
       p.x+=p.vx+Math.sin(p.sw)*.18; p.y+=p.vy; p.rot+=p.rv; p.sw+=p.sws;
@@ -2320,7 +2361,8 @@ window.closeLightbox=function(){$('lightbox')?.classList.add('hidden');};
       ctx.fill(); ctx.restore();
     });
     requestAnimationFrame(draw);
-  })();
+  }
+  requestAnimationFrame(draw);
 })();
 
 // ── Init ──────────────────────────────────────────────────────

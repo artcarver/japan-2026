@@ -4,7 +4,7 @@
    own offline persistence separately.
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'japan-2026-202603231200';
+const CACHE_NAME = 'japan-2026-202603221800';
 const SHELL_FILES = [
   './',
   './index.html',
