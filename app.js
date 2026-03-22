@@ -40,88 +40,6 @@ let driveFolderUrl = '';
 
 // ── Dates ─────────────────────────────────────────────────────────────────────
 const TRIP_START = new Date('2026-04-15');
-  '2026-04-17': [
-    { id:'s0005', time:'08:30', title:'teamLab Borderless · Azabudai Hills', category:'activity', notes:'¥5,600/person · 2 tickets booked · Kamiyacho Exit 5 · Wear pants (mirrored floors) · Download teamLab app first · Hit Bubble Universe + Infinite Crystal World first', cost:11200, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0006', time:'12:30', title:'Meiji Shrine · Harajuku', category:'activity', notes:'Very peaceful forested approach · 1-1 Yoyogikamizonocho, Shibuya-ku', cost:0, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0007', time:'14:30', title:'Takeshita-dori + Omotesando', category:'activity', notes:'Street fashion, crepes, flagship architecture', cost:0, currency:'JPY', driveUrl:'', order:2 },
-    { id:'s0008', time:'17:30', title:'Shibuya Scramble Crossing', category:'activity', notes:'View from above first, then walk through the crossing', cost:0, currency:'JPY', driveUrl:'', order:3 },
-  ],
-  '2026-04-18': [
-    { id:'s0009', time:'07:30', title:'Senso-ji Temple · Asakusa', category:'activity', notes:'Arrive before crowds (tour buses arrive 10 AM) · 2-3-1 Asakusa, Taito-ku · Nakamise-dori snacks after', cost:0, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0010', time:'09:30', title:'Kappabashi-dori · Yanaka neighborhood', category:'activity', notes:'Restaurant supply street · plastic food models · traditional Tokyo neighborhood with cherry trees', cost:0, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0011', time:'14:00', title:'Akihabara', category:'activity', notes:'Electronics, retro games, arcade floors', cost:0, currency:'JPY', driveUrl:'', order:2 },
-    { id:'s0012', time:'19:00', title:'Fuunji ramen · Golden Gai', category:'food', notes:'Exceptional tsukemen at Fuunji · then Golden Gai cluster of tiny themed bars', cost:0, currency:'JPY', driveUrl:'', order:3 },
-  ],
-  '2026-04-19': [
-    { id:'s0013', time:'08:00', title:'Kamakura Day Trip — JR Shonan-Shinjuku Line', category:'transport', notes:'~1 hr · ¥920 per person · Start at Kita-Kamakura', cost:1840, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0014', time:'09:15', title:'Engaku-ji Temple · Kita-Kamakura', category:'activity', notes:'Cedar forest, zen garden', cost:0, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0015', time:'11:00', title:'Great Buddha (Kotoku-in)', category:'activity', notes:'¥300 · can enter the hollow statue · 4-2-28 Hase, Kamakura', cost:600, currency:'JPY', driveUrl:'', order:2 },
-    { id:'s0016', time:'12:00', title:'Hase-dera Temple · Lunch — shirasu', category:'food', notes:'¥400 · ocean views, cave system · shirasu (whitebait) is the Kamakura local specialty', cost:800, currency:'JPY', driveUrl:'', order:3 },
-    { id:'s0017', time:'18:00', title:'Arrange takkyubin at Hotel Gracery', category:'other', notes:'Send luggage to Hotel Granvia Kyoto tonight · arrives Apr 21 · ask front desk · ~¥1,500–2,000 per bag', cost:0, currency:'JPY', driveUrl:'', order:4 },
-  ],
-  '2026-04-20': [
-    { id:'s0018', time:'08:30', title:'Fuji-Excursion 7 — Shinjuku → Kawaguchiko', category:'transport', notes:'Res: E77821 · Pickup code: 24492390994521288 · Car 3 Seats 13-C & 13-D · Arrives 10:26 · Pick up tickets before boarding!', cost:8400, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0019', time:'10:30', title:'Oishi Park · Kawaguchiko', category:'activity', notes:'North shore · best Fuji reflections + late cherry blossoms · photography spot', cost:0, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0020', time:'13:30', title:'Bus to Gora · Hakone (via Gotemba)', category:'transport', notes:'~2.5 hrs · day bags only (luggage sent to Kyoto)', cost:0, currency:'JPY', driveUrl:'', order:2 },
-    { id:'s0021', time:'15:00', title:'Check in — Tensui Saryo Ryokan', category:'hotel', notes:'Res: IK1516984808 · Verify: 0F35443D931C12B · Detached room, private outdoor onsen · 1320-276 Gora, Hakone-machi · 2–3 min walk from Gora Station · get smart check-in QR via SMS', cost:126340, currency:'JPY', driveUrl:'', order:3 },
-    { id:'s0022', time:'19:45', title:'Kaiseki Dinner · Tensui Saryo', category:'food', notes:'Dinner included in stay · 10-course kaiseki · dinner time selected: 19:45', cost:0, currency:'JPY', driveUrl:'', order:4 },
-  ],
-  '2026-04-21': [
-    { id:'s0023', time:'09:00', title:'Hakone Open Air Museum', category:'activity', notes:'¥2,000 · opens 9 AM · 10 min walk from ryokan · Picasso Pavilion (300+ works) · foot onsen inside', cost:4000, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0024', time:'11:00', title:'Hakone Ropeway — Sounzan → Owakudani', category:'activity', notes:'Hakone Free Pass covers this · best Fuji views before clouds build · sulfur vents · black eggs ¥500 for 5', cost:0, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0025', time:'13:00', title:'Lake Ashi boat cruise → Moto-Hakone', category:'activity', notes:'Free Pass covers boat · ~30 min · Hakone Shrine torii gate rising from lake', cost:0, currency:'JPY', driveUrl:'', order:2 },
-    { id:'s0026', time:'19:45', title:'Kaiseki Dinner · Tensui Saryo', category:'food', notes:'Dinner included · 19:45 time slot', cost:0, currency:'JPY', driveUrl:'', order:3 },
-  ],
-  '2026-04-22': [
-    { id:'s0027', time:'09:00', title:'Checkout — Tensui Saryo', category:'hotel', notes:'Checkout by 09:00 · Hot spring tax ¥150/person due at checkout', cost:0, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0028', time:'10:11', title:'Shinkansen HIKARI 637 — Odawara → Kyoto', category:'transport', notes:'Res: 2002 · Smart EX · Membership: 9007241665 · ¥23,800 total · Series N700 · Seats TBD by email · Arrives 12:12', cost:23800, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0029', time:'14:00', title:'Check in — Hotel Granvia Kyoto', category:'hotel', notes:'Conf: #23151SF060529 · Granvia Deluxe Twin · 4 nights · JR Kyoto Station connected · +81-75-344-8888 · Luggage arriving from takkyubin today or tomorrow', cost:268256, currency:'JPY', driveUrl:'', order:2 },
-    { id:'s0030', time:'16:00', title:'Fushimi Inari preview + Nishiki Market', category:'activity', notes:'Fushimi Inari: 5 min JR from Kyoto Station · free · lower gates only today · save full hike for tomorrow 6 AM · Nishiki closes ~5:30 PM weekdays', cost:0, currency:'JPY', driveUrl:'', order:3 },
-  ],
-  '2026-04-23': [
-    { id:'s0031', time:'06:00', title:'Fushimi Inari Taisha — FULL HIKE', category:'activity', notes:'FREE · open 24 hrs · crowded by 8 AM · shoulder-to-shoulder by 10 AM · 6 AM is transformative · Full hike to summit ~2 hrs · Yotsutsuji crossroads has best views', cost:0, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0032', time:'10:00', title:'Higashiyama — Ninenzaka, Sannenzaka, Kiyomizudera', category:'activity', notes:'Kiyomizudera ¥500 · preserved stone-paved streets · 1-294 Kiyomizu, Higashiyama-ku', cost:1000, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0033', time:'14:00', title:'Gion district · Philosopher\'s Path · Nanzenji', category:'activity', notes:'Gion: watch for geiko/maiko on Hanamikoji · Philosopher\'s Path: 2km canal walk with cherry trees · Nanzenji: free grounds', cost:0, currency:'JPY', driveUrl:'', order:2 },
-  ],
-  '2026-04-24': [
-    { id:'s0034', time:'07:30', title:'Arashiyama Bamboo Grove', category:'activity', notes:'FREE · open 24 hrs · tour groups arrive by 9 AM · 7:30 AM is dramatically quieter', cost:0, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0035', time:'08:30', title:'Tenryu-ji + Okochi-Sanso Villa', category:'activity', notes:'Tenryu-ji garden ¥500 · Okochi-Sanso ¥1,000 includes matcha + sweet · Togetsukyo bridge', cost:3000, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0036', time:'14:00', title:'Nishiki Market + Teramachi shopping', category:'shopping', notes:'Go before 3 PM · closes ~5:30 PM weekdays · "Kyoto\'s Kitchen" · sakura sweets in April', cost:0, currency:'JPY', driveUrl:'', order:2 },
-  ],
-  '2026-04-25': [
-    { id:'s0037', time:'08:30', title:'Nara Day Trip — JR Nara Line', category:'transport', notes:'45 min from Kyoto · ¥760/person', cost:1520, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0038', time:'09:30', title:'Nara Park · Todai-ji · Kasuga Taisha', category:'activity', notes:'Nara Park: free roaming deer · Todai-ji: ¥600 world\'s largest wooden building + giant bronze Buddha · Kasuga Taisha: lantern-lined forest shrine', cost:1200, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0039', time:'15:00', title:'Kinkaku-ji · Ryoan-ji', category:'activity', notes:'Kinkaku-ji ¥500 · Golden Pavilion · best after 3 PM when tour buses thin · Ryoan-ji ¥600 world-famous rock garden', cost:2200, currency:'JPY', driveUrl:'', order:2 },
-  ],
-  '2026-04-26': [
-    { id:'s0040', time:'10:00', title:'Checkout — Hotel Granvia Kyoto', category:'hotel', notes:'Checkout by 11:00 · cancel by 16:00 JST day before or full night charge', cost:0, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0041', time:'11:00', title:'Thunderbird Express — Kyoto → Kanazawa', category:'transport', notes:'~2 hrs · ~¥6,000–7,000/person · check timetable at JR-West', cost:14000, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0042', time:'15:00', title:'Check in — Hotel Intergate Kanazawa', category:'hotel', notes:'Conf: 20260125110822242 · Expedia: 73356721260247 · Superior Twin · Breakfast included · 2-5 Takaokamachi, Kanazawa · Free cancel until Apr 22', cost:39004, currency:'JPY', driveUrl:'', order:2 },
-    { id:'s0043', time:'16:30', title:'Higashi Chaya geisha district', category:'activity', notes:'Best-preserved geisha quarter outside Kyoto · evening light is beautiful', cost:0, currency:'JPY', driveUrl:'', order:3 },
-  ],
-  '2026-04-27': [
-    { id:'s0044', time:'07:00', title:'Kenroku-en Garden', category:'activity', notes:'¥320 · opens 7 AM · one of Japan\'s three great gardens · Kasumigaike Pond · free entry from 4 AM via Mayumizaka Gate', cost:640, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0045', time:'08:30', title:'Kanazawa Castle Park', category:'activity', notes:'Free grounds · directly adjacent to Kenroku-en', cost:0, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0046', time:'10:00', title:'21st Century Museum of Contemporary Art', category:'activity', notes:'~¥1,400 exhibitions · CLOSED MONDAYS — verify before visiting · kanazawa21.jp · Swimming Pool (Leandro Erlich) + Blue Planet Sky (James Turrell)', cost:2800, currency:'JPY', driveUrl:'', order:2 },
-    { id:'s0047', time:'12:00', title:'Omicho Market — kaisendon lunch', category:'food', notes:'Arrive by noon before lines grow · kaisendon (seafood rice bowl) · popular items sell out before noon', cost:0, currency:'JPY', driveUrl:'', order:3 },
-    { id:'s0048', time:'14:00', title:'Nagamachi Samurai District', category:'activity', notes:'Nomura Clan House ¥550 · preserved earthen walls and drainage canals', cost:1100, currency:'JPY', driveUrl:'', order:4 },
-  ],
-  '2026-04-28': [
-    { id:'s0049', time:'08:00', title:'Breakfast buffet — Hotel Intergate', category:'food', notes:'Included in stay', cost:0, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0050', time:'10:00', title:'Checkout + Hokuriku Shinkansen → Tokyo (Ueno)', category:'transport', notes:'~2.5 hrs · ~¥14,000/person · checkout by 11:00', cost:28000, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0051', time:'15:00', title:'Check in — Quintessa Hotel Tokyo Ginza', category:'hotel', notes:'Conf: 6519361226 · PIN: 9235 · Hollywood Twin · Breakfast included · Chuo-ku Ginza 4-11-4 · +81 3-6264-1351 · Free cancel until Apr 26 11:59 PM JST', cost:24713, currency:'JPY', driveUrl:'', order:2 },
-    { id:'s0052', time:'16:00', title:'Hamarikyu Gardens + Ginza evening', category:'activity', notes:'¥300 · traditional garden on Tokyo Bay · Ginza: Itoya stationery, Ginza Six', cost:600, currency:'JPY', driveUrl:'', order:3 },
-    { id:'s0053', time:'19:00', title:'Dinner — Tsukiji area', category:'food', notes:'Sushi, grilled seafood, sake bars near Tsukiji Outer Market', cost:0, currency:'JPY', driveUrl:'', order:4 },
-  ],
-  '2026-04-29': [
-    { id:'s0054', time:'07:30', title:'Tsukiji Outer Market — farewell breakfast', category:'food', notes:'10 min walk · fresh sushi, tamagoyaki, grilled scallops, matcha · best before 10 AM', cost:0, currency:'JPY', driveUrl:'', order:0 },
-    { id:'s0055', time:'12:30', title:'Depart hotel → Haneda Airport', category:'transport', notes:'No later than 12:30 PM · Keikyu Line from Higashi-Ginza → HND Terminal 3 · ~30 min · allow 3 hrs before flight', cost:0, currency:'JPY', driveUrl:'', order:1 },
-    { id:'s0056', time:'18:10', title:'Depart HND — United Flight UA38', category:'transport', notes:'Seats 31J (Gwen) & 31L (Christina) · Conf: F354LH · Boeing 787-10 Dreamliner · 10h 5m · Arrives LAX 12:15 PM same day', cost:0, currency:'USD', driveUrl:'', order:2 },
-  ],
-};
-
-// ── Dates ─────────────────────────────────────────────────────────────────────
-const TRIP_START = new Date('2026-04-15');
 const TRIP_END   = new Date('2026-04-29T23:59:59');
 
 const DAY_DATES = {
@@ -565,18 +483,6 @@ const CONFIRMATIONS = {
   ],
 };
 
-// Cost totals for summary
-const COSTS = [
-  {label:'Flights (both)',                  jpy:null,   usd:null,  note:'Booked via United (F354LH)'},
-  {label:'Hotel Gracery Shinjuku',          jpy:200692, usd:1261},
-  {label:'teamLab Borderless (2 tickets)',  jpy:11200,  usd:70},
-  {label:'Fuji-Excursion 7 train',          jpy:8400,   usd:53},
-  {label:'Tensui Saryo, Hakone',            jpy:126340, usd:794},
-  {label:'Shinkansen (Odawara → Kyoto)',    jpy:23800,  usd:150},
-  {label:'Hotel Granvia Kyoto',             jpy:268256, usd:1686},
-  {label:'Hotel Intergate Kanazawa',        jpy:39004,  usd:245},
-  {label:'Quintessa Hotel Tokyo Ginza',     jpy:24713,  usd:155},
-];
 
 // ── Checklist ─────────────────────────────────────────────────────────────────
 const CHECKLIST = [
@@ -1102,7 +1008,7 @@ function renderConfirmations() {
   if (!currentUser) {
     confirmEl.innerHTML = `
       <div class="auth-gate">
-        <div class="auth-gate-icon">🔒</div>
+        <div class="auth-gate-icon" style="font-size:28px;opacity:0.3;margin-bottom:12px">&#128274;</div>
         <div class="auth-gate-title">Confirmations are private</div>
         <div class="auth-gate-sub">Confirmation numbers, costs, and booking details<br>are only visible to Gwen &amp; Christina.</div>
         <button class="auth-gate-btn" onclick="openAuthModal()">
@@ -1514,7 +1420,7 @@ function renderBudget() {
   if (!currentUser) {
     budgetEl.innerHTML = `
       <div class="auth-gate">
-        <div class="auth-gate-icon">💴</div>
+        <div class="auth-gate-icon" style="font-size:28px;opacity:0.3;margin-bottom:12px">&#165;</div>
         <div class="auth-gate-title">Budget is private</div>
         <div class="auth-gate-sub">Expense tracking and settlement is only<br>visible to Gwen &amp; Christina.</div>
         <button class="auth-gate-btn" onclick="openAuthModal()">
@@ -2383,7 +2289,6 @@ getDoc(doc(db, 'settings', 'drive')).then(snap => {
 renderItinerary();
 renderConfirmations();
 renderChecklist();
-renderTips();
 renderBudget();
 buildDestPills();
 updateTripStatus();
