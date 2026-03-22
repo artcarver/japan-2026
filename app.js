@@ -39,7 +39,7 @@ let currentEditActId  = null;
 let driveFolderUrl = '';
 
 // ── Dates ─────────────────────────────────────────────────────────────────────
-const TRIP_START = new Date('2026-04-15');
+const TRIP_START = new Date('2026-04-15T00:00:00'); // local midnight — matches overview countdown
 const TRIP_END   = new Date('2026-04-29T23:59:59');
 
 const DAY_DATES = {
@@ -375,13 +375,18 @@ const OVERVIEW_DATA = [
       { text: 'Shibuya Scramble Crossing — the world\'s busiest intersection' },
       { text: 'Golden Gai — forty tiny themed bars, each seating about eight people' },
     ],
-    daytrips: [
-      { label: 'Day trip', city: 'Kamakura', note: '45 min by train', highlights: [
-        { text: '13th-century Great Buddha (Kotoku-in)', star: true, url: 'https://maps.app.goo.gl/4t9v9fT6GHzKCpYcA' },
-        { text: 'Hase-dera Temple — ocean views, cave system, 11,000 Jizo statues' },
-        { text: 'Shirasu (whitebait) lunch — the Kamakura specialty' },
-      ]},
+    daytrips: [],
+  },
+  {
+    city: 'Kamakura', dates: 'Apr 19 · day trip', nights: 0,
+    hotel: 'Day trip from Tokyo · 45 min by JR Shonan-Shinjuku Line',
+    waypoint: true,
+    highlights: [
+      { text: 'Kotoku-in — 13th-century bronze Great Buddha, 13 metres tall', star: true, url: 'https://maps.app.goo.gl/4t9v9fT6GHzKCpYcA' },
+      { text: 'Hase-dera Temple — ocean views, cave system, 11,000 Jizo statues' },
+      { text: 'Shirasu (whitebait) rice bowl — the Kamakura coastal specialty' },
     ],
+    daytrips: [],
   },
   {
     city: 'Kawaguchiko', dates: 'Apr 20 · morning only', nights: 0,
@@ -509,6 +514,7 @@ function renderOverview() {
       </li>`).join('');
 
     if (isWaypoint) {
+      const wpBadge = stop.hotel && stop.hotel.startsWith('En route') ? 'En route' : 'Day trip';
       return `
         <div class="ov-stop ov-stop-waypoint${isLast ? ' ov-stop-last' : ''}">
           <div class="ov-stop-left">
@@ -517,7 +523,7 @@ function renderOverview() {
           </div>
           <div class="ov-stop-right ov-stop-right-wp">
             <div class="ov-stop-head">
-              <div class="ov-wp-badge">Day trip</div>
+              <div class="ov-wp-badge">${wpBadge}</div>
               <div class="ov-stop-city ov-wp-city">${stop.city}</div>
               <div class="ov-stop-dates">${stop.dates.split(' · ')[0]}</div>
             </div>
@@ -2631,6 +2637,8 @@ renderItinerary();
 renderConfirmations();
 renderChecklist();
 renderBudget();
+// Overview is the default tab — make sure pills are hidden
+if (destPillsWrap) destPillsWrap.style.display = 'none';
 buildDestPills();
 updateTripStatus();
 updateClock();
