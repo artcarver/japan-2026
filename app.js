@@ -2419,16 +2419,16 @@ function injectDayActsSection(dayId) {
   const existing = card.querySelector('.day-acts-section');
   if (existing) existing.remove();
 
-  const acts = getDayActivities(dayId);
+  const acts = getDayActivities(dayId) || [];
 
   const section = document.createElement('div');
   section.className = 'day-acts-section';
   section.innerHTML = `
     <div class="day-acts-label">Your additions</div>
     <div class="day-acts-list" id="acts-list-${dayId}">
-      ${renderFirestoreActivities(dayId, acts || [])}
+      ${renderFirestoreActivities(dayId, acts)}
     </div>
-    ${currentUser ? `<button class="add-act-btn" onclick="openAddAct('${dayId}')">+ Add activity, note, or reminder</button>` : ''}
+    <button class="add-act-btn" onclick="openAddAct('${dayId}')">+ Add activity, note, or reminder</button>
   `;
 
   // Insert before notes section
