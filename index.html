@@ -81,37 +81,23 @@ main{max-width:1100px;margin:0 auto;padding:28px 20px 80px;position:relative;z-i
 @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(76,175,128,.13)}50%{box-shadow:0 0 0 6px rgba(76,175,128,.04)}}
 
 /* Itinerary strip on overview */
-.ov-strip{margin-bottom:24px}
-.ov-day{background:var(--wh);border:1px solid var(--ln);border-radius:8px;margin-bottom:8px;overflow:hidden}
-.ov-day-head{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:default}
-.ov-day-num{font-family:'DM Serif Display',serif;font-size:13px;color:var(--wh);background:var(--ink);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ov-day-info{flex:1}
-.ov-day-date{font-size:10.5px;color:var(--tx3);margin-bottom:1px}
-.ov-day-title{font-size:13.5px;font-weight:500;color:var(--ink)}
-.ov-day-base{font-size:11.5px;color:var(--tx3);background:var(--bg2);padding:1px 8px;border-radius:4px;margin-left:6px;font-weight:400}
-.ov-day-tags{display:flex;gap:5px;flex-wrap:wrap}
-.ov-city-badge{font-size:10.5px;font-weight:500;padding:2px 8px;border-radius:3px;background:var(--bg2);color:var(--tx2)}
-.ov-city-badge.daytrip{background:#EAF1FD;color:#2A5FB5}
-.ov-city-badge.main{background:var(--bg3);color:var(--ink)}
+/* overview strip removed — static HTML now */
 
-/* Route bar */
-.route-grid{display:flex;margin-bottom:24px;background:var(--wh);border:1px solid var(--ln);border-radius:10px;overflow:hidden}
-.rg-stop{flex:1;padding:14px 16px;border-right:1px solid var(--ln);position:relative}
-.rg-stop:last-child{border-right:none}
-.rg-bar{height:2px;background:var(--rose);position:absolute;top:0;left:0;right:0}
-.rg-nights{font-size:10.5px;font-weight:500;color:var(--tx3);margin-bottom:2px}
-.rg-city{font-family:'DM Serif Display',serif;font-size:16px;color:var(--ink);margin-bottom:2px}
-.rg-dates{font-size:11px;color:var(--tx3)}
-.rg-trips{margin-top:6px;display:flex;flex-direction:column;gap:2px}
-.rg-trip{font-size:10.5px;color:#2A5FB5;background:#EAF1FD;padding:1px 7px;border-radius:3px;display:inline-block;width:fit-content}
+/* ═══ OVERVIEW ═══ */
+/* City cards */
+.ov-cities{display:grid;grid-template-columns:repeat(5,1fr);gap:0;background:var(--wh);border:1px solid var(--ln);border-radius:12px;overflow:hidden;margin-bottom:28px}
+.ov-city{padding:20px 18px 18px;border-right:1px solid var(--ln);position:relative;display:flex;flex-direction:column;gap:0}
+.ov-city:last-child{border-right:none}
+.ov-city-accent{height:3px;background:var(--rose);position:absolute;top:0;left:0;right:0;border-radius:0}
+.ov-city-nights{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.ov-city-name{font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink);line-height:1.1;margin-bottom:3px}
+.ov-city-dates{font-size:11px;color:var(--tx3);margin-bottom:10px}
+.ov-city-hotel{font-size:11.5px;color:var(--tx2);margin-bottom:8px;line-height:1.35}
+.ov-city-hotel span{display:block;font-size:10.5px;color:var(--tx3);margin-top:1px}
+.ov-city-trips{display:flex;flex-direction:column;gap:3px;margin-top:auto}
+.ov-city-trip{font-size:10px;font-weight:600;color:#2A5FB5;background:#EAF1FD;padding:2px 7px;border-radius:3px;letter-spacing:.02em;width:fit-content}
 
-/* highlights grid */
-.hl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:9px;margin-bottom:24px}
-.hl-item{background:var(--wh);border:1px solid var(--ln);border-radius:8px;padding:11px 14px;display:flex;gap:9px;align-items:flex-start}
-.hl-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:7px}
-.hd-c{background:var(--green)}.hd-m{background:var(--rose)}.hd-n{background:var(--bg3);border:1.5px solid var(--ln)}
-.hl-t{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:2px}
-.hl-d{font-size:12px;color:var(--tx3);line-height:1.4}
+/* conf and must-do sections removed */
 
 /* ═══ ITINERARY ═══ */
 .itin-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:8px 13px;background:var(--wh);border:1px solid var(--ln);border-radius:7px;font-size:11.5px;color:var(--tx2)}
@@ -215,14 +201,10 @@ main{max-width:1100px;margin:0 auto;padding:28px 20px 80px;position:relative;z-i
 .clh p{font-size:11.5px;color:var(--tx3)}
 .pb{height:2px;background:var(--ln2)}.pf{height:100%;background:var(--rose);transition:width .4s ease}
 .cl-cat{padding:7px 17px 3px;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);background:var(--bg);border-bottom:1px solid var(--ln2)}
-.cl-item{display:flex;align-items:center;padding:8px 17px;border-bottom:1px solid var(--ln2);gap:9px;transition:background .1s}
+.cl-item{display:flex;align-items:center;padding:9px 17px;border-bottom:1px solid var(--ln2);gap:10px;transition:background .1s}
 .cl-item:last-child{border-bottom:none}.cl-item:hover{background:var(--bg)}.cl-item:hover .ib{opacity:.5}
-.cl-lbl{flex:1;font-size:13px;color:var(--tx);cursor:pointer}
+.cl-lbl{flex:1;font-size:13px;color:var(--tx);cursor:pointer;line-height:1.4}
 .cl-lbl.done{text-decoration:line-through;color:var(--tx3)}
-.cl-cks{display:flex;gap:11px;flex-shrink:0}
-.cw{display:flex;flex-direction:column;align-items:center;gap:2px}
-.cw span{font-size:10px;color:var(--tx3);font-weight:500}
-.cw input[type=checkbox]{width:14px;height:14px;accent-color:var(--rose);cursor:pointer}
 .add-row{display:flex;gap:7px;padding:9px 17px;border-top:1px solid var(--ln2)}
 .add-in{flex:1;border:1px solid var(--ln);border-radius:5px;padding:6px 9px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--bg);color:var(--tx);outline:none;transition:border-color .15s}
 .add-in:focus{border-color:var(--ink);background:var(--wh)}
@@ -286,8 +268,8 @@ main{max-width:1100px;margin:0 auto;padding:28px 20px 80px;position:relative;z-i
 
 @media(max-width:760px){
   .banner{padding:22px 20px}.ban-title{font-size:28px}
-  .bstat-row,.spl-row,.cl-grid,.tips-grid{grid-template-columns:1fr}
-  .route-grid{flex-direction:column}.rg-stop{border-right:none;border-bottom:1px solid var(--ln)}.rg-stop:last-child{border-bottom:none}
+  .bstat-row,.spl-row,.cl-grid,.tips-grid,.conf-grid{grid-template-columns:1fr}
+  .ov-cities{grid-template-columns:1fr 1fr}.ov-city{border-right:none;border-bottom:1px solid var(--ln)}.ov-city:last-child{border-bottom:none}
   .tb{padding:0 9px;font-size:12px}
 }
 </style>
@@ -319,24 +301,54 @@ main{max-width:1100px;margin:0 auto;padding:28px 20px 80px;position:relative;z-i
 <div class="pg on" id="pg-overview">
   <div class="banner">
     <div class="ban-l">
-      <div class="ban-ey">April 15 – 29, 2026</div>
+      <div class="ban-ey">April 15 – 29, 2026 &nbsp;·&nbsp; 14 days &nbsp;·&nbsp; 2 travelers</div>
       <div class="ban-title">Japan</div>
-      <div class="ban-sub">Tokyo · Hakone · Kyoto · Kanazawa · Ginza</div>
+      <div class="ban-sub">Gwendalynn Stilson &nbsp;·&nbsp; Christina Melikian</div>
     </div>
     <div class="ban-r" id="countdown"></div>
   </div>
 
-  <div class="sl mb20">The Route</div>
-  <div class="route-grid mb24">
-    <div class="rg-stop"><div class="rg-bar"></div><div class="rg-nights">4 nights</div><div class="rg-city">Tokyo</div><div class="rg-dates">Apr 16–20 · Shinjuku</div><div class="rg-trips"><span class="rg-trip">Day trip: Kamakura</span></div></div>
-    <div class="rg-stop"><div class="rg-bar"></div><div class="rg-nights">2 nights</div><div class="rg-city">Hakone</div><div class="rg-dates">Apr 20–22 · Gora Onsen</div></div>
-    <div class="rg-stop"><div class="rg-bar"></div><div class="rg-nights">4 nights</div><div class="rg-city">Kyoto</div><div class="rg-dates">Apr 22–26 · JR Station</div><div class="rg-trips"><span class="rg-trip">Day trip: Nara</span><span class="rg-trip">Day trip: Osaka</span></div></div>
-    <div class="rg-stop"><div class="rg-bar"></div><div class="rg-nights">2 nights</div><div class="rg-city">Kanazawa</div><div class="rg-dates">Apr 26–28</div></div>
-    <div class="rg-stop"><div class="rg-bar"></div><div class="rg-nights">1 night</div><div class="rg-city">Tokyo · Ginza</div><div class="rg-dates">Apr 28–29 · Departure</div></div>
+  <div class="sl mb20">Where We're Staying</div>
+  <div class="ov-cities mb28">
+    <div class="ov-city">
+      <div class="ov-city-accent"></div>
+      <div class="ov-city-nights">4 nights</div>
+      <div class="ov-city-name">Tokyo</div>
+      <div class="ov-city-dates">Apr 16 – 20</div>
+      <div class="ov-city-hotel">Hotel Gracery Shinjuku<span>Kabukicho, Shinjuku</span></div>
+      <div class="ov-city-trips"><span class="ov-city-trip">Day trip → Kamakura</span></div>
+    </div>
+    <div class="ov-city">
+      <div class="ov-city-accent"></div>
+      <div class="ov-city-nights">2 nights</div>
+      <div class="ov-city-name">Hakone</div>
+      <div class="ov-city-dates">Apr 20 – 22</div>
+      <div class="ov-city-hotel">Tensui Saryo Ryokan<span>Gora Onsen · private onsen</span></div>
+    </div>
+    <div class="ov-city">
+      <div class="ov-city-accent"></div>
+      <div class="ov-city-nights">4 nights</div>
+      <div class="ov-city-name">Kyoto</div>
+      <div class="ov-city-dates">Apr 22 – 26</div>
+      <div class="ov-city-hotel">Hotel Granvia Kyoto<span>JR Kyoto Station</span></div>
+      <div class="ov-city-trips"><span class="ov-city-trip">Day trip → Nara</span><span class="ov-city-trip" style="margin-top:2px">Day trip → Osaka</span></div>
+    </div>
+    <div class="ov-city">
+      <div class="ov-city-accent"></div>
+      <div class="ov-city-nights">2 nights</div>
+      <div class="ov-city-name">Kanazawa</div>
+      <div class="ov-city-dates">Apr 26 – 28</div>
+      <div class="ov-city-hotel">Hotel Intergate Kanazawa<span>Breakfast included</span></div>
+    </div>
+    <div class="ov-city">
+      <div class="ov-city-accent"></div>
+      <div class="ov-city-nights">1 night</div>
+      <div class="ov-city-name">Tokyo</div>
+      <div class="ov-city-dates">Apr 28 – 29</div>
+      <div class="ov-city-hotel">Quintessa Hotel Ginza<span>Ginza · Departure day</span></div>
+    </div>
   </div>
 
-  <div class="sl mb20">Day by Day</div>
-  <div class="ov-strip" id="ov-strip"></div>
 </div>
 
 <!-- ═══ ITINERARY ═══ -->
@@ -397,13 +409,12 @@ main{max-width:1100px;margin:0 auto;padding:28px 20px 80px;position:relative;z-i
   <div id="ptgate" class="notice">Pre-trip is private — sign in as Gwendalynn or Christina to view.</div>
   <div id="ptinner" style="display:none">
     <div class="ph">
-      <div><div class="pey">Preparation</div><div class="ptitle">Pre-Trip</div><div class="psub">Each traveler checks off their own items independently.</div></div>
+      <div><div class="pey">Preparation</div><div class="ptitle">Pre-Trip</div></div>
     </div>
 
-    <!-- Checklists -->
-    <div class="cl-grid mb24">
+    <div class="cl-grid mb28">
       <div class="cls">
-        <div class="clh"><div><h3>Before You Go</h3><p>Tasks before departure</p></div><span id="pt-prog-lbl" style="font-size:12px;color:var(--tx3)">—</span></div>
+        <div class="clh"><div><h3>Before You Go</h3><p>Tasks to complete before departure</p></div><span id="pt-prog-lbl" style="font-size:12px;color:var(--tx3)">—</span></div>
         <div class="pb"><div class="pf" id="pt-prog" style="width:0%"></div></div>
         <div id="pt-body"></div>
         <div class="add-row">
@@ -424,13 +435,8 @@ main{max-width:1100px;margin:0 auto;padding:28px 20px 80px;position:relative;z-i
       </div>
     </div>
 
-    <!-- Tips (buried here in pre-trip) -->
-    <div class="sl mb20">Japan Travel Tips</div>
-    <div class="tips-grid mb24" id="tips-wrap"></div>
-
-    <!-- Drive -->
     <div class="sl mb20">Trip Files · Google Drive</div>
-    <div class="drive-wrap">
+    <div class="drive-wrap mb28">
       <div class="drive-hd"><div><h3>Google Drive Folder</h3><p>Confirmation PDFs, receipts, photos</p></div></div>
       <div class="drive-url-row">
         <input class="drive-in" type="text" id="drive-in" placeholder="Paste Google Drive folder URL here…">
@@ -445,10 +451,12 @@ main{max-width:1100px;margin:0 auto;padding:28px 20px 80px;position:relative;z-i
         <iframe id="drive-iframe" style="display:none" allowfullscreen></iframe>
       </div>
       <div class="drive-help">
-        <b>How to get your Drive URL:</b> Open your Google Drive folder → Share → Change to "Anyone with the link" → Copy link.<br>
-        Paste the full <code>drive.google.com/drive/folders/...</code> URL above. The folder will embed here for both travelers.
+        <b>How to get your Drive URL:</b> Open your Google Drive folder → Share → "Anyone with the link" → Copy link. Paste the full <code>drive.google.com/drive/folders/...</code> URL above.
       </div>
     </div>
+
+    <div class="sl mb20">Japan Travel Tips</div>
+    <div class="tips-grid" id="tips-wrap"></div>
   </div>
 </div>
 
@@ -464,7 +472,7 @@ main{max-width:1100px;margin:0 auto;padding:28px 20px 80px;position:relative;z-i
         <svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.909-2.259c-.806.54-1.837.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
         Continue with Google
       </button>
-      <p class="afn">ghstilson@gmail.com and cmelikian@gmail.com get edit access.<br>All other Google accounts can view the itinerary.<br><br><b style="color:var(--tx2)">Sign-in not working?</b> Go to Firebase Console → Authentication → Settings → Authorized Domains and add the domain where this file is hosted (or <code>localhost</code> for local use).</p>
+      <p class="afn"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="fa9d92898e9396899594ba9d979b9396d4999597">[email&#160;protected]</a> and <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="99faf4fcf5f0f2f0f8f7d9fef4f8f0f5b7faf6f4">[email&#160;protected]</a> get edit access.<br>All other Google accounts can view the itinerary.<br><br><b style="color:var(--tx2)">Sign-in not working?</b> Go to Firebase Console → Authentication → Settings → Authorized Domains and add the domain where this file is hosted (or <code>localhost</code> for local use).</p>
     </div>
   </div>
 </div>
@@ -515,7 +523,7 @@ main{max-width:1100px;margin:0 auto;padding:28px 20px 80px;position:relative;z-i
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ─── Firebase ──────────────────────────────────────────────────────────────────
 const FB={apiKey:"AIzaSyBCIaluRd8u7M88DbL59Cs_6_sfcb86f0E",authDomain:"japan-2026-gc.firebaseapp.com",projectId:"japan-2026-gc",storageBucket:"japan-2026-gc.firebasestorage.app",messagingSenderId:"661642949404",appId:"1:661642949404:web:c6a554f3c243171d5a00d9"};
 firebase.initializeApp(FB);
@@ -675,42 +683,53 @@ const BUDGET_SEED=[
 ];
 
 const PRETRIP_SEED=[
- {id:'pt1',cat:'Documents',item:'Valid passport (6+ months validity past Apr 29)',dg:false,dc:false},
- {id:'pt2',cat:'Documents',item:'Save all confirmation PDFs offline (no wifi fallback)',dg:false,dc:false},
- {id:'pt3',cat:'Documents',item:'Travel insurance — purchase and save policy number',dg:false,dc:false},
- {id:'pt4',cat:'Finance',item:'Notify bank and credit cards of Japan travel dates',dg:false,dc:false},
- {id:'pt5',cat:'Finance',item:'Get ~¥50,000 yen cash before departure',dg:false,dc:false},
- {id:'pt6',cat:'Finance',item:'Add Suica to Apple Wallet before departure',dg:false,dc:false},
- {id:'pt7',cat:'Transport',item:'Book Thunderbird: Kyoto → Kanazawa (~¥7,120 each)',dg:false,dc:false},
- {id:'pt8',cat:'Transport',item:'Book Hokuriku Shinkansen: Kanazawa → Tokyo (~¥14,120 each)',dg:false,dc:false},
- {id:'pt9',cat:'Tech',item:'Download Google Maps offline — Japan regions',dg:false,dc:false},
- {id:'pt10',cat:'Tech',item:'Download Google Translate offline — Japanese',dg:false,dc:false},
- {id:'pt11',cat:'Tech',item:'Order Japan pocket WiFi or SIM card',dg:false,dc:false},
- {id:'pt12',cat:'Tech',item:'Download teamLab app before Apr 17',dg:false,dc:false},
- {id:'pt13',cat:'Health',item:'Check travel vaccinations with doctor',dg:false,dc:false},
- {id:'pt14',cat:'Health',item:'Pack prescription medications — bring extra supply',dg:false,dc:false},
- {id:'pt15',cat:'Logistics',item:'Set phone to international data plan',dg:false,dc:false},
- {id:'pt16',cat:'Logistics',item:'Arrange mail hold / pet sitter / house check',dg:false,dc:false}
+ {id:'pt1',cat:'Documents',item:'Confirm passport valid 6+ months past Apr 29, 2026',done:false},
+ {id:'pt2',cat:'Documents',item:'Save all confirmation PDFs offline to phone (no wifi fallback)',done:false},
+ {id:'pt3',cat:'Documents',item:'Screenshot all booking QR codes and PINs',done:false},
+ {id:'pt4',cat:'Documents',item:'Purchase travel insurance — save policy number',done:false},
+ {id:'pt5',cat:'Documents',item:'Share full itinerary with a family emergency contact',done:false},
+ {id:'pt6',cat:'Finance',item:'Notify bank and credit cards of Japan travel dates',done:false},
+ {id:'pt7',cat:'Finance',item:'Get ¥50,000–80,000 cash before departure (many places cash-only)',done:false},
+ {id:'pt8',cat:'Finance',item:'Add Suica card to Apple Wallet (Wallet → + → Transit Card → Suica)',done:false},
+ {id:'pt9',cat:'Transport',item:'Book Thunderbird express: Kyoto → Kanazawa (~¥7,120 each) at smart-ex.jp',done:false},
+ {id:'pt10',cat:'Transport',item:'Book Hokuriku Shinkansen: Kanazawa → Tokyo (~¥14,120 each)',done:false},
+ {id:'pt11',cat:'Transport',item:'Pre-book Osaka Aquarium Kaiyukan tickets online (skip the line)',done:false},
+ {id:'pt12',cat:'Tech',item:'Download Google Maps offline — Tokyo, Kyoto, Hakone, Kanazawa',done:false},
+ {id:'pt13',cat:'Tech',item:'Download Google Translate offline — Japanese language pack',done:false},
+ {id:'pt14',cat:'Tech',item:'Order Japan pocket WiFi or SIM (Sakura Mobile, IIJmio, or airport pickup)',done:false},
+ {id:'pt15',cat:'Tech',item:'Download teamLab app before Apr 17',done:false},
+ {id:'pt16',cat:'Tech',item:'Download Hyperdia or Navitime for train route planning',done:false},
+ {id:'pt17',cat:'Health',item:'Check travel vaccinations with doctor 4–6 weeks before departure',done:false},
+ {id:'pt18',cat:'Health',item:'Pack prescription medications — 2-week supply plus extra',done:false},
+ {id:'pt19',cat:'Health',item:'Buy motion sickness medication (winding Hakone mountain roads)',done:false},
+ {id:'pt20',cat:'Health',item:'Buy antihistamines — April is peak cedar pollen season in Japan',done:false},
+ {id:'pt21',cat:'Logistics',item:'Set phone plan to international data or confirm WiFi device',done:false},
+ {id:'pt22',cat:'Logistics',item:'Arrange mail hold, pet sitter, house check while away',done:false},
 ];
 
 const PACKING_SEED=[
- {id:'pk1',cat:'Clothing',item:'Comfortable walking shoes (15k+ steps/day)',dg:false,dc:false},
- {id:'pk2',cat:'Clothing',item:'Light layers — April mornings cool, afternoons warm',dg:false,dc:false},
- {id:'pk3',cat:'Clothing',item:'Slip-on shoes for temples (frequent removal)',dg:false,dc:false},
- {id:'pk4',cat:'Clothing',item:'Packable rain jacket',dg:false,dc:false},
- {id:'pk5',cat:'Clothing',item:'Socks without holes (important at temples)',dg:false,dc:false},
- {id:'pk6',cat:'Toiletries',item:'Sunscreen (Japanese brands are excellent)',dg:false,dc:false},
- {id:'pk7',cat:'Toiletries',item:'Small day bag or lightweight backpack',dg:false,dc:false},
- {id:'pk8',cat:'Toiletries',item:'Insect repellent for outdoor shrines and gardens',dg:false,dc:false},
- {id:'pk9',cat:'Documents',item:'Passport in travel wallet',dg:false,dc:false},
- {id:'pk10',cat:'Documents',item:'Printed reservation backup copies',dg:false,dc:false},
- {id:'pk11',cat:'Documents',item:'Travel credit card (no foreign transaction fees)',dg:false,dc:false},
- {id:'pk12',cat:'Tech',item:'Power adapter — Japan is Type A, same as US',dg:false,dc:false},
- {id:'pk13',cat:'Tech',item:'Portable charger / power bank',dg:false,dc:false},
- {id:'pk14',cat:'Medications',item:'Motion sickness meds (winding mountain roads)',dg:false,dc:false},
- {id:'pk15',cat:'Medications',item:'Basic first aid kit',dg:false,dc:false},
- {id:'pk16',cat:'Other',item:'Small cash pouch for yen',dg:false,dc:false},
- {id:'pk17',cat:'Other',item:'Reusable tote bag for market shopping',dg:false,dc:false}
+ {id:'pk1',cat:'Clothing',item:'Comfortable walking shoes — broken in, 15,000+ steps/day',done:false},
+ {id:'pk2',cat:'Clothing',item:'Slip-on shoes or sandals for temples (removed constantly)',done:false},
+ {id:'pk3',cat:'Clothing',item:'Light layers — Apr mornings 10°C, afternoons 18–22°C',done:false},
+ {id:'pk4',cat:'Clothing',item:'Packable rain jacket or compact umbrella',done:false},
+ {id:'pk5',cat:'Clothing',item:'Nice outfit for kaiseki dinner at Tensui Saryo',done:false},
+ {id:'pk6',cat:'Clothing',item:'Socks without holes — inspected at every temple',done:false},
+ {id:'pk7',cat:'Clothing',item:'Pants for teamLab Borderless (mirrored floors)',done:false},
+ {id:'pk8',cat:'Toiletries',item:'High-SPF sunscreen — Japanese Biore UV is excellent, buy there or before',done:false},
+ {id:'pk9',cat:'Toiletries',item:'Blister bandages / moleskin for walking-heavy days',done:false},
+ {id:'pk10',cat:'Toiletries',item:'Small day bag or packable backpack',done:false},
+ {id:'pk11',cat:'Documents',item:'Passport in neck wallet or secure travel pouch',done:false},
+ {id:'pk12',cat:'Documents',item:'Printed backup copies of all reservations',done:false},
+ {id:'pk13',cat:'Documents',item:'Travel credit card with no foreign transaction fees',done:false},
+ {id:'pk14',cat:'Documents',item:'Small coin purse for yen — you will collect many ¥100 and ¥500 coins',done:false},
+ {id:'pk15',cat:'Tech',item:'Power adapter — Japan is Type A (same plug as US, no adapter needed)',done:false},
+ {id:'pk16',cat:'Tech',item:'Portable charger / power bank — essential for full days out',done:false},
+ {id:'pk17',cat:'Tech',item:'USB-C and Lightning charging cables',done:false},
+ {id:'pk18',cat:'Medications',item:'Ibuprofen or Tylenol',done:false},
+ {id:'pk19',cat:'Medications',item:'Antidiarrheal (Imodium) — just in case',done:false},
+ {id:'pk20',cat:'Medications',item:'Antihistamines for spring pollen',done:false},
+ {id:'pk21',cat:'Other',item:'Reusable tote bag — essential for Nishiki Market and shopping days',done:false},
+ {id:'pk22',cat:'Other',item:'Small gifts from the US for ryokan staff (omiyage) — optional but appreciated',done:false},
 ];
 
 const TIPS=[
@@ -794,8 +813,9 @@ async function doGoogle(){
 async function setupDB(){
   S.unsubs.forEach(u=>u());S.unsubs=[];
   try{await seedDB();}catch(e){console.warn('seed:',e.code);}
+  if(S.isEditor){try{await reseedChecklistsIfNeeded();}catch(e){}}
   const snap=(col,order,cb)=>{try{S.unsubs.push(db.collection(col).orderBy(order).onSnapshot(s=>{cb(s.docs.map(d=>({id:d.id,...d.data()})));},e=>console.warn(col,e.code)));}catch(e){}};
-  snap('itinerary','n',d=>{S.itin=d;if(S.page==='itinerary')renderItin();if(S.page==='overview')renderOvStrip();});
+  snap('itinerary','n',d=>{S.itin=d;if(S.page==='itinerary')renderItin();});
   snap('budget','category',d=>{S.budget=d;if(S.page==='budget')renderBudget();});
   snap('pretrip','cat',d=>{S.pretrip=d;if(S.page==='pretrip')renderCL('pretrip');});
   snap('packing','cat',d=>{S.packing=d;if(S.page==='pretrip')renderCL('packing');});
@@ -808,6 +828,27 @@ async function seedDB(){
   PRETRIP_SEED.forEach(p=>b.set(db.collection('pretrip').doc(p.id),p));
   PACKING_SEED.forEach(p=>b.set(db.collection('packing').doc(p.id),p));
   await b.commit();
+}
+
+// Force re-seed checklists if they have the old dg/dc format
+async function reseedChecklistsIfNeeded(){
+  try{
+    const snap=await db.collection('pretrip').limit(1).get();
+    if(!snap.empty){
+      const first=snap.docs[0].data();
+      if('dg' in first || 'dc' in first){
+        // Old format detected — delete all and re-seed
+        const [ptSnap,pkSnap]=await Promise.all([db.collection('pretrip').get(),db.collection('packing').get()]);
+        const b=db.batch();
+        ptSnap.docs.forEach(d=>b.delete(d.ref));
+        pkSnap.docs.forEach(d=>b.delete(d.ref));
+        PRETRIP_SEED.forEach(p=>b.set(db.collection('pretrip').doc(p.id),p));
+        PACKING_SEED.forEach(p=>b.set(db.collection('packing').doc(p.id),p));
+        await b.commit();
+        toast('Checklists updated to new format','ok');
+      }
+    }
+  }catch(e){console.warn('reseed check:',e);}
 }
 
 // ─── NAV ───────────────────────────────────────────────────────────────────────
@@ -843,24 +884,6 @@ function renderCountdown(){
 }
 renderCountdown();
 setInterval(()=>{if(document.getElementById('pg-overview').classList.contains('on'))renderCountdown();},1000);
-
-// ─── OVERVIEW STRIP ────────────────────────────────────────────────────────────
-function renderOvStrip(){
-  const data=S.itin.length?S.itin:ITIN;
-  document.getElementById('ov-strip').innerHTML=data.map(day=>{
-    const tags=[];
-    if(day.daytrip)tags.push(`<span class="ov-city-badge daytrip">Day trip: ${day.daytrip}</span>`);
-    else if(day.base&&day.base!==day.city.split(' ')[0])tags.push(`<span class="ov-city-badge main">${day.base}</span>`);
-    const confItems=day.items.filter(i=>i.booked);
-    const confTags=confItems.slice(0,2).map(i=>`<span class="tag tc" style="font-size:10px">${i.title.split('·')[0].trim()}</span>`).join('');
-    return`<div class="ov-day"><div class="ov-day-head">
-      <div class="ov-day-num">${day.n}</div>
-      <div class="ov-day-info"><div class="ov-day-date">${day.date}</div><div class="ov-day-title">${day.title}${day.daytrip?'':day.base?`<span class="ov-day-base">${day.base}</span>`:''}</div></div>
-      <div class="ov-day-tags">${tags.join('')}${confTags}</div>
-    </div></div>`;
-  }).join('');
-}
-renderOvStrip();
 
 // ─── ITINERARY ─────────────────────────────────────────────────────────────────
 function renderItin(){
@@ -981,11 +1004,14 @@ async function delAct(dayId,itemId){
 }
 
 // ─── BUDGET ────────────────────────────────────────────────────────────────────
-const toJ=i=>i.cur==='JPY'?i.amount:i.amount*RATE;
+// Normalize field names — old Firestore docs used paid_by/currency, new ones use paid/cur
+const norm=x=>({...x,paid:x.paid||x.paid_by||'Gwendalynn',cur:x.cur||x.currency||'JPY'});
+const toJ=i=>{const c=i.cur||i.currency||'JPY';return c==='JPY'?i.amount:i.amount*RATE;};
 const fmt=j=>S.cur==='JPY'?'¥'+Math.round(j).toLocaleString():'$'+(j/RATE).toFixed(0).toLocaleString();
 function setCur(c){S.cur=c;document.getElementById('cjpy').classList.toggle('on',c==='JPY');document.getElementById('cusd').classList.toggle('on',c==='USD');renderBudget();}
 function renderBudget(){
-  const items=S.budget.length?S.budget:BUDGET_SEED;if(!S.isEditor||!items.length)return;
+  const raw=S.budget.length?S.budget:BUDGET_SEED;if(!S.isEditor||!raw.length)return;
+  const items=raw.map(norm);
   const total=items.reduce((s,i)=>s+toJ(i),0);
   const gS=items.reduce((s,i)=>s+(i.split==='even'?toJ(i)/2:i.split==='gwen'?toJ(i):0),0);
   const cS=items.reduce((s,i)=>s+(i.split==='even'?toJ(i)/2:i.split==='chris'?toJ(i):0),0);
@@ -1018,7 +1044,8 @@ function openExpModal(){
   openM('mo-exp');
 }
 function openEditExp(id){
-  const x=(S.budget.length?S.budget:BUDGET_SEED).find(b=>b.id===id);if(!x)return;
+  const raw=(S.budget.length?S.budget:BUDGET_SEED).find(b=>b.id===id);if(!raw)return;
+  const x=norm(raw);
   document.getElementById('exp-modal-title').textContent='Edit expense';document.getElementById('e-id').value=id;
   document.getElementById('e-cat').value=x.category||'Other';document.getElementById('e-paid').value=x.paid||'Gwendalynn';
   document.getElementById('e-title').value=x.title||'';document.getElementById('e-amount').value=x.amount||'';
@@ -1029,7 +1056,8 @@ async function saveExp(){
   const id=document.getElementById('e-id').value||'b_'+Date.now();
   const data={category:document.getElementById('e-cat').value,title:document.getElementById('e-title').value,amount:parseFloat(document.getElementById('e-amount').value)||0,cur:document.getElementById('e-cur').value,paid:document.getElementById('e-paid').value,split:document.getElementById('e-split').value,date:document.getElementById('e-date').value,confirmed:document.getElementById('e-paid').value!=='TBD'};
   if(!data.title)return;
-  try{await db.collection('budget').doc(id).set(data);closeM('mo-exp');toast('Saved','ok');}catch(e){toast('Sign in to save','');}
+  try{await db.collection('budget').doc(id).set(data);closeM('mo-exp');toast('Saved','ok');}
+  catch(e){console.error('saveExp error:',e);toast(e.code==='permission-denied'?'Permission denied — check Firestore rules':'Error: '+e.message,'');}
 }
 async function delExp(id){if(!confirm('Remove?'))return;try{await db.collection('budget').doc(id).delete();toast('Removed','');}catch(e){}}
 
@@ -1040,25 +1068,24 @@ function renderCL(type){
   const bar=document.getElementById(type==='pretrip'?'pt-prog':'pk-prog');
   const lbl=document.getElementById(type==='pretrip'?'pt-prog-lbl':'pk-prog-lbl');
   if(!items.length)return;
-  const total=items.length*2,done=items.reduce((s,i)=>s+(i.dg?1:0)+(i.dc?1:0),0);
+  // support both old (dg/dc) and new (done) field formats
+  const isDone=i=>i.done||(i.dg&&i.dc)||false;
+  const total=items.length,done=items.filter(i=>isDone(i)).length;
   bar.style.width=(done/total*100)+'%';lbl.textContent=done+' / '+total;
   const cats=[...new Set(items.map(i=>i.cat))];
   body.innerHTML=cats.map(cat=>`<div class="cl-cat">${cat}</div>`+items.filter(i=>i.cat===cat).map(item=>`
     <div class="cl-item">
-      <label class="cl-lbl${item.dg&&item.dc?' done':''}" for="cg-${item.id}">${item.item}</label>
-      <div class="cl-cks">
-        <div class="cw"><input type="checkbox" id="cg-${item.id}" ${item.dg?'checked':''} ${S.isEditor?'':'disabled'} onchange="chk('${type}','${item.id}','g',this.checked)"><span>Gwen</span></div>
-        <div class="cw"><input type="checkbox" id="cc-${item.id}" ${item.dc?'checked':''} ${S.isEditor?'':'disabled'} onchange="chk('${type}','${item.id}','c',this.checked)"><span>Christina</span></div>
-      </div>
+      <input type="checkbox" id="ck-${item.id}" ${isDone(item)?'checked':''} ${S.isEditor?'':'disabled'} onchange="chk('${type}','${item.id}',this.checked)" style="width:14px;height:14px;accent-color:var(--rose);cursor:pointer;flex-shrink:0">
+      <label class="cl-lbl${isDone(item)?' done':''}" for="ck-${item.id}">${item.item}</label>
       ${S.isEditor?`<button class="ib" style="opacity:.4" onclick="delCL('${type}','${item.id}')">✕</button>`:''}
     </div>`).join('')).join('');
 }
-async function chk(type,id,who,val){try{await db.collection(type).doc(id).update({[who==='g'?'dg':'dc']:val});}catch(e){}}
+async function chk(type,id,val){try{await db.collection(type).doc(id).update({done:val});}catch(e){}}
 async function addCL(type){
   const inp=document.getElementById(type==='pretrip'?'pt-add':'pk-add');
   const cat=document.getElementById(type==='pretrip'?'pt-cat':'pk-cat');
   const text=inp.value.trim();if(!text)return;
-  try{await db.collection(type).doc(type+'_'+Date.now()).set({cat:cat.value,item:text,dg:false,dc:false});inp.value='';toast('Added','ok');}
+  try{await db.collection(type).doc(type+'_'+Date.now()).set({cat:cat.value,item:text,done:false});inp.value='';toast('Added','ok');}
   catch(e){toast('Sign in to add items','');}
 }
 async function delCL(type,id){try{await db.collection(type).doc(id).delete();}catch(e){}}
@@ -1112,8 +1139,4 @@ let tt;function toast(msg,type){const el=document.getElementById('toast');el.tex
   function rs(){cv.width=innerWidth;cv.height=innerHeight;}rs();window.addEventListener('resize',rs);
   function mk(){return{x:Math.random()*cv.width,y:-40-Math.random()*80,r:2.5+Math.random()*2.5,rot:Math.random()*Math.PI*2,rv:(Math.random()-.5)*.013,vx:(Math.random()-.5)*.16,vy:.16+Math.random()*.24,sw:Math.random()*Math.PI*2,sws:.004+Math.random()*.005,a:.4+Math.random()*.35};}
   for(let i=0;i<14;i++){const p=mk();p.y=Math.random()*innerHeight;P.push(p);}
-  (function draw(){ctx.clearRect(0,0,cv.width,cv.height);P.forEach((p,i)=>{p.sw+=p.sws;p.x+=p.vx+Math.sin(p.sw)*.18;p.y+=p.vy;p.rot+=p.rv;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=p.a;ctx.fillStyle='#C8909A';ctx.beginPath();ctx.ellipse(0,0,p.r*1.5,p.r*.7,0,0,Math.PI*2);ctx.fill();ctx.restore();if(p.y>cv.height+20)P[i]=mk();});requestAnimationFrame(draw);})();
-})();
-</script>
-</body>
-</html>
+  (function draw(){ctx.clearRect(0,0,cv.width,cv.height);P.forEach((
