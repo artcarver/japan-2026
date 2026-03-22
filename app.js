@@ -441,7 +441,7 @@ const OVERVIEW_DATA = [
       { text: 'Osaka Castle — 16th century, museum inside, beautiful grounds', url: 'https://www.osakacastle.net/english/' },
     ],
     daytrips: [],
-  },  },
+  },
   {
     city: 'Kanazawa', dates: 'Apr 26–28', nights: 2,
     hotel: 'Hotel Intergate Kanazawa · breakfast included',
