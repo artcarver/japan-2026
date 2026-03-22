@@ -27,6 +27,7 @@ let exchRate  = 159;
 let expenses = [];
 let expUnsub  = null;
 let expFilter = 'all';
+let budgetCur = 'JPY'; // JPY or USD
 let localExpenses = [];
 
 // Firestore-backed editable days
@@ -1770,116 +1771,161 @@ function renderBudget() {
   }
 
   const { grandTotal, bookedTotal, onTripTotal, gwenNet, christinaNet, settlement, byCat, byDate } = calcBudget();
-  const maxCat = Math.max(...Object.values(byCat), 1);
+
+  // Format helpers
+  const isUSD = budgetCur === 'USD';
+  function fmt(jpy) {
+    if (isUSD) return '$' + Math.round(jpy / exchRate).toLocaleString();
+    return '¥' + Math.round(jpy).toLocaleString();
+  }
 
   // Settlement
   const settled = Math.abs(settlement) < 100;
   let settlementText = '', settleClass = '';
   if (settled) {
-    settlementText = 'All settled up ✓';
+    settlementText = 'All settled up';
     settleClass = 'settlement';
   } else if (settlement > 0) {
-    settlementText = `Christina owes Gwen ¥${Math.round(settlement).toLocaleString()}`;
+    settlementText = `Christina owes Gwen ${fmt(settlement)}`;
     settleClass = 'settlement owed';
   } else {
-    settlementText = `Gwen owes Christina ¥${Math.round(Math.abs(settlement)).toLocaleString()}`;
+    settlementText = `Gwen owes Christina ${fmt(Math.abs(settlement))}`;
     settleClass = 'settlement owed';
   }
 
-  const settleUSD = `~$${Math.round(Math.abs(settlement) / exchRate).toLocaleString()} USD`;
+  const settleSub = isUSD
+    ? `¥${Math.round(Math.abs(settlement)).toLocaleString()} JPY · includes all pre-booked + on-trip`
+    : `~$${Math.round(Math.abs(settlement)/exchRate).toLocaleString()} USD · includes all pre-booked + on-trip`;
+
+  // Christina's "owes" = settlement if positive
+  const christinaOwes = settlement > 0 ? settlement : 0;
+  const gwenOwes      = settlement < 0 ? Math.abs(settlement) : 0;
 
   // Filter expenses
   const displayed = expFilter === 'all' ? expenses : expenses.filter(e => e.category === expFilter);
 
   budgetEl.innerHTML = `
     <div class="budget-header">
-      <div class="budget-title">Trip Budget</div>
-      <div class="budget-sub">${currentUser ? 'Synced · both travelers' : 'Sign in to sync with Christina'}</div>
-    </div>
-
-    <!-- Settlement banner — always front and center -->
-    <div class="settlement-banner ${settleClass}">
-      <div class="settlement-main">${settlementText}</div>
-      ${!settled ? `<div class="settlement-sub">${settleUSD} · includes all pre-booked + on-trip expenses</div>` : ''}
-    </div>
-
-    <!-- Stats -->
-    <div class="stat-grid">
-      <div class="stat-card stat-card-primary">
-        <div class="stat-label">Total Trip Cost</div>
-        <div class="stat-jpy">¥${grandTotal.toLocaleString()}</div>
-        <div class="stat-usd">~$${Math.round(grandTotal / exchRate).toLocaleString()} USD</div>
+      <div>
+        <div class="budget-eyebrow">Finances</div>
+        <div class="budget-title">Trip Budget</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Pre-booked</div>
-        <div class="stat-jpy">¥${bookedTotal.toLocaleString()}</div>
-        <div class="stat-usd">~$${Math.round(bookedTotal / exchRate).toLocaleString()} USD</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Gwen fronted</div>
-        <div class="stat-jpy">¥${gwenNet.toLocaleString()}</div>
-        <div class="stat-usd">~$${Math.round(gwenNet / exchRate).toLocaleString()}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Christina fronted</div>
-        <div class="stat-jpy">¥${christinaNet.toLocaleString()}</div>
-        <div class="stat-usd">~$${Math.round(christinaNet / exchRate).toLocaleString()}</div>
-      </div>
-    </div>
-
-    <!-- Category breakdown -->
-    <div class="cat-breakdown">
-      <div class="cat-breakdown-title">By Category</div>
-      ${Object.entries(byCat).map(([cat, amt]) => `
-        <div class="cat-row">
-          <span class="cat-name">${cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
-          <div class="cat-bar-wrap">
-            <div class="cat-bar" style="width:${(amt/maxCat)*100}%;background:${CAT_COLORS[cat]}"></div>
-          </div>
-          <span class="cat-amt">¥${amt.toLocaleString()}</span>
+      <div class="budget-header-right">
+        <div class="cur-toggle">
+          <button class="cur-btn${!isUSD?' cur-btn-on':''}" data-cur="JPY">¥ JPY</button>
+          <button class="cur-btn${isUSD?' cur-btn-on':''}" data-cur="USD">$ USD</button>
         </div>
-      `).join('')}
+        <button class="budget-add-btn" id="budgetAddBtn">+ Add expense</button>
+      </div>
     </div>
 
-    <!-- Booked costs — editable -->
-    <div class="booked-ref-card">
-      <div class="booked-ref-hd">
-        <div class="booked-ref-title">Pre-booked Costs</div>
-        <button class="booked-edit-btn" id="bookedEditToggle">Edit</button>
+    <!-- Top stats row -->
+    <div class="b-top-row">
+      <div class="b-total-card">
+        <div class="b-total-label">Total trip cost</div>
+        <div class="b-total-val">${fmt(grandTotal)}</div>
+        <div class="b-total-sub">${isUSD ? '¥'+grandTotal.toLocaleString()+' JPY' : '~$'+Math.round(grandTotal/exchRate).toLocaleString()+' USD'}</div>
       </div>
-      <div id="bookedCostList">
-        ${bookedCosts.filter(c=>c.jpy).map(c=>`
-          <div class="booked-ref-row" data-id="${c.id}">
-            <span class="booked-ref-label">${c.label}</span>
-            <div class="booked-ref-right">
-              <span class="booked-ref-paidby booked-payer-${c.paidBy}">${c.paidBy === 'split' ? 'Split' : c.paidBy === 'gwen' ? 'Gwen' : 'Christina'}</span>
-              <span class="booked-ref-val">¥${c.jpy.toLocaleString()}</span>
-            </div>
-          </div>
-        `).join('')}
+      <div class="b-share-card">
+        <div class="b-share-label">Gwendalynn's share</div>
+        <div class="b-share-val">${fmt(grandTotal/2)}</div>
+        <div class="b-share-sub">half of all shared costs</div>
       </div>
-      <div id="bookedCostEdit" style="display:none">
-        ${bookedCosts.filter(c=>c.jpy).map(c=>`
-          <div class="booked-edit-row" data-id="${c.id}">
-            <span class="booked-edit-label">${c.label}</span>
-            <div class="booked-edit-controls">
-              <select class="booked-payer-sel" data-id="${c.id}">
-                <option value="gwen"${c.paidBy==='gwen'?' selected':''}>Gwen paid</option>
-                <option value="christina"${c.paidBy==='christina'?' selected':''}>Christina paid</option>
-                <option value="split"${c.paidBy==='split'?' selected':''}>Split 50/50</option>
-              </select>
-              <span class="booked-ref-val">¥${c.jpy.toLocaleString()}</span>
-            </div>
-          </div>
-        `).join('')}
-        <button class="booked-save-btn" id="bookedSave">Save</button>
+      <div class="b-share-card">
+        <div class="b-share-label">Christina's share</div>
+        <div class="b-share-val">${fmt(grandTotal/2)}</div>
+        <div class="b-share-sub">half of all shared costs</div>
       </div>
-      <div class="booked-ref-total">
-        <span class="booked-ref-total-label">Pre-booked total</span>
-        <span class="booked-ref-total-val">¥${bookedTotal.toLocaleString()}</span>
+    </div>
+
+    <!-- Person cards -->
+    <div class="b-person-row">
+      <div class="b-person-card">
+        <div class="b-person-head">
+          <div class="b-avatar b-avatar-g">G</div>
+          <span class="b-person-name">Gwendalynn</span>
+        </div>
+        <div class="b-person-paid">${fmt(gwenNet)}</div>
+        <div class="b-person-sub">fronted so far</div>
+        ${gwenOwes > 0
+          ? `<div class="b-chip b-chip-owes">Owes ${fmt(gwenOwes)} to Christina</div>`
+          : christinaOwes > 0
+          ? `<div class="b-chip b-chip-owed">Owed ${fmt(christinaOwes)}</div>`
+          : `<div class="b-chip b-chip-even">Settled</div>`}
       </div>
-      <div style="font-size:11px;color:var(--light);margin-top:6px">
-        On-trip expenses logged: ¥${onTripTotal.toLocaleString()} &nbsp;·&nbsp; Total with pre-booked: ¥${grandTotal.toLocaleString()}
+      <div class="b-person-card">
+        <div class="b-person-head">
+          <div class="b-avatar b-avatar-c">C</div>
+          <span class="b-person-name">Christina</span>
+        </div>
+        <div class="b-person-paid">${fmt(christinaNet)}</div>
+        <div class="b-person-sub">fronted so far</div>
+        ${christinaOwes > 0
+          ? `<div class="b-chip b-chip-owes">Owes ${fmt(christinaOwes)} to Gwendalynn</div>`
+          : gwenOwes > 0
+          ? `<div class="b-chip b-chip-owed">Owed ${fmt(gwenOwes)}</div>`
+          : `<div class="b-chip b-chip-even">Settled</div>`}
+      </div>
+    </div>
+
+    <!-- Pre-booked table -->
+    <div class="b-table-wrap">
+      <div class="b-table-hd">
+        <span class="b-table-title">All Expenses</span>
+        <button class="booked-edit-btn" id="bookedEditToggle">Edit who paid</button>
+      </div>
+      <div class="b-table-scroll">
+        <table class="b-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Item</th>
+              <th>Amount</th>
+              <th>Paid by</th>
+              <th>Split</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="bookedCostList">
+            ${bookedCosts.filter(c=>c.jpy).map(c=>{
+              const catMap = {b1:'Flights',b2:'Hotels',b3:'Activities',b4:'Transport',b5:'Hotels',b6:'Transport',b7:'Hotels',b8:'Hotels',b9:'Hotels'};
+              const cat = catMap[c.id] || 'Other';
+              return `<tr data-id="${c.id}">
+                <td><span class="b-cat-chip b-cat-${cat.toLowerCase()}">${cat}</span></td>
+                <td class="b-item-cell">${c.label}</td>
+                <td class="b-amt-cell">${fmt(c.jpy)}</td>
+                <td>${c.paidBy === 'gwen' ? 'Gwendalynn' : c.paidBy === 'christina' ? 'Christina' : 'Split'}</td>
+                <td>50/50</td>
+                <td></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+          <tbody id="bookedCostEdit" style="display:none">
+            ${bookedCosts.filter(c=>c.jpy).map(c=>{
+              const catMap = {b1:'Flights',b2:'Hotels',b3:'Activities',b4:'Transport',b5:'Hotels',b6:'Transport',b7:'Hotels',b8:'Hotels',b9:'Hotels'};
+              const cat = catMap[c.id] || 'Other';
+              return `<tr data-id="${c.id}">
+                <td><span class="b-cat-chip b-cat-${cat.toLowerCase()}">${cat}</span></td>
+                <td class="b-item-cell">${c.label}</td>
+                <td class="b-amt-cell">${fmt(c.jpy)}</td>
+                <td>
+                  <select class="booked-payer-sel b-payer-sel" data-id="${c.id}">
+                    <option value="gwen"${c.paidBy==='gwen'?' selected':''}>Gwendalynn</option>
+                    <option value="christina"${c.paidBy==='christina'?' selected':''}>Christina</option>
+                    <option value="split"${c.paidBy==='split'?' selected':''}>Split</option>
+                  </select>
+                </td>
+                <td>50/50</td>
+                <td><button class="booked-save-btn-inline" id="bookedSave" style="display:none"></button></td>
+              </tr>`;
+            }).join('')}
+            <tr class="b-save-row"><td colspan="6"><button class="b-save-btn" id="bookedSave">Save changes</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="b-table-foot">
+        <span>Total pre-booked</span>
+        <span>${fmt(bookedTotal)}</span>
       </div>
     </div>
 
@@ -1950,6 +1996,22 @@ function renderBudget() {
     <div style="height:80px"></div>
   `;
 
+  // Currency toggle
+  budgetEl.querySelectorAll('.cur-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      budgetCur = btn.dataset.cur;
+      renderBudget();
+    });
+  });
+
+  // Add expense button
+  const budgetAddBtn = document.getElementById('budgetAddBtn');
+  if (budgetAddBtn) {
+    budgetAddBtn.addEventListener('click', () => {
+      document.getElementById('addExpFab')?.click();
+    });
+  }
+
   // Booked costs edit toggle
   const bookedEditToggle = document.getElementById('bookedEditToggle');
   const bookedCostList   = document.getElementById('bookedCostList');
@@ -1960,9 +2022,9 @@ function renderBudget() {
   if (bookedEditToggle) {
     bookedEditToggle.addEventListener('click', () => {
       bookedEditing = !bookedEditing;
-      bookedCostList.style.display = bookedEditing ? 'none' : '';
-      bookedCostEdit.style.display = bookedEditing ? '' : 'none';
-      bookedEditToggle.textContent = bookedEditing ? 'Cancel' : 'Edit';
+      if (bookedCostList) bookedCostList.style.display = bookedEditing ? 'none' : '';
+      if (bookedCostEdit) bookedCostEdit.style.display = bookedEditing ? '' : 'none';
+      bookedEditToggle.textContent = bookedEditing ? 'Cancel' : 'Edit who paid';
     });
   }
 
@@ -1974,7 +2036,7 @@ function renderBudget() {
         if (item) item.paidBy = sel.value;
       });
       await saveBookedCosts();
-      showToast('Pre-booked costs saved');
+      showToast('Saved');
       renderBudget();
     });
   }
