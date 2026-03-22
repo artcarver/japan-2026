@@ -217,10 +217,11 @@ header {
    DEST PILLS
 ════════════════════════════════════════════════ */
 .dest-pills-wrap {
-  background: var(--card); border-bottom: 1px solid var(--border);
-  position: sticky; top: 103px; z-index: 90;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 89;
   overflow-x: auto; scrollbar-width: none;
   transition: background var(--speed);
+  box-shadow: 0 2px 8px rgba(22,18,12,.06);
 }
 .dest-pills-wrap::-webkit-scrollbar { display: none; }
 .dest-pills { display: flex; gap: 6px; padding: 8px 20px; min-width: max-content; }
@@ -245,47 +246,50 @@ header {
    OVERVIEW
 ════════════════════════════════════════════════ */
 .ov-hero {
-  background: var(--text);
-  border-radius: var(--r-xl); padding: 36px 40px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl); padding: 32px 36px;
   margin-bottom: 28px; position: relative; overflow: hidden;
+  box-shadow: var(--sh);
 }
 .ov-hero::after {
   content: '日本';
   font-family: var(--serif);
-  position: absolute; right: 20px; bottom: -14px;
-  font-size: 120px; font-weight: 400;
-  color: rgba(255,255,255,.06);
+  position: absolute; right: 16px; bottom: -18px;
+  font-size: 110px; font-weight: 400;
+  color: var(--border-lt);
   pointer-events: none; user-select: none;
   line-height: 1;
+  opacity: 0.5;
 }
 .ov-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .ov-eyebrow {
   font-size: 11px; font-weight: 500; letter-spacing: 0.12em;
-  text-transform: uppercase; color: rgba(255,255,255,.35);
+  text-transform: uppercase; color: var(--light);
   margin-bottom: 8px;
 }
 .ov-title {
   font-family: var(--serif); font-size: 44px; font-weight: 400;
-  color: #fff; line-height: 1; margin-bottom: 6px;
+  color: var(--text); line-height: 1; margin-bottom: 6px;
 }
-.ov-who { font-size: 14px; color: rgba(255,255,255,.4); }
+.ov-who { font-size: 14px; color: var(--muted); }
 
 .ov-cd { text-align: right; flex-shrink: 0; }
 .ov-cd-num {
   font-family: var(--serif); font-size: 56px; font-weight: 400;
-  color: #fff; line-height: 1; display: block;
+  color: var(--red); line-height: 1; display: block;
 }
 .ov-cd-den {
   font-family: var(--serif); font-size: 28px;
-  color: rgba(255,255,255,.3); margin-left: 3px;
+  color: var(--light); margin-left: 3px;
 }
 .ov-cd-label {
   font-size: 10px; font-weight: 500; letter-spacing: 0.1em;
-  text-transform: uppercase; color: rgba(255,255,255,.3);
+  text-transform: uppercase; color: var(--light);
   display: block; margin-top: 2px; text-align: right;
 }
 .ov-cd-sub {
-  font-size: 12px; color: rgba(255,255,255,.25);
+  font-size: 12px; color: var(--light);
   display: block; margin-top: 1px;
 }
 .ov-live-dot {
@@ -299,14 +303,14 @@ header {
 /* Currently in banner */
 .ov-in-japan {
   margin-top: 18px; padding-top: 16px;
-  border-top: 1px solid rgba(255,255,255,.1);
+  border-top: 1px solid var(--border-lt);
 }
 .ov-currently-label {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
-  color: rgba(255,255,255,.3); margin-bottom: 4px;
+  color: var(--light); margin-bottom: 4px;
 }
 .ov-currently-city {
-  font-family: var(--serif); font-size: 22px; color: rgba(255,255,255,.85);
+  font-family: var(--serif); font-size: 22px; color: var(--text);
 }
 
 /* ov-meta-row removed */
@@ -972,12 +976,12 @@ body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
   gap: 10px; margin-bottom: 16px;
 }
 .b-total-card {
-  background: var(--text); border-radius: var(--r-lg);
-  padding: 16px 18px; box-shadow: var(--sh-lg);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--sh);
 }
-.b-total-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,.35); margin-bottom: 4px; }
-.b-total-val { font-family: var(--serif); font-size: 24px; font-weight: 400; color: #fff; line-height: 1.1; }
-.b-total-sub { font-size: 11px; color: rgba(255,255,255,.28); margin-top: 2px; }
+.b-total-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--light); margin-bottom: 4px; }
+.b-total-val { font-family: var(--serif); font-size: 24px; font-weight: 400; color: var(--red); line-height: 1.1; }
+.b-total-sub { font-size: 11px; color: var(--light); margin-top: 2px; }
 .b-share-card {
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--sh);
@@ -1378,7 +1382,7 @@ body.dark .highlight { background: #4A4000; }
   .cw-fab  { bottom: calc(64px + env(safe-area-inset-bottom)); right: 20px; }
   .currency-widget { bottom: calc(120px + env(safe-area-inset-bottom)); right: 12px; width: calc(100vw - 24px); max-width: 260px; }
   /* Dest pills stick below header (no top tabs, so lower) */
-  .dest-pills-wrap { top: 60px; }
+  /* Dest pills stick below header (JS sets top dynamically) */
   /* Hero */
   .ov-hero { padding: 24px 22px; }
   .ov-title { font-size: 34px; }
@@ -1457,3 +1461,28 @@ body.dark .highlight { background: #4A4000; }
 }
 .cl-items .btn-primary:hover,
 .pack-cat .btn-primary:hover { background: var(--red-d); }
+
+/* Draggable itinerary items */
+.act[draggable="true"] { cursor: grab; }
+.act[draggable="true"]:active { cursor: grabbing; }
+
+/* Packing progress */
+.pack-progress { 
+  display: flex; align-items: center; gap: 10px; 
+  margin-bottom: 16px; padding: 10px 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-lg); box-shadow: var(--sh);
+}
+.pack-progress-bar { 
+  flex: 1; height: 6px; background: var(--border-lt); 
+  border-radius: 3px; overflow: hidden; 
+}
+.pack-progress-fill { 
+  height: 100%; background: var(--red); border-radius: 3px; 
+  transition: width 0.3s ease; 
+}
+.pack-progress-text { 
+  font-size: 12px; font-weight: 500; color: var(--muted); 
+  white-space: nowrap; 
+}
+.pack-progress-text span { color: var(--red); font-weight: 600; }

@@ -127,71 +127,64 @@ function parseTimeToMinutes(t){
   return h*60+min;
 }
 
-// Sort activities by time, keeping period labels as group headers
+// Sort all activities globally by time, keeping subs attached to parents.
+// Period labels are stripped out and re-derived from time ranges.
 function sortActivitiesByTime(acts){
-  // Separate period labels from items
-  // Strategy: assign each item to the period label above it,
-  // sort items within each group by time, then flatten back
-  const groups=[]; let currentGroup=null;
-  acts.forEach(act=>{
-    if(act.type==='period-label'){
-      currentGroup={label:act,items:[]};
-      groups.push(currentGroup);
-    } else if(currentGroup){
-      currentGroup.items.push(act);
+  // Collect period labels (preserve them for reference) and all items
+  const periodLabels = [];
+  const items = [];
+  acts.forEach(a => {
+    if (a.type === 'period-label') periodLabels.push(a);
+    else items.push(a);
+  });
+
+  // Group each item with its trailing subs
+  const bundles = []; // [{parent, subs:[]}]
+  items.forEach(item => {
+    if (item.sub && bundles.length > 0) {
+      bundles[bundles.length - 1].subs.push(item);
     } else {
-      // Item before any period label - create implicit group
-      if(!groups.length||groups[groups.length-1].label)groups.push({label:null,items:[]});
-      groups[groups.length-1].items.push(act);
+      bundles.push({ parent: item, subs: [] });
     }
   });
-  // Sort non-sub items by time, then re-attach subs after their parent
-  groups.forEach(g=>{
-    // Separate into parent items and sub-items-attached-to-parent
-    const parents = [];
-    const subMap = new Map(); // parentIndex -> [sub items]
-    let lastParentIdx = -1;
-    g.items.forEach(item => {
-      if (item.sub) {
-        if (lastParentIdx >= 0) {
-          if (!subMap.has(lastParentIdx)) subMap.set(lastParentIdx, []);
-          subMap.get(lastParentIdx).push(item);
-        } else {
-          parents.push(item); // orphan sub, treat as parent
-          lastParentIdx = parents.length - 1;
-        }
-      } else {
-        parents.push(item);
-        lastParentIdx = parents.length - 1;
+
+  // Sort bundles by parent time
+  bundles.sort((a, b) => parseTimeToMinutes(a.parent.time) - parseTimeToMinutes(b.parent.time));
+
+  // Rebuild with period labels inserted at time boundaries
+  // Keep existing period labels and assign them by checking if any items fall into their time range
+  // Simpler: just re-insert the original period labels in order between items based on time gaps
+  const result = [];
+  let order = 0;
+  let usedLabels = 0;
+
+  bundles.forEach((bundle, i) => {
+    const t = parseTimeToMinutes(bundle.parent.time);
+    // Insert next period label if this item's time crosses into a new period
+    // Heuristic: insert period label when there's a time gap of 90+ min from previous item
+    // OR when we haven't placed any label yet
+    if (usedLabels < periodLabels.length) {
+      const prevT = i > 0 ? parseTimeToMinutes(bundles[i-1].parent.time) : -1;
+      if (i === 0 || (t - prevT >= 90 && t !== 9999) || (prevT < 720 && t >= 720) || (prevT < 1020 && t >= 1020)) {
+        const pl = periodLabels[usedLabels];
+        pl.order = order++;
+        result.push(pl);
+        usedLabels++;
       }
-    });
-    // Sort parents by time
-    parents.sort((a, b) => {
-      if (a.sub) return 1; // orphan subs go last
-      if (b.sub) return -1;
-      return parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time);
-    });
-    // Rebuild with subs after their parent (using original index mapping)
-    const originalParents = [];
-    let opi = -1;
-    g.items.forEach(item => {
-      if (!item.sub) { opi++; originalParents.push(item); }
-    });
-    g.items = [];
-    parents.forEach(p => {
-      g.items.push(p);
-      const origIdx = originalParents.indexOf(p);
-      if (origIdx >= 0 && subMap.has(origIdx)) {
-        subMap.get(origIdx).forEach(s => g.items.push(s));
-      }
-    });
+    }
+    bundle.parent.order = order++;
+    result.push(bundle.parent);
+    bundle.subs.forEach(s => { s.order = order++; result.push(s); });
   });
-  // Flatten back with updated order numbers
-  const result = []; let order = 0;
-  groups.forEach(g => {
-    if (g.label) { g.label.order = order++; result.push(g.label); }
-    g.items.forEach(item => { item.order = order++; result.push(item); });
-  });
+
+  // Append any remaining period labels that weren't used
+  while (usedLabels < periodLabels.length) {
+    const pl = periodLabels[usedLabels];
+    pl.order = order++;
+    result.push(pl);
+    usedLabels++;
+  }
+
   return result;
 }
 function updateClock(){
@@ -268,7 +261,13 @@ window.switchTab=switchTab;
 document.querySelectorAll('.tab-btn,.bnav-btn').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
 
 // ── Dest pills ────────────────────────────────────────────────
+function updatePillsOffset(){
+  const wrap=$('destPillsWrap'), hdr=document.querySelector('header');
+  if(wrap&&hdr) wrap.style.top=hdr.offsetHeight+'px';
+}
 function buildDestPills(){
+  updatePillsOffset();
+  window.addEventListener('resize', updatePillsOffset);
   const el=$('destPills'); if(!el)return;
   el.innerHTML=GROUPS.map((g,i)=>'<button class="dest-pill" data-group="'+i+'">'+esc(g.label)+'</button>').join('');
   el.querySelectorAll('.dest-pill').forEach(pill=>{
@@ -939,10 +938,10 @@ function renderOverview(){
     '<div class="ov-hero"><div class="ov-hero-top"><div><div class="ov-eyebrow">April 15\u201329, 2026 &middot; 15 days &middot; 5 cities &middot; 4 day trips</div><div class="ov-title">Japan</div><div class="ov-who">Gwendalynn &amp; Christina</div></div><div class="ov-cd" id="ovCd">'+cdHtml()+'</div></div>'
     +(inTrip&&todayDay?'<div class="ov-in-japan"><div class="ov-currently-label">Currently in</div><div class="ov-currently-city">'+esc(todayDay.location)+'</div></div>':'')
     +'</div>'
-    +'<div class="ov-section-label" style="margin-bottom:10px">Hotels &amp; emergency contacts</div>'
-    +'<div class="family-strip"><div class="hotel-grid">'+hotelGrid+'</div></div>'
-    +'<div class="ov-section-label" style="margin-top:8px">The route</div><div class="ov-route">'+journeyHtml+'</div>'
-    +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">View full itinerary \u2192</button></div>';
+    +'<div class="ov-section-label">The route</div><div class="ov-route">'+journeyHtml+'</div>'
+    +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">View full itinerary \u2192</button></div>'
+    +'<div class="ov-section-label" style="margin-top:32px">Hotels &amp; emergency contacts</div>'
+    +'<div class="family-strip"><div class="hotel-grid">'+hotelGrid+'</div></div>';
 
   if(ovTimer)clearInterval(ovTimer);
   const closeToDepart=now<T_DEPART&&(T_DEPART-now)<86400000;
@@ -971,7 +970,7 @@ function renderItinerary(){
     h.addEventListener('click',()=>{
       const card=h.parentElement, dayId=card.id.replace('card-','');
       card.classList.toggle('expanded');
-      if(card.classList.contains('expanded')){expandedCards.add(dayId);injectDayActsSection(dayId);}
+      if(card.classList.contains('expanded')){expandedCards.add(dayId);injectDayActsSection(dayId);initItinDragDrop(dayId);}
       else expandedCards.delete(dayId);
     });
   });
@@ -979,7 +978,7 @@ function renderItinerary(){
   // Restore expanded cards
   expandedCards.forEach(dayId=>{
     const card=document.getElementById('card-'+dayId);
-    if(card&&!card.classList.contains('expanded')){card.classList.add('expanded');injectDayActsSection(dayId);}
+    if(card&&!card.classList.contains('expanded')){card.classList.add('expanded');injectDayActsSection(dayId);initItinDragDrop(dayId);}
   });
 
   // Auto-expand today
@@ -1033,7 +1032,8 @@ function renderFsItem(dayId,act,isEdit){
   const editBtns=isEdit?'<span class="item-edit-btns"><button class="conf-toggle-btn" onclick="openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')" title="Edit">\u270e</button><button class="conf-toggle-btn" onclick="deleteAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')" title="Delete">\u2715</button></span>':'';
   if(isSub)return '<div class="act sub-item"><div class="act-time"></div><div class="act-body"><div class="act-sub">'+titleText+dur+'</div></div></div>';
   const desc=act.desc?'<div class="act-sub">'+esc(act.desc)+'</div>':'';
-  return '<div class="act'+(isBooked?' booked':'')+'">'+time+'<div class="act-body"><div class="act-text">'+titleText+'</div>'+desc+dur+confHtml+'</div>'+editBtns+'</div>';
+  const dragAttr=isEdit?' draggable="true" data-act-id="'+ea(act.id)+'" data-day-id="'+ea(dayId)+'"':'';
+  return '<div class="act'+(isBooked?' booked':'')+'"'+dragAttr+'>'+time+'<div class="act-body"><div class="act-text">'+titleText+'</div>'+desc+dur+confHtml+'</div>'+editBtns+'</div>';
 }
 
 // Render a static (hardcoded DAYS) item
@@ -1107,6 +1107,45 @@ function renderFsActivities(dayId,acts){
   }).join('');
 }
 function driveUrlToThumb(url){if(!url)return null;const m=url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)||url.match(/[?&]id=([a-zA-Z0-9_-]+)/);return m?'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w480':null;}
+
+// Drag-and-drop for main Firestore itinerary items
+function initItinDragDrop(dayId){
+  const card = document.getElementById('card-' + dayId);
+  if (!card || !currentUser) return;
+  const dayBody = card.querySelector('.day-body');
+  if (!dayBody) return;
+  let draggedId = null;
+  dayBody.querySelectorAll('.act[draggable="true"]').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      draggedId = el.dataset.actId;
+      el.style.opacity = '0.35';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => { el.style.opacity = ''; });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      el.style.borderTop = '2px solid var(--red)';
+    });
+    el.addEventListener('dragleave', () => { el.style.borderTop = ''; });
+    el.addEventListener('drop', async e => {
+      e.preventDefault();
+      el.style.borderTop = '';
+      const targetId = el.dataset.actId;
+      if (!draggedId || draggedId === targetId) return;
+      const dateId = dayIdToDate(dayId), dd = firestoreDays[dateId];
+      if (!dd) return;
+      let acts = [...(dd.activities || [])];
+      const fi = acts.findIndex(a => a.id === draggedId);
+      const ti = acts.findIndex(a => a.id === targetId);
+      if (fi < 0 || ti < 0) return;
+      const [moved] = acts.splice(fi, 1);
+      acts.splice(ti, 0, moved);
+      acts = acts.map((a, i) => ({ ...a, order: i }));
+      await db.collection('days').doc(dateId).set({ ...dd, dayDate: dateId, activities: acts });
+      showToast('Reordered', 'ok');
+    });
+  });
+}
 
 function initDragDrop(dayId){
   const list=document.getElementById('acts-list-'+dayId); if(!list)return;
@@ -1270,13 +1309,15 @@ function renderPlan(){
     +'<button class="pt-tab'+(ptTab==='tips'?' active':'')+'" data-pt="tips">Japan Tips</button>'
     +'</div>';
 
-  const urgentHtml='<div class="urgent-wrap">'
+  const dismissed=JSON.parse(localStorage.getItem('japan-dismissed')||'{}');
+  const visibleUrgent=URGENT.filter(u=>!dismissed[u.id]);
+  const urgentHtml=visibleUrgent.length?'<div class="urgent-wrap">'
     +'<div class="urgent-hd"><span class="urgent-label">&#9888; Still needs booking</span></div>'
-    +URGENT.map(u=>'<div class="urgent-item"><div class="urgent-title">'+esc(u.label)+'</div>'
+    +visibleUrgent.map(u=>'<div class="urgent-item"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><div class="urgent-title">'+esc(u.label)+'</div>'
       +'<div class="urgent-sub">'+esc(u.sub)+'</div>'
       +(u.link?'<a href="'+ea(u.link)+'" target="_blank" rel="noopener" class="urgent-link">'+esc(u.linkLabel)+'</a>':'')
-      +'</div>').join('')
-    +'</div>';
+      +'</div><button class="conf-toggle-btn" onclick="dismissUrgent(\''+u.id+'\')" title="Mark as booked" style="font-size:11px;white-space:nowrap;color:var(--green)">\u2713 Booked</button></div></div>').join('')
+    +'</div>':'';
 
   // Booked section
   const bookedHtml='<div class="cl-section" id="cl-booked">'
@@ -1328,9 +1369,16 @@ function renderPlan(){
     :sec.items.map(tip=>'<div class="tip-card"><div class="tip-card-title">'+esc(tip.title)+'</div><div class="tip-card-body">'+tip.body+'</div></div>').join(''))
     +'</div>').join('');
 
+  // Packing progress
+  const packChecksAll=JSON.parse(localStorage.getItem('japan-packing')||'{}');
+  const totalPackItems=PACKING.reduce((s,g)=>s+g.items.length,0);
+  const packedCount=Object.keys(packChecksAll).length;
+  const packPct=totalPackItems?Math.round((packedCount/totalPackItems)*100):0;
+  const packProgressHtml='<div class="pack-progress"><div class="pack-progress-text"><span>'+packedCount+'</span> / '+totalPackItems+' packed</div><div class="pack-progress-bar"><div class="pack-progress-fill" style="width:'+packPct+'%"></div></div><div class="pack-progress-text">'+packPct+'%</div></div>';
+
   el.innerHTML=tabBar
     +'<div class="pt-panel'+(ptTab==='tasks'?' active':'')+'" id="pt-tasks">'+urgentHtml+checklistHtml+bookedHtml+'</div>'
-    +'<div class="pt-panel'+(ptTab==='packing'?' active':'')+'" id="pt-packing">'+packingHtml+'</div>'
+    +'<div class="pt-panel'+(ptTab==='packing'?' active':'')+'" id="pt-packing">'+packProgressHtml+packingHtml+'</div>'
     +'<div class="pt-panel'+(ptTab==='tips'?' active':'')+'" id="pt-tips">'+tipsHtml+'</div>';
 
   // Tab switching
@@ -1340,6 +1388,13 @@ function renderPlan(){
   el.querySelectorAll('.check-item[data-check]').forEach(item=>item.addEventListener('click',()=>toggleCheck(item.dataset.check)));
 }
 
+window.dismissUrgent=function(id){
+  const d=JSON.parse(localStorage.getItem('japan-dismissed')||'{}');
+  d[id]=true;
+  localStorage.setItem('japan-dismissed',JSON.stringify(d));
+  renderPlan();
+  showToast('Marked as booked','ok');
+};
 window.toggleClSection=function(id){
   document.getElementById('cl-'+id)?.classList.toggle('expanded');
 };
@@ -1474,7 +1529,9 @@ function renderBudget(){
     +'</div>'
     // Pre-booked table
     +'<div class="b-table-wrap"><div class="b-table-hd"><span class="b-table-title">Pre-booked costs</span>'
-    +'<button class="booked-edit-btn" id="bookedEditToggle">'+(bookedEditing?'Cancel':'Edit who paid')+'</button></div>'
+    +'<div style="display:flex;gap:6px">'
+    +'<button class="booked-edit-btn" id="bookedEditToggle">'+(bookedEditing?'Done':'Edit')+'</button>'
+    +'</div></div>'
     +'<div class="b-table-scroll"><table class="b-table">'
     +'<thead><tr><th>Category</th><th>Item</th><th>Amount</th><th>Paid by</th><th>Split</th></tr></thead>'
     +'<tbody id="bcView" style="'+(bookedEditing?'display:none':'')+'">'+bookedCosts.map(c=>{
