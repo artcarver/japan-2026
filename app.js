@@ -61,6 +61,7 @@ let editActId      = null;
 let ovTimer        = null;
 let selectedCat    = 'food';
 let selectedPayer  = 'gwen';
+let editExpId      = null;
 
 // ── Trip dates ────────────────────────────────────────────────
 const TRIP_START = new Date('2026-04-15T00:00:00');
@@ -112,6 +113,87 @@ function dayIdToDate(id){
   const m=id.match(/^([a-z]+)(\d+)$/); if(!m)return id;
   return '2026-'+(({apr:'04',may:'05',mar:'03'})[m[1]]||'04')+'-'+String(m[2]).padStart(2,'0');
 }
+
+// Parse time strings like "10:45 AM", "5:30 PM", "~2:30 PM" into minutes since midnight for sorting
+function parseTimeToMinutes(t){
+  if(!t)return 9999; // no time = sort to end
+  const clean=t.replace(/^~/, '').trim();
+  const m=clean.match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/);
+  if(!m)return 9999;
+  let h=parseInt(m[1],10), min=parseInt(m[2],10);
+  const ampm=(m[3]||'').toUpperCase();
+  if(ampm==='PM'&&h<12)h+=12;
+  if(ampm==='AM'&&h===12)h=0;
+  return h*60+min;
+}
+
+// Sort activities by time, keeping period labels as group headers
+function sortActivitiesByTime(acts){
+  // Separate period labels from items
+  // Strategy: assign each item to the period label above it,
+  // sort items within each group by time, then flatten back
+  const groups=[]; let currentGroup=null;
+  acts.forEach(act=>{
+    if(act.type==='period-label'){
+      currentGroup={label:act,items:[]};
+      groups.push(currentGroup);
+    } else if(currentGroup){
+      currentGroup.items.push(act);
+    } else {
+      // Item before any period label - create implicit group
+      if(!groups.length||groups[groups.length-1].label)groups.push({label:null,items:[]});
+      groups[groups.length-1].items.push(act);
+    }
+  });
+  // Sort non-sub items by time, then re-attach subs after their parent
+  groups.forEach(g=>{
+    // Separate into parent items and sub-items-attached-to-parent
+    const parents = [];
+    const subMap = new Map(); // parentIndex -> [sub items]
+    let lastParentIdx = -1;
+    g.items.forEach(item => {
+      if (item.sub) {
+        if (lastParentIdx >= 0) {
+          if (!subMap.has(lastParentIdx)) subMap.set(lastParentIdx, []);
+          subMap.get(lastParentIdx).push(item);
+        } else {
+          parents.push(item); // orphan sub, treat as parent
+          lastParentIdx = parents.length - 1;
+        }
+      } else {
+        parents.push(item);
+        lastParentIdx = parents.length - 1;
+      }
+    });
+    // Sort parents by time
+    parents.sort((a, b) => {
+      if (a.sub) return 1; // orphan subs go last
+      if (b.sub) return -1;
+      return parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time);
+    });
+    // Rebuild with subs after their parent (using original index mapping)
+    const originalParents = [];
+    let opi = -1;
+    g.items.forEach(item => {
+      if (!item.sub) { opi++; originalParents.push(item); }
+    });
+    g.items = [];
+    parents.forEach(p => {
+      g.items.push(p);
+      const origIdx = originalParents.indexOf(p);
+      if (origIdx >= 0 && subMap.has(origIdx)) {
+        subMap.get(origIdx).forEach(s => g.items.push(s));
+      }
+    });
+  });
+  // Flatten back with updated order numbers
+  const result = []; let order = 0;
+  groups.forEach(g => {
+    if (g.label) { g.label.order = order++; result.push(g.label); }
+    g.items.forEach(item => { item.order = order++; result.push(item); });
+  });
+  return result;
+}
 function updateClock(){
   const el=$('jstClock'); if(!el)return;
   const jst=getTodayJST();
@@ -162,6 +244,10 @@ function closeModal(id){$(id)?.classList.remove('open');}
 window.closeModal=closeModal;
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){
+    if($('activityModal')?.classList.contains('open'))saveActivity();
+    if($('expenseModal')?.classList.contains('open'))saveExpense();
+  }
 });
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
 
@@ -290,7 +376,7 @@ const DAYS = {
       {time:'7:00 PM',text:'Fuunji ramen · exceptional tsukemen · short queue likely',addr:'Fuunji Ramen, Nishi-Shinjuku, Tokyo'},
       {time:'8:30 PM',text:'Golden Gai · cluster of tiny themed bars (jazz, film, rock) · just wander in'},
     ]},
-  ],tip:null},
+  ],tip:''},
 
   apr19:{id:'apr19',date:'SUN APR 19',title:'Kamakura Day Trip',location:'Tokyo → Kamakura (~1 hr)',periods:[
     {label:'Morning — Kita-Kamakura',items:[
@@ -551,7 +637,7 @@ const OVERVIEW_DATA = [
   {city:'Kawaguchiko',dates:'Apr 20 \u00b7 morning only',nights:0,waypoint:true,hotel:'Transit stop en route to Hakone',
    highlights:[
      {text:'Oishi Park \u2014 Mt. Fuji reflected in the lake with cherry blossoms',star:true},
-     {text:'Optional: Chureito Pagoda \u2014 5-story pagoda framing Fuji from above'},
+     {text:'Chureito Pagoda \u2014 five-story pagoda framing Fuji from above'},
    ]},
   {city:'Hakone',dates:'Apr 20\u201322',nights:2,hotel:'Tensui Saryo Ryokan \u00b7 Gora \u00b7 private outdoor onsen',phone:'+81-570-062-302',
    highlights:[
@@ -852,11 +938,11 @@ function renderOverview(){
   el.innerHTML=
     '<div class="ov-hero"><div class="ov-hero-top"><div><div class="ov-eyebrow">April 15\u201329, 2026 &middot; 15 days &middot; 5 cities &middot; 4 day trips</div><div class="ov-title">Japan</div><div class="ov-who">Gwendalynn &amp; Christina</div></div><div class="ov-cd" id="ovCd">'+cdHtml()+'</div></div>'
     +(inTrip&&todayDay?'<div class="ov-in-japan"><div class="ov-currently-label">Currently in</div><div class="ov-currently-city">'+esc(todayDay.location)+'</div></div>':'')
-    +'<div class="ov-meta-row">Tokyo \u00b7 Hakone \u00b7 Kyoto \u00b7 Kanazawa \u00b7 Tokyo</div></div>'
+    +'</div>'
     +'<div class="ov-section-label" style="margin-bottom:10px">Hotels &amp; emergency contacts</div>'
     +'<div class="family-strip"><div class="hotel-grid">'+hotelGrid+'</div></div>'
-    +'<div class="ov-section-label">Where we\'re going</div><div class="ov-route">'+journeyHtml+'</div>'
-    +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">See full day-by-day itinerary \u2192</button></div>';
+    +'<div class="ov-section-label" style="margin-top:8px">The route</div><div class="ov-route">'+journeyHtml+'</div>'
+    +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">View full itinerary \u2192</button></div>';
 
   if(ovTimer)clearInterval(ovTimer);
   const closeToDepart=now<T_DEPART&&(T_DEPART-now)<86400000;
@@ -910,7 +996,7 @@ function renderItinerary(){
 function renderDay(d){
   const cls=getDayClass(d.id), isToday=cls==='today';
   const noteText=notes[d.id]||'';
-  const noteRead=noteText?noteText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'):'<em>No notes yet \u2014 sign in to add notes.</em>';
+  const noteRead=noteText?noteText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'):(currentUser?'<em>No notes yet \u2014 type below to add.</em>':'<em>No notes yet.</em>');
 
   // Use Firestore data if available for the full itinerary
   const dateId=dayIdToDate(d.id), fsDay=firestoreDays[dateId];
@@ -918,13 +1004,13 @@ function renderDay(d){
   let bodyContent;
 
   if(fsDay&&fsDay.activities&&fsDay.activities.length>0){
-    const acts=[...fsDay.activities].sort((a,b)=>(a.order||0)-(b.order||0));
+    const acts=sortActivitiesByTime([...fsDay.activities]);
     bodyContent=acts.map(act=>{
       if(act.type==='period-label')return '<div class="period"><div class="period-label">'+esc(act.title)+'</div></div>';
       return renderFsItem(d.id,act,isEdit);
     }).join('');
     bodyContent+=isEdit?'<button class="add-act-btn" onclick="openAddAct(\''+d.id+'\')">+ Add activity</button>':'';
-    bodyContent+=(fsDay.tip||d.tip)?'<div class="tip-block"><span class="tip-label">Tip </span>'+(fsDay.tip||d.tip)+'</div>':'';
+    const tipText=fsDay?.tip||d.tip||'';bodyContent+=tipText?'<div class="tip-block"><span class="tip-label">Tip </span>'+tipText+'</div>':'';
   } else {
     bodyContent=d.periods.map(p=>'<div class="period"><div class="period-label">'+p.label+'</div>'+p.items.map(item=>renderStaticItem(item,d.id,isEdit)).join('')+'</div>').join('');
     bodyContent+=isEdit?'<button class="add-act-btn" onclick="openAddAct(\''+d.id+'\')">+ Add activity</button>':'';
@@ -945,7 +1031,7 @@ function renderFsItem(dayId,act,isEdit){
   let confHtml='';
   if(act.conf)confHtml='<button class="conf-toggle-btn" onclick="toggleInlineConf(this)">\u25b8 show details</button><div class="inline-conf">'+esc(act.conf)+'</div>';
   const editBtns=isEdit?'<span class="item-edit-btns"><button class="conf-toggle-btn" onclick="openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')" title="Edit">\u270e</button><button class="conf-toggle-btn" onclick="deleteAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')" title="Delete">\u2715</button></span>':'';
-  if(isSub)return '<div class="act sub-item"><div class="act-time"></div><div class="act-body"><div class="act-sub">'+titleText+dur+'</div></div>'+editBtns+'</div>';
+  if(isSub)return '<div class="act sub-item"><div class="act-time"></div><div class="act-body"><div class="act-sub">'+titleText+dur+'</div></div></div>';
   const desc=act.desc?'<div class="act-sub">'+esc(act.desc)+'</div>':'';
   return '<div class="act'+(isBooked?' booked':'')+'">'+time+'<div class="act-body"><div class="act-text">'+titleText+'</div>'+desc+dur+confHtml+'</div>'+editBtns+'</div>';
 }
@@ -1003,7 +1089,7 @@ function injectDayActsSection(dayId){
 function enhanceExpandedCards(){document.querySelectorAll('.day-card.expanded').forEach(card=>injectDayActsSection(card.id.replace('card-','')));}
 function getDayActivities(dayId){
   const dateId=dayIdToDate(dayId);
-  return firestoreDays[dateId]?[...(firestoreDays[dateId].activities||[])].sort((a,b)=>(a.order||0)-(b.order||0)):null;
+  return firestoreDays[dateId]?sortActivitiesByTime([...(firestoreDays[dateId].activities||[])]):null;
 }
 function renderFsActivities(dayId,acts){
   if(!acts||!acts.length)return currentUser?'<div class="fs-empty">Nothing added yet.</div>':'<div class="fs-empty">Sign in to add activities.</div>';
@@ -1091,10 +1177,12 @@ async function saveActivity(){
       id:editActId||('act-'+Date.now()),time:$('actTime')?.value||'',title,
       category:$('actCategory')?.value||'activity',notes:$('actNotes')?.value.trim()||'',
       cost:parseFloat($('actCost')?.value)||0,currency:$('actCurrency')?.value||'JPY',
-      driveUrl:$('actPhoto')?.value.trim()||'',order:0,
+      driveUrl:$('actPhoto')?.value.trim()||'',order:acts.length,
     };
     if(editActId){const i=acts.findIndex(a=>a.id===editActId); if(i!==-1)acts[i]={...acts[i],...newAct};}
     else{newAct.order=acts.length; acts.push(newAct);}
+    // Re-sort by time before saving
+    acts=sortActivitiesByTime(acts);
     await db.collection('days').doc(dateId).set({...dd,dayDate:dateId,activities:acts});
     closeModal('activityModal');
     showToast(editActId?'Activity updated':'Activity added','ok');
@@ -1202,19 +1290,37 @@ function renderPlan(){
   const checklistHtml=CHECKLIST.map(sec=>{
     const done=sec.items.filter(i=>checks[i.id]).length;
     return '<div class="cl-section expanded" id="cl-'+sec.id+'">'
-      +'<div class="cl-section-hd" onclick="toggleClSection(\''+ sec.id +'\')">'
-      +'<span class="cl-section-title">'+esc(sec.title)+'</span>'
+      +'<div class="cl-section-hd" onclick="toggleClSection(\''+sec.id+'\')"><span class="cl-section-title">'+esc(sec.title)+'</span>'
       +'<div class="cl-section-meta"><span class="cl-progress"><span>'+done+'</span> / '+sec.items.length+'</span><span class="cl-toggle">&#9660;</span></div></div>'
       +'<div class="cl-items">'+sec.items.map(item=>'<div class="check-item'+(checks[item.id]?' done':'')+'" data-check="'+item.id+'">'
         +'<div class="check-box'+(checks[item.id]?' checked':'')+'"></div>'
-        +'<div><div class="check-label">'+esc(item.label)+'</div>'+(item.sub?'<div class="check-sub">'+esc(item.sub)+'</div>':'')+'</div></div>').join('')
+        +'<div style="flex:1"><div class="check-label">'+esc(item.label)+'</div>'+(item.sub?'<div class="check-sub">'+esc(item.sub)+'</div>':'')+'</div>'
+        +(currentUser?'<button class="conf-toggle-btn" onclick="event.stopPropagation();deleteCheckItem(\''+sec.id+'\',\''+item.id+'\')" title="Remove" style="opacity:0.3;font-size:11px">&times;</button>':'')
+        +'</div>').join('')
+      +(currentUser?'<div style="display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--border-lt)">'
+        +'<input type="text" class="form-input" id="clAdd-'+sec.id+'" placeholder="Add a task\u2026" style="flex:1;font-size:12px;padding:6px 10px" onkeydown="if(event.key===\'Enter\')addCheckItem(\''+sec.id+'\')">'
+        +'<button class="btn-primary" onclick="addCheckItem(\''+sec.id+'\')" style="font-size:12px;padding:6px 12px">Add</button></div>':'')
       +'</div></div>';
-  }).join('');
+  }).join('')
 
-  const packingHtml=PACKING.map(group=>'<div class="pack-cat">'
+  const packChecks=JSON.parse(localStorage.getItem('japan-packing')||'{}');
+  const packingHtml=PACKING.map((group,gi)=>'<div class="pack-cat">'
     +'<div class="pack-cat-head">'+esc(group.cat)+'</div>'
-    +group.items.map(item=>'<div class="pack-item-row"><span class="pack-item-text">'+esc(item)+'</span></div>').join('')
-    +'</div>').join('');
+    +group.items.map((item,ii)=>{
+      const pid='pk-'+gi+'-'+ii;
+      const done=packChecks[pid];
+      return '<div class="pack-item-row'+(done?' packed':'')+'" data-pack="'+pid+'">'
+        +'<input type="checkbox" '+(done?'checked ':'')+' onchange="togglePack(&quot;'+pid+'&quot;,this.checked)">'
+        +'<span class="pack-item-text">'+esc(item)+'</span>'
+        +(currentUser?'<button class="conf-toggle-btn" onclick="event.stopPropagation();deletePackItem('+gi+','+ii+')" title="Remove" style="opacity:0.3;font-size:11px;margin-left:auto">&times;</button>':'')
+        +'</div>';
+    }).join('')
+    +'</div>').join('')
+    +(currentUser?'<div style="margin-top:16px;padding:12px 0;border-top:1px solid var(--border-lt)">'
+    +'<div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--light);margin-bottom:8px">Add item</div>'
+    +'<div style="display:flex;gap:6px"><select class="form-input form-select" id="packCatSel" style="width:auto;min-width:120px;font-size:12px;padding:6px 8px">'+PACKING.map(g=>'<option>'+esc(g.cat.split('\u2014')[0].trim())+'</option>').join('')+'</select>'
+    +'<input type="text" class="form-input" id="packAddInput" placeholder="Item to pack\u2026" style="flex:1;font-size:12px;padding:6px 8px">'
+    +'<button class="btn-primary" onclick="addPackItem()" style="font-size:12px;padding:6px 12px">Add</button></div></div>':'');
 
   const tipsHtml=TIPS_DATA.map(sec=>'<div class="tips-section">'
     +'<div class="tips-section-title">'+esc(sec.title)+'</div>'
@@ -1244,6 +1350,45 @@ async function toggleCheck(id){
   else{try{localStorage.setItem('japan-checks',JSON.stringify(checks));}catch{}}
 }
 
+window.addCheckItem=function(secId){
+  const inp=$('clAdd-'+secId); if(!inp||!inp.value.trim())return;
+  const sec=CHECKLIST.find(s=>s.id===secId); if(!sec)return;
+  const newId='c-'+Date.now();
+  sec.items.push({id:newId,label:inp.value.trim(),sub:''});
+  inp.value='';
+  renderPlan();
+  showToast('Task added','ok');
+};
+window.deleteCheckItem=function(secId,itemId){
+  const sec=CHECKLIST.find(s=>s.id===secId); if(!sec)return;
+  sec.items=sec.items.filter(i=>i.id!==itemId);
+  delete checks[itemId];
+  renderPlan();
+  showToast('Task removed');
+};
+
+// Packing list helpers
+window.togglePack=function(id,val){
+  const pc=JSON.parse(localStorage.getItem('japan-packing')||'{}');
+  if(val)pc[id]=true; else delete pc[id];
+  localStorage.setItem('japan-packing',JSON.stringify(pc));
+  renderPlan();
+};
+window.addPackItem=function(){
+  const inp=$('packAddInput'), sel=$('packCatSel');
+  if(!inp||!sel||!inp.value.trim())return;
+  const catName=sel.value.trim();
+  const group=PACKING.find(g=>g.cat.startsWith(catName));
+  if(group){group.items.push(inp.value.trim()); inp.value=''; renderPlan(); showToast('Added to packing list','ok');}
+};
+window.deletePackItem=function(gi,ii){
+  if(PACKING[gi]&&PACKING[gi].items[ii]!==undefined){
+    PACKING[gi].items.splice(ii,1);
+    renderPlan();
+    showToast('Removed from packing list');
+  }
+};
+
 // ── Budget ────────────────────────────────────────────────────
 function renderBudget(){
   const el=$('panel-budget'); if(!el)return;
@@ -1264,6 +1409,7 @@ function renderBudget(){
     if(!c.jpy)return;
     if(c.paidBy==='gwen'){gwenPaid+=c.jpy; settlement+=c.jpy/2;}
     else if(c.paidBy==='christina'){christinaPaid+=c.jpy; settlement-=c.jpy/2;}
+    else if(c.paidBy==='split'){gwenPaid+=c.jpy/2; christinaPaid+=c.jpy/2;}
   });
   expenses.forEach(e=>{
     const a=e.amount||0;
@@ -1296,6 +1442,7 @@ function renderBudget(){
           +'<div class="exp-cat-stripe" style="background:'+(CAT_COLORS[e.category]||'#ccc')+'"></div>'
           +'<div class="exp-body"><div class="exp-top"><span class="exp-desc">'+esc(e.description||e.category||'')+'</span><span class="exp-amount">\u00a5'+(e.amount||0).toLocaleString()+'</span></div>'
           +'<div class="exp-meta"><span>'+(e.paidBy==='gwen'?'Gwen':'Christina')+' paid</span>'+(e.split?'<span class="exp-tag split">Split</span>':'')+' <span class="exp-tag">'+esc(e.category||'')+'</span></div></div>'
+          +'<button class="exp-edit" data-id="'+ea(e.id||'')+'" title="Edit" style="background:none;border:none;border-left:1px solid var(--border-lt);padding:0 8px;cursor:pointer;color:var(--light);font-size:11px">\u270e</button>'
           +'<button class="exp-delete" data-id="'+ea(e.id||'')+'" title="Delete">&times;</button></div>'
         ).join('')+'</div>';
     }).join('');
@@ -1371,10 +1518,35 @@ function renderBudget(){
     e.stopPropagation();
     if(confirm('Delete this expense?'))await deleteExpense(btn.dataset.id);
   }));
+  el.querySelectorAll('.exp-edit').forEach(btn=>btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    openEditExpense(btn.dataset.id);
+  }));
 }
 
 // ── Expense modal ─────────────────────────────────────────────
+function openEditExpense(id){
+  const exp=expenses.find(e=>e.id===id);
+  if(!exp)return;
+  editExpId=id;
+  if($('expAmount'))$('expAmount').value=exp.amount||'';
+  if($('expNote'))$('expNote').value=exp.description||'';
+  if($('expDate'))$('expDate').value=exp.date||'';
+  selectedCat=exp.category||'food';
+  selectedPayer=exp.paidBy||'gwen';
+  document.querySelectorAll('#expCatChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.cat===selectedCat));
+  document.querySelectorAll('#expPayerChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.payer===selectedPayer));
+  if($('expSplit'))$('expSplit').checked=!!exp.split;
+  if($('expDate'))$('expDate').style.display='block';
+  document.querySelectorAll('.qd-btn').forEach(b=>b.classList.remove('active'));
+  $('expErr')?.classList.add('hidden');
+  const saveBtn=$('expSaveBtn'); if(saveBtn)saveBtn.textContent='Save changes';
+  openModal('expenseModal');
+  setTimeout(()=>$('expAmount')?.focus(),80);
+}
 function openExpenseModal(){
+  editExpId=null;
+  const saveBtn=$('expSaveBtn'); if(saveBtn)saveBtn.textContent='Add expense';
   const now=getTodayJST();
   const inTrip=now>=TRIP_START&&now<=TRIP_END;
   const useDate=inTrip?now:TRIP_START;
@@ -1434,14 +1606,23 @@ async function saveExpense(){
   if(!amount||amount<=0){if($('expErr')){$('expErr').textContent='Enter an amount.';$('expErr').classList.remove('hidden');}return;}
   const btn=$('expSaveBtn'); if(btn){btn.textContent='Adding\u2026';btn.disabled=true;}
   try{
-    await addExpense({
+    const expData={
       amount, category:selectedCat,
       description:$('expNote')?.value.trim()||selectedCat,
       paidBy:selectedPayer, split:!!$('expSplit')?.checked,
       date:$('expDate')?.value||'',
-    });
-    closeModal('expenseModal');
-    showToast('Added \u00a5'+amount.toLocaleString(),'ok');
+    };
+    if(editExpId){
+      // Update existing expense
+      if(currentUser){try{await db.collection('expenses').doc(editExpId).update(expData);}catch(e){throw e;}}
+      else{const i=localExpenses.findIndex(e=>e.id===editExpId);if(i!==-1){localExpenses[i]={...localExpenses[i],...expData};saveLocalExpenses();expenses=[...localExpenses];renderBudget();}}
+      closeModal('expenseModal');
+      showToast('Expense updated','ok');
+    } else {
+      await addExpense(expData);
+      closeModal('expenseModal');
+      showToast('Added \u00a5'+amount.toLocaleString(),'ok');
+    }
   }catch(e){
     if($('expErr')){$('expErr').textContent='Could not save. Check connection.';$('expErr').classList.remove('hidden');}
   }finally{
@@ -1507,11 +1688,15 @@ async function seedDays(){
       day.periods.forEach(p=>{
         activities.push({id:dayId+'-pl-'+order,type:'period-label',title:p.label,order:order++});
         p.items.forEach(item=>{
+          // Parse cost from text like "¥500" or "¥2,000 (~$13)"
+          let itemCost=0;
+          const costMatch=(item.text||'').match(/[¥\u00a5]([\d,]+)/);
+          if(costMatch)itemCost=parseInt(costMatch[1].replace(/,/g,''),10)||0;
           activities.push({
             id:dayId+'-'+order,time:item.time||'',title:item.text||'',desc:'',
             category:item.type==='booked'?'hotel':'activity',
             booked:item.type==='booked',conf:'',addr:item.addr||'',
-            notes:'',cost:0,currency:'JPY',driveUrl:'',
+            notes:'',cost:itemCost,currency:'JPY',driveUrl:'',
             sub:item.sub||false,dur:item.dur||'',order:order++,
           });
         });

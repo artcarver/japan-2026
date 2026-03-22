@@ -252,9 +252,9 @@ header {
 .ov-hero::after {
   content: '日本';
   font-family: var(--serif);
-  position: absolute; right: -10px; bottom: -20px;
-  font-size: 110px; font-weight: 400;
-  color: rgba(255,255,255,.04);
+  position: absolute; right: 20px; bottom: -14px;
+  font-size: 120px; font-weight: 400;
+  color: rgba(255,255,255,.06);
   pointer-events: none; user-select: none;
   line-height: 1;
 }
@@ -309,10 +309,7 @@ header {
   font-family: var(--serif); font-size: 22px; color: rgba(255,255,255,.85);
 }
 
-.ov-meta-row {
-  font-size: 12px; color: rgba(255,255,255,.3);
-  margin-top: 14px; letter-spacing: 0.03em;
-}
+/* ov-meta-row removed */
 
 /* City stops */
 .ov-section-label {
@@ -389,7 +386,7 @@ header {
 .family-strip {
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--r-lg); overflow: hidden;
-  margin-bottom: 28px; box-shadow: var(--sh);
+  margin-bottom: 32px; box-shadow: var(--sh);
 }
 .family-strip-hd {
   padding: 12px 16px 10px;
@@ -397,7 +394,7 @@ header {
   display: flex; align-items: center; justify-content: space-between;
 }
 .family-strip-title { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--light); }
-.hotel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0; }
+.hotel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0; }
 .hotel-cell {
   padding: 12px 16px;
   border-right: 1px solid var(--border-lt);
@@ -509,7 +506,7 @@ body.edit-mode .notes-dot.has-notes { display: block; }
 }
 
 /* Activity rows */
-.act { display: grid; grid-template-columns: 64px 1fr; gap: 6px; padding: 3px 0; align-items: start; }
+/* overridden below */
 .act-dot {
   position: relative;
   width: 8px; height: 8px; border-radius: 50%;
@@ -1399,6 +1396,7 @@ body.dark .highlight { background: #4A4000; }
     width: 100%; border-bottom-left-radius: 0; border-bottom-right-radius: 0;
     border-top-left-radius: var(--r-xl); border-top-right-radius: var(--r-xl);
     max-height: 92vh; animation: slideUp 0.25s cubic-bezier(.4,0,.2,1) both;
+    overflow-y: auto;
   }
   .modal-sm { width: 100%; }
   .tip-phrase-row { grid-template-columns: 1fr 1fr; }
@@ -1435,7 +1433,27 @@ body.dark .highlight { background: #4A4000; }
 .item-edit-btns:hover { opacity: 1 !important; }
 .item-edit-btns .conf-toggle-btn { padding: 1px 4px; }
 
-/* Grid fix for acts with edit buttons */
+/* Activity row layout */
 .act { display: flex; gap: 6px; padding: 3px 0; align-items: flex-start; }
-.act-time { min-width: 64px; text-align: right; padding-right: 6px; flex-shrink: 0; }
+.act-time { min-width: 64px; text-align: right; padding-right: 6px; flex-shrink: 0;
+  font-family: var(--mono); font-size: 10.5px; color: var(--light);
+  padding-top: 2px; line-height: 1.4; }
 .act-body { flex: 1; min-width: 0; }
+
+/* Expense edit button */
+.exp-edit { transition: color var(--speed), background var(--speed); }
+.exp-edit:hover { background: var(--card-2); color: var(--red); }
+
+/* Plan tab inline add forms */
+.cl-items .form-input,
+.pack-cat .form-input { transition: border-color var(--speed); }
+.cl-items .form-input:focus,
+.pack-cat .form-input:focus { border-color: var(--red); outline: none; }
+.cl-items .btn-primary,
+.pack-cat .btn-primary {
+  background: var(--red); color: #fff; border: none; border-radius: var(--r);
+  cursor: pointer; font-weight: 500; font-family: var(--sans);
+  transition: background var(--speed);
+}
+.cl-items .btn-primary:hover,
+.pack-cat .btn-primary:hover { background: var(--red-d); }
