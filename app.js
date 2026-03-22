@@ -250,6 +250,7 @@ function switchTab(tab){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+tab));
   const pills=$('destPillsWrap');
   if(pills)pills.classList.toggle('hidden',tab!=='itinerary');
+  try{localStorage.setItem('japan-tab',tab);}catch{}
   if(tab==='overview')  renderOverview();
   if(tab==='itinerary') renderItinerary();
   if(tab==='bookings')  renderBookings();
@@ -880,15 +881,15 @@ const PACKING = [
 // ── Budget seed ───────────────────────────────────────────────
 function DEFAULT_BOOKED_COSTS_fn(){
   return [
-    {id:'bc1',label:'United flights + Economy Plus seats',   category:'Flights',   jpy:349100, usd:2197, paidBy:'gwen'},
-    {id:'bc2',label:'Hotel Gracery Shinjuku \u00b7 4 nights', category:'Hotels',    jpy:200692, usd:1261, paidBy:'gwen'},
-    {id:'bc3',label:'teamLab Borderless \u00b7 2 tickets',    category:'Activities',jpy:11200,  usd:70,   paidBy:'gwen'},
-    {id:'bc4',label:'Fuji-Excursion 7',                      category:'Transport', jpy:8400,   usd:53,   paidBy:'gwen'},
-    {id:'bc5',label:'Tensui Saryo Ryokan \u00b7 2 nights',    category:'Hotels',    jpy:126340, usd:794,  paidBy:'gwen'},
-    {id:'bc6',label:'Shinkansen HIKARI 637',                  category:'Transport', jpy:23800,  usd:150,  paidBy:'gwen'},
-    {id:'bc7',label:'Hotel Granvia Kyoto \u00b7 4 nights',    category:'Hotels',    jpy:268256, usd:1686, paidBy:'gwen'},
-    {id:'bc8',label:'Hotel Intergate Kanazawa \u00b7 2 nights',category:'Hotels',   jpy:39004,  usd:245,  paidBy:'gwen'},
-    {id:'bc9',label:'Quintessa Hotel Ginza \u00b7 1 night',   category:'Hotels',    jpy:24713,  usd:155,  paidBy:'gwen'},
+    {id:'bc1',label:'United flights + Economy Plus seats',   category:'Flights',   jpy:349100, usd:2197, paidBy:'gwen', dates:'Apr 15 + Apr 29'},
+    {id:'bc2',label:'Hotel Gracery Shinjuku \u00b7 4 nights', category:'Hotels',    jpy:200692, usd:1261, paidBy:'gwen', dates:'Apr 16\u201320'},
+    {id:'bc3',label:'teamLab Borderless \u00b7 2 tickets',    category:'Activities',jpy:11200,  usd:70,   paidBy:'gwen', dates:'Apr 17'},
+    {id:'bc4',label:'Fuji-Excursion 7',                      category:'Transport', jpy:8400,   usd:53,   paidBy:'gwen', dates:'Apr 20'},
+    {id:'bc5',label:'Tensui Saryo Ryokan \u00b7 2 nights',    category:'Hotels',    jpy:126340, usd:794,  paidBy:'gwen', dates:'Apr 20\u201322'},
+    {id:'bc6',label:'Shinkansen HIKARI 637',                  category:'Transport', jpy:23800,  usd:150,  paidBy:'gwen', dates:'Apr 22'},
+    {id:'bc7',label:'Hotel Granvia Kyoto \u00b7 4 nights',    category:'Hotels',    jpy:268256, usd:1686, paidBy:'gwen', dates:'Apr 22\u201326'},
+    {id:'bc8',label:'Hotel Intergate Kanazawa \u00b7 2 nights',category:'Hotels',   jpy:39004,  usd:245,  paidBy:'gwen', dates:'Apr 26\u201328'},
+    {id:'bc9',label:'Quintessa Hotel Ginza \u00b7 1 night',   category:'Hotels',    jpy:24713,  usd:155,  paidBy:'gwen', dates:'Apr 28\u201329'},
   ];
 }
 const CAT_COLORS={food:'#E91E8C',drinks:'#C0392B',transport:'#4A90D9',shopping:'#F39C12',activities:'#27AE60',other:'#8E8E8E'};
@@ -1385,7 +1386,11 @@ function renderPlan(){
   el.innerHTML=tabBar
     +'<div class="pt-panel'+(ptTab==='tasks'?' active':'')+'" id="pt-tasks">'+urgentHtml+checklistHtml+bookedHtml+'</div>'
     +'<div class="pt-panel'+(ptTab==='packing'?' active':'')+'" id="pt-packing">'+packProgressHtml+packingHtml+'</div>'
-    +'<div class="pt-panel'+(ptTab==='tips'?' active':'')+'" id="pt-tips">'+tipsHtml+'</div>';
+    +'<div class="pt-panel'+(ptTab==='tips'?' active':'')+'" id="pt-tips">'+tipsHtml+'</div>'
+    +(currentUser?'<div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'
+      +'<div><div style="font-size:13px;font-weight:500;color:var(--text)">Export trip data</div>'
+      +'<div style="font-size:12px;color:var(--light)">Download itinerary, bookings, budget, and notes as JSON</div></div>'
+      +'<button class="booked-edit-btn" onclick="exportTripData()" style="white-space:nowrap">Download JSON</button></div>':'');
 
   // Tab switching
   el.querySelectorAll('.pt-tab').forEach(btn=>btn.addEventListener('click',()=>{ptTab=btn.dataset.pt;renderPlan();}));
@@ -1502,7 +1507,7 @@ function renderBudget(){
         +byDay[day].map(e=>'<div class="expense-item">'
           +'<div class="exp-cat-stripe" style="background:'+(CAT_COLORS[e.category]||'#ccc')+'"></div>'
           +'<div class="exp-body"><div class="exp-top"><span class="exp-desc">'+esc(e.description||e.category||'')+'</span><span class="exp-amount">\u00a5'+(e.amount||0).toLocaleString()+'</span></div>'
-          +'<div class="exp-meta"><span>'+(e.paidBy==='gwen'?'Gwen':'Christina')+' paid</span>'+(e.split?'<span class="exp-tag split">Split</span>':'')+' <span class="exp-tag">'+esc(e.category||'')+'</span></div></div>'
+          +'<div class="exp-meta"><span>'+(e.paidBy==='gwen'?'Gwen':'Christina')+' paid</span>'+(e.split?'<span class="exp-tag split">Split</span>':'')+'<span class="exp-tag">'+esc(e.category||'')+'</span>'+(e.date?'<span style="color:var(--light);font-size:10px">'+e.date+'</span>':'')+'</div></div>'
           +'<button class="exp-edit" data-id="'+ea(e.id||'')+'" title="Edit" style="background:none;border:none;border-left:1px solid var(--border-lt);padding:0 8px;cursor:pointer;color:var(--light);font-size:11px">\u270e</button>'
           +'<button class="exp-delete" data-id="'+ea(e.id||'')+'" title="Delete">&times;</button></div>'
         ).join('')+'</div>';
@@ -1542,7 +1547,7 @@ function renderBudget(){
     +'<thead><tr><th>Category</th><th>Item</th><th>Amount</th><th>Paid by</th><th>Split</th></tr></thead>'
     +'<tbody id="bcView" style="'+(bookedEditing?'display:none':'')+'">'+bookedCosts.map(c=>{
       const catClass='b-cat-'+(c.category||'Other').toLowerCase().replace(' ','');
-      return '<tr><td><span class="b-cat-chip '+catClass+'">'+esc(c.category||'')+'</span></td><td class="b-item-cell">'+esc(c.label)+'</td><td class="b-amt-cell">'+fmt(c.jpy||0)+'</td><td>'+(c.paidBy==='gwen'?'Gwendalynn':c.paidBy==='christina'?'Christina':'Split')+'</td><td>50/50</td></tr>';
+      return '<tr><td><span class="b-cat-chip '+catClass+'">'+esc(c.category||'')+'</span></td><td class="b-item-cell">'+esc(c.label)+(c.dates?'<div style="font-size:10px;color:var(--light);margin-top:1px">'+esc(c.dates)+'</div>':'')+'</td><td class="b-amt-cell">'+fmt(c.jpy||0)+'</td><td>'+(c.paidBy==='gwen'?'Gwendalynn':c.paidBy==='christina'?'Christina':'Split')+'</td><td>50/50</td></tr>';
     }).join('')+'</tbody>'
     +'<tbody id="bcEdit" style="'+(bookedEditing?'':'display:none')+'">'+bookedCosts.map(c=>{
       const cats=['Flights','Hotels','Transport','Activities','Other'];
@@ -1908,6 +1913,91 @@ function setupEditors(){
   });
 }
 
+// ── Export all trip data ──────────────────────────────────
+window.exportTripData=async function(){
+  showToast('Gathering data\u2026');
+  try {
+    // 1. Itinerary from Firestore (or fallback to hardcoded DAYS)
+    const itinerary = {};
+    if (Object.keys(firestoreDays).length > 0) {
+      // Use live Firestore data
+      Object.entries(firestoreDays).forEach(([dateId, data]) => {
+        const dayId = data.dayId || dateId;
+        itinerary[dateId] = {
+          dayId, dateId,
+          title: data.title || '',
+          location: data.location || '',
+          tip: data.tip || '',
+          activities: (data.activities || []).map(a => ({
+            id: a.id, type: a.type || undefined,
+            time: a.time || '', title: a.title || '',
+            desc: a.desc || '', category: a.category || '',
+            booked: a.booked || false, conf: a.conf || '',
+            addr: a.addr || '', notes: a.notes || '',
+            cost: a.cost || 0, currency: a.currency || 'JPY',
+            sub: a.sub || false, dur: a.dur || '',
+            order: a.order || 0,
+          })),
+        };
+      });
+    } else {
+      // Fallback to hardcoded
+      Object.entries(DAYS).forEach(([dayId, day]) => {
+        const dateId = dayIdToDate(dayId);
+        itinerary[dateId] = { dayId, dateId, title: day.title, location: day.location, tip: day.tip || '', periods: day.periods };
+      });
+    }
+
+    // 2. Notes
+    const allNotes = { ...notes };
+
+    // 3. Confirmations
+    const confirmations = CONFIRMATIONS;
+
+    // 4. Pre-booked costs
+    const prebooked = [...bookedCosts];
+
+    // 5. Expenses
+    const expenseList = [...expenses];
+
+    // 6. Overview data
+    const overview = OVERVIEW_DATA;
+
+    // 7. Checklist state
+    const checklistState = { ...checks };
+
+    // Bundle it all
+    const exportData = {
+      _exportedAt: new Date().toISOString(),
+      _exportedBy: currentUser?.email || 'anonymous',
+      _description: 'Japan 2026 trip data export. Includes itinerary (from Firestore if signed in), notes, confirmations, pre-booked costs, expenses, and checklist state.',
+      itinerary,
+      notes: allNotes,
+      confirmations,
+      prebooked,
+      expenses: expenseList,
+      overview,
+      checklistState,
+      groups: GROUPS,
+    };
+
+    // Download as JSON
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'japan-2026-trip-data.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Trip data exported', 'ok');
+  } catch (e) {
+    console.error('Export failed:', e);
+    showToast('Export failed', 'err');
+  }
+};
+
 // ── Lightbox ──────────────────────────────────────────────────
 window.openLightbox=function(imgUrl,driveLink){
   const img=$('lightboxImg'),lnk=$('lightboxLink'),lb=$('lightbox');
@@ -1954,8 +2044,9 @@ db.collection('settings').doc('drive').get()
   .then(s=>{if(s.exists&&s.data()?.folderUrl)driveFolderUrl=s.data().folderUrl;})
   .catch(()=>{});
 
-// Initial render
-renderOverview();
+// Initial render — restore last active tab
+const savedTab=localStorage.getItem('japan-tab')||'overview';
+switchTab(savedTab);
 buildDestPills();
 updateTripStatus();
 updateClock();
