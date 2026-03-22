@@ -164,7 +164,11 @@ header {
 .jst-clock {
   font-family: var(--mono); font-size: 11px; color: var(--light);
   border-left: 1px solid var(--border); padding-left: 10px;
-  white-space: nowrap;
+  white-space: nowrap; display: flex; align-items: center; gap: 5px;
+}
+.jst-label {
+  font-family: var(--sans); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--xlight);
 }
 .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
@@ -273,168 +277,99 @@ header {
 /* ════════════════════════════════════════════════
    OVERVIEW
 ════════════════════════════════════════════════ */
-.ov-hero {
-  background: linear-gradient(135deg, #2A1810 0%, #1A120C 100%);
-  border-radius: var(--r-xl); padding: 36px 40px;
-  margin-bottom: 28px; position: relative; overflow: hidden;
-  box-shadow: 0 4px 24px rgba(42,24,16,.3);
+/* Terracotta accent strip */
+.ov-accent {
+  background: var(--red); color: #fff;
+  padding: 18px 24px; border-radius: 0 0 var(--r-lg) var(--r-lg);
+  margin-bottom: 28px; display: flex;
+  align-items: center; justify-content: space-between; gap: 16px;
+  position: relative; overflow: hidden;
 }
-.ov-hero::after {
-  content: '日本';
-  font-family: var(--serif);
-  position: absolute; right: 20px; bottom: -14px;
-  font-size: 120px; font-weight: 400;
-  color: rgba(184,92,56,.12);
-  pointer-events: none; user-select: none;
-  line-height: 1;
+.ov-accent::after {
+  content: '\u65E5\u672C'; font-family: var(--serif); font-size: 72px;
+  position: absolute; right: 14px; bottom: -6px;
+  color: rgba(255,255,255,.07); pointer-events: none; line-height: 1;
 }
-.ov-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
-.ov-eyebrow {
-  font-size: 11.5px; font-weight: 500; letter-spacing: 0.12em;
-  text-transform: uppercase; color: rgba(255,255,255,.4);
-  margin-bottom: 8px;
-}
-.ov-title {
-  font-family: var(--serif); font-size: 44px; font-weight: 400;
-  color: #fff; line-height: 1; margin-bottom: 6px;
-}
-.ov-who { font-size: 14px; color: rgba(255,255,255,.35); }
-
-.ov-cd { text-align: right; flex-shrink: 0; }
-.ov-cd-num {
-  font-family: var(--serif); font-size: 56px; font-weight: 400;
-  color: var(--red); line-height: 1; display: block;
-}
-.ov-cd-den {
-  font-family: var(--serif); font-size: 28px;
-  color: rgba(255,255,255,.25); margin-left: 3px;
-}
-.ov-cd-label {
-  font-size: 11px; font-weight: 500; letter-spacing: 0.1em;
-  text-transform: uppercase; color: rgba(255,255,255,.3);
-  display: block; margin-top: 2px; text-align: right;
-}
-.ov-cd-sub {
-  font-size: 12px; color: rgba(255,255,255,.25);
-  display: block; margin-top: 1px;
-}
+.ov-accent-title { font-family: var(--serif); font-size: 26px; line-height: 1; position: relative; }
+.ov-accent-sub { font-size: 12px; opacity: 0.55; margin-top: 3px; position: relative; }
+.ov-accent-right { text-align: right; position: relative; }
+.ov-cd-num { font-family: var(--serif); font-size: 36px; line-height: 1; display: block; }
+.ov-cd-den { font-family: var(--serif); font-size: 18px; opacity: 0.4; margin-left: 2px; }
+.ov-cd-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.45; margin-top: 2px; display: block; }
+.ov-cd-sub { font-size: 11px; opacity: 0.35; margin-top: 1px; display: block; }
 .ov-live-dot {
-  display: inline-block; width: 7px; height: 7px;
-  border-radius: 50%; background: #4CAF80;
-  box-shadow: 0 0 0 3px rgba(76,175,128,.2);
-  animation: pulse 2.2s ease-in-out infinite;
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #6EE7B7;
+  box-shadow: 0 0 0 3px rgba(110,231,183,.2); animation: pulse 2.2s ease-in-out infinite;
   margin-right: 6px; vertical-align: middle;
 }
+.ov-in-japan { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); }
+.ov-currently-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.35; margin-bottom: 2px; }
+.ov-currently-city { font-family: var(--serif); font-size: 20px; opacity: 0.85; }
 
-/* Currently in banner */
-.ov-in-japan {
-  margin-top: 18px; padding-top: 16px;
-  border-top: 1px solid rgba(255,255,255,.08);
-}
-.ov-currently-label {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
-  color: rgba(255,255,255,.3); margin-bottom: 4px;
-}
-.ov-currently-city {
-  font-family: var(--serif); font-size: 22px; color: rgba(255,255,255,.85);
-}
-
-/* City stops */
+/* Section labels */
 .ov-section-label {
   font-size: 11px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.1em; color: var(--red); margin-bottom: 14px;
-  opacity: 0.7;
+  letter-spacing: 0.12em; color: var(--red); margin-bottom: 14px; opacity: 0.65;
 }
+
+/* Route timeline */
 .ov-route { margin-bottom: 28px; }
-
-.ov-stop {
-  display: flex; gap: 0; margin-bottom: 0;
-}
-.ov-stop-left {
-  display: flex; flex-direction: column; align-items: center;
-  flex-shrink: 0; width: 28px; padding-top: 4px;
-}
-.ov-stop-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--red); border: 2px solid var(--card);
-  box-shadow: 0 0 0 1.5px var(--red); flex-shrink: 0; z-index: 1;
-}
-.ov-stop.waypoint .ov-stop-dot { background: var(--xlight); box-shadow: 0 0 0 1.5px var(--border); }
-.ov-stop-line { width: 1px; flex: 1; background: var(--border-lt); min-height: 20px; margin: 4px 0; }
+.ov-stop { display: flex; gap: 0; }
+.ov-stop-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 28px; padding-top: 5px; }
+.ov-stop-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--red); border: 2.5px solid var(--bg); box-shadow: 0 0 0 1.5px var(--red); flex-shrink: 0; z-index: 1; }
+.ov-stop.waypoint .ov-stop-dot { width: 8px; height: 8px; background: var(--xlight); box-shadow: 0 0 0 1px var(--border); }
+.ov-stop-line { width: 1px; flex: 1; background: var(--border); min-height: 20px; margin: 4px 0; }
 .ov-stop-last .ov-stop-line { display: none; }
-
-.ov-stop-right { flex: 1; padding: 0 0 24px 16px; }
+.ov-stop-right { flex: 1; padding: 0 0 22px 16px; }
 .ov-stop-last .ov-stop-right { padding-bottom: 0; }
 
+/* Overnight cities - strong presence */
 .ov-stop-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 3px; }
-.ov-stop-city {
-  font-family: var(--serif); font-size: 20px; font-weight: 400; color: var(--text);
-}
-.ov-wp-city { font-size: 16px; color: var(--muted); }
+.ov-stop-city { font-family: var(--serif); font-size: 22px; font-weight: 400; color: var(--text); }
 .ov-stop-dates { font-size: 12px; color: var(--light); }
-.ov-wp-badge {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  background: var(--card-2); color: var(--muted);
-  padding: 2px 8px; border-radius: 10px; text-transform: uppercase;
-}
-.ov-stop-hotel {
-  font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.4;
-}
+.ov-stop-hotel { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.4; }
 .ov-stop-hotel strong { color: var(--text); font-weight: 500; }
 
+/* Day trips - visually recessed */
+.ov-wp-city { font-size: 16px; color: var(--muted); font-family: var(--serif); }
+.ov-wp-badge { font-size: 9px; font-weight: 600; letter-spacing: 0.08em; background: var(--card-2); color: var(--light); padding: 2px 8px; border-radius: 10px; text-transform: uppercase; }
+.ov-stop.waypoint .ov-stop-right { padding-bottom: 16px; }
+.ov-stop.waypoint .ov-stop-hotel { font-size: 12px; color: var(--light); }
+
+/* Highlights */
 .ov-hls { list-style: none; display: flex; flex-direction: column; gap: 4px; }
-.ov-hl { font-size: 13px; color: var(--muted); display: flex; align-items: flex-start; gap: 6px; }
-.ov-hl::before { content: '·'; color: var(--xlight); flex-shrink: 0; margin-top: 0; }
-.ov-hl.star::before { content: '★'; color: var(--red); font-size: 9px; margin-top: 3px; }
+.ov-hl { font-size: 14px; color: var(--muted); display: flex; align-items: flex-start; gap: 8px; line-height: 1.45; }
+.ov-hl::before { content: '\00b7'; color: var(--border); flex-shrink: 0; font-size: 18px; line-height: 1.2; }
+.ov-hl.star::before { content: '\2605'; color: var(--red); font-size: 10px; margin-top: 4px; }
 .ov-hl a { color: inherit; text-decoration: underline; text-decoration-color: var(--border); transition: color var(--speed); }
 .ov-hl a:hover { color: var(--red); }
-.ov-ext { font-size: 11px; opacity: 0.6; }
+.ov-ext { font-size: 11px; opacity: 0.5; }
+.ov-stop.waypoint .ov-hl { font-size: 13px; }
 
+/* CTA */
 .ov-cta-row { margin-top: 20px; text-align: center; }
-.ov-cta {
-  background: none; border: 1px solid var(--border);
-  padding: 10px 24px; border-radius: var(--r);
-  font-size: 13px; font-weight: 500; cursor: pointer;
-  color: var(--muted); transition: all var(--speed);
-  letter-spacing: 0.03em;
-}
+.ov-cta { background: none; border: 1px solid var(--border); padding: 10px 24px; border-radius: var(--r); font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted); transition: all var(--speed); letter-spacing: 0.03em; }
 .ov-cta:hover { border-color: var(--red); color: var(--red); }
 
-/* Overview info cards (flights, timezone/contact) */
-.ov-info-card {
+/* Flights */
+.ov-flights {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--r-lg); overflow: hidden; margin-bottom: 12px; box-shadow: var(--sh);
 }
-.ov-info-title {
-  font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--light);
-  padding: 12px 16px 8px;
-}
-.ov-info-body {
-  padding: 0 16px 14px; font-size: 14px; color: var(--muted); line-height: 1.65;
-}
-.ov-info-body p { margin-bottom: 8px; }
-.ov-info-body p:last-child { margin-bottom: 0; }
-.ov-info-body strong { color: var(--text); font-weight: 500; }
-.ov-info-note {
-  font-size: 12px; color: var(--light); margin-bottom: 8px;
-  padding-left: 2px;
-}
+.ov-fl-leg { padding: 14px 18px; }
+.ov-fl-leg + .ov-fl-leg { border-left: 1px solid var(--border-lt); }
+.ov-fl-dir { font-size: 11px; font-weight: 500; color: var(--light); margin-bottom: 6px; }
+.ov-fl-airports { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.ov-fl-code { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: 0.02em; }
+.ov-fl-arrow { color: var(--xlight); font-size: 14px; }
+.ov-fl-time { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+.ov-fl-detail { font-size: 12px; color: var(--muted); }
+.ov-fl-track { display: inline-block; font-size: 11px; color: var(--red); text-decoration: none; margin-top: 6px; font-weight: 500; }
+.ov-fl-track:hover { text-decoration: underline; }
 
-/* Flight rows */
-.ov-flight-row {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
-}
-.ov-flight-leg {
-  padding: 12px 16px; display: flex; flex-direction: column; gap: 2px;
-}
-.ov-flight-leg:first-child { border-right: 1px solid var(--border-lt); }
-.ov-flight-dir {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--light);
-}
-.ov-flight-detail { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.4; }
-.ov-flight-sub { font-size: 12px; color: var(--muted); line-height: 1.4; }
+/* Info note */
+.ov-info-note { font-size: 12px; color: var(--light); margin-bottom: 10px; line-height: 1.5; }
 
 /* Today's plan card (visible during trip) */
 .ov-today-card {
@@ -546,7 +481,7 @@ a.hotel-cell-phone:hover { text-decoration: underline; }
 /* Day cards */
 .day-card {
   background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--r-lg); margin-bottom: 8px; overflow: hidden;
+  border-radius: var(--r-lg); margin-bottom: 10px; overflow: hidden;
   transition: border-color var(--speed), background var(--speed), transform var(--speed), box-shadow var(--speed);
 }
 .day-card:not(.expanded):hover {
@@ -556,22 +491,23 @@ a.hotel-cell-phone:hover { text-decoration: underline; }
 .day-card.past { background: var(--past-bg); border-color: var(--border-lt); }
 .day-card.today { border-color: var(--red); border-width: 2px; box-shadow: 0 0 0 1px rgba(184,92,56,.1), var(--sh); }
 .day-card.today .day-header { background: var(--today-bg); }
+.day-card.expanded { box-shadow: var(--sh); }
 .day-card.expanded .day-toggle { transform: rotate(180deg); }
 
 .day-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; cursor: pointer; user-select: none; gap: 10px;
+  padding: 14px 18px; cursor: pointer; user-select: none; gap: 12px;
   transition: background var(--speed);
 }
 .day-header:hover { background: var(--bg); }
 .day-card.today .day-header:hover { background: var(--today-bg); }
 
-.day-header-left { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; flex: 1; min-width: 0; }
-.day-date { font-family: var(--mono); font-size: 12px; color: var(--light); white-space: nowrap; letter-spacing: 0.04em; flex-shrink: 0; }
+.day-header-left { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.day-date { font-family: var(--mono); font-size: 11px; color: var(--light); white-space: nowrap; letter-spacing: 0.04em; flex-shrink: 0; }
 .day-title-wrap { min-width: 0; }
-.day-title { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.3; }
-.day-card.past .day-title { color: var(--light); }
-.day-location { font-size: 12px; color: var(--light); margin-top: 1px; }
+.day-title { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.day-card.past .day-title { color: var(--light); font-weight: 500; }
+.day-location { font-size: 12px; color: var(--light); margin-top: 2px; }
 .today-badge {
   display: inline-block; font-size: 9px; font-weight: 600;
   letter-spacing: 0.1em; padding: 2px 7px; border-radius: 10px;
@@ -591,51 +527,71 @@ body.edit-mode .notes-dot.has-notes { display: block; }
 }
 .day-body-inner {
   overflow: hidden;
-  padding: 0 16px;
+  padding: 0 18px;
 }
 .day-card.expanded .day-body {
   grid-template-rows: 1fr;
   border-top-color: var(--border-lt);
 }
-.day-card.expanded .day-body-inner { padding: 2px 16px 14px; }
+.day-card.expanded .day-body-inner { padding: 6px 18px 18px; }
 .day-card.past .day-body { opacity: 0.7; }
 
 /* Periods */
-.period { margin-top: 10px; }
-.period:first-child { margin-top: 6px; }
+.period { margin-top: 14px; }
+.period:first-child { margin-top: 8px; }
 .period-label {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.18em;
-  text-transform: uppercase; color: var(--light); margin-bottom: 2px;
-  opacity: 0.7; padding: 4px 0 2px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--red); margin-bottom: 4px;
+  opacity: 0.55; padding: 6px 0 4px;
   border-top: 1px solid var(--border-lt);
 }
 .period:first-child .period-label { border-top: none; }
 
 /* Activity rows — canonical definition */
-.act { display: flex; gap: 6px; padding: 2px 0; align-items: flex-start; }
+.act { display: flex; gap: 8px; padding: 4px 0; align-items: flex-start; }
 .act-time {
-  min-width: 64px; text-align: right; padding-right: 6px; flex-shrink: 0;
+  min-width: 62px; text-align: right; padding-right: 6px; flex-shrink: 0;
   font-family: var(--mono); font-size: 12px; color: var(--light);
-  padding-top: 2px; line-height: 1.4;
+  padding-top: 2px; line-height: 1.5;
 }
 .act-body { flex: 1; min-width: 0; }
 .act-main { display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; }
-.act-text { font-size: 13.5px; color: var(--text); line-height: 1.5; flex: 1; min-width: 0; }
+.act-text { font-size: 14px; color: var(--text); line-height: 1.5; flex: 1; min-width: 0; font-weight: 400; }
 .act-duration { font-size: 11px; color: var(--light); margin-top: 0; }
 .act.booked .act-text { color: var(--green); }
 .sub-item .act-text,
 .act-sub { font-size: 12px; color: var(--muted); margin-top: 0; line-height: 1.4; }
 .act-sub a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--border-lt); }
 
-/* Expand button */
-.act-expand-btn {
-  background: none; border: none; cursor: pointer;
-  font-size: 9px; color: var(--xlight);
-  padding: 3px 5px; flex-shrink: 0; margin-top: 2px;
-  line-height: 1; transition: color var(--speed);
+/* Clickable activity rows — tap to expand */
+.act.clickable { cursor: pointer; border-radius: var(--r); transition: background var(--speed); }
+.act.clickable:hover { background: var(--card-2); }
+
+/* Chevron indicator */
+.act-chevron {
+  font-size: 10px; color: var(--xlight); flex-shrink: 0; margin-top: 3px;
+  transition: transform 0.2s ease, color var(--speed);
 }
-.act:hover .act-expand-btn { color: var(--light); }
-.act.expanded .act-expand-btn { color: var(--red); }
+.act.expanded .act-chevron { transform: rotate(90deg); color: var(--red); }
+
+/* Edit button — appears inside detail panel when expanded, editors only */
+.act-edit-btn {
+  display: inline-block; background: none; border: 1px solid var(--border-lt);
+  cursor: pointer; font-size: 11px; color: var(--light); font-family: var(--sans);
+  padding: 3px 10px; border-radius: var(--r); margin-top: 6px;
+  transition: color var(--speed), border-color var(--speed);
+}
+body:not(.edit-mode) .act-edit-btn { display: none; }
+.act-edit-btn:hover { color: var(--red); border-color: var(--red); }
+
+/* Expand all button */
+.expand-all-wrap { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.expand-all-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 11px; color: var(--light); font-family: var(--sans);
+  padding: 2px 0; transition: color var(--speed); letter-spacing: 0.02em;
+}
+.expand-all-btn:hover { color: var(--red); }
 
 /* Expand detail panel — CSS grid animation */
 .act-detail {
@@ -662,10 +618,7 @@ body.edit-mode .notes-dot.has-notes { display: block; }
   transition: color var(--speed);
 }
 .act-detail-map:hover { color: var(--red); }
-.act-detail-btns {
-  display: flex; gap: 6px; margin-top: 6px;
-  padding-top: 6px; border-top: 1px solid var(--border-lt);
-}
+.act-detail-btns { display: none; }
 .act-detail-btns .fs-act-btn {
   flex: none; border: 1px solid var(--border); border-radius: var(--r);
   padding: 3px 10px; background: none; font-size: 11px;
@@ -1522,11 +1475,12 @@ body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
   .exp-fab { bottom: calc(68px + env(safe-area-inset-bottom)); }
   .cw-fab  { bottom: calc(112px + env(safe-area-inset-bottom)); right: 20px; }
   .currency-widget { bottom: calc(156px + env(safe-area-inset-bottom)); right: 12px; width: calc(100vw - 24px); max-width: 260px; }
-  .ov-hero { padding: 24px 22px; }
-  .ov-title { font-size: 34px; }
-  .ov-cd-num { font-size: 42px; }
-  .ov-flight-row { grid-template-columns: 1fr; }
-  .ov-flight-leg:first-child { border-right: none; }
+  .ov-accent { padding: 14px 18px; }
+  .ov-accent-title { font-size: 22px; }
+  .ov-cd-num { font-size: 30px; }
+  .ov-flights { grid-template-columns: 1fr; }
+  .ov-fl-leg + .ov-fl-leg { border-left: none; border-top: 1px solid var(--border-lt); }
+  .ov-stop-city { font-size: 19px; }
   .b-top-row { grid-template-columns: 1fr; }
   .b-person-row { grid-template-columns: 1fr; }
   .hotel-grid { grid-template-columns: 1fr; }
@@ -1568,30 +1522,36 @@ body.dark .cat-shopping  { background: #831843; color: #F9A8D4; }
     position: sticky !important;
     top: 80px;
     border-bottom: none !important;
-    border-right: 1px solid var(--border);
+    border-right: none;
     background: transparent !important;
     box-shadow: none !important;
     overflow: visible;
     align-self: start;
     padding-top: 4px;
-    /* Override the JS-set top since we manage it ourselves here */
   }
   .dest-pills {
     flex-direction: column;
-    gap: 3px;
-    padding: 0 8px 0 0;
+    gap: 2px;
+    padding: 0 12px 0 0;
     min-width: 0;
   }
   .dest-pill {
-    width: 100%;
+    width: auto;
     text-align: left;
     border-radius: var(--r);
     border-color: transparent;
-    padding: 7px 12px;
+    padding: 6px 10px;
     font-size: 11.5px;
+    background: none;
   }
-  .dest-pill:hover { background: var(--card-2); border-color: transparent; color: var(--red); }
-  .dest-pill.active { background: var(--red-bg); border-color: transparent; color: var(--red); }
+  .dest-pill:hover { background: none; border-color: transparent; color: var(--red); }
+  .dest-pill.active {
+    background: none; border-color: transparent;
+    color: var(--red); font-weight: 600;
+    border-left: 2.5px solid var(--red);
+    border-radius: 0;
+    padding-left: 8px;
+  }
 
   /* All dest-sections go in the right column */
   .dest-section { grid-column: 2; }

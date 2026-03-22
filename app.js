@@ -149,13 +149,17 @@ function parseTimeToMinutes(t){
   return 9999;
 }
 
+function timeToPeriodLabel(minutes){
+  if(minutes<360)return 'Very early morning'; // before 6 AM
+  if(minutes<720)return 'Morning';            // 6 AM - noon
+  if(minutes<780)return 'Midday';             // noon - 1 PM
+  if(minutes<1020)return 'Afternoon';         // 1 PM - 5 PM
+  return 'Evening';                           // 5 PM+
+}
+
 function sortActivitiesByTime(acts){
-  const periodLabels = [];
-  const items = [];
-  acts.forEach(a => {
-    if (a.type === 'period-label') periodLabels.push(a);
-    else items.push(a);
-  });
+  // Filter out old period-label entries — we auto-generate them now
+  const items = acts.filter(a => a.type !== 'period-label');
 
   const bundles = [];
   items.forEach(item => {
@@ -170,17 +174,15 @@ function sortActivitiesByTime(acts){
 
   const result = [];
   let order = 0;
-  let usedLabels = 0;
+  let lastPeriod = '';
 
-  bundles.forEach((bundle, i) => {
+  bundles.forEach(bundle => {
     const t = parseTimeToMinutes(bundle.parent.time);
-    if (usedLabels < periodLabels.length) {
-      const prevT = i > 0 ? parseTimeToMinutes(bundles[i-1].parent.time) : -1;
-      if (i === 0 || (t - prevT >= 90 && t !== 9999) || (prevT < 720 && t >= 720) || (prevT < 1020 && t >= 1020)) {
-        const pl = periodLabels[usedLabels];
-        pl.order = order++;
-        result.push(pl);
-        usedLabels++;
+    if (t < 9999) {
+      const period = timeToPeriodLabel(t);
+      if (period !== lastPeriod) {
+        result.push({ type: 'period-label', title: period, order: order++ });
+        lastPeriod = period;
       }
     }
     bundle.parent.order = order++;
@@ -188,23 +190,17 @@ function sortActivitiesByTime(acts){
     bundle.subs.forEach(s => { s.order = order++; result.push(s); });
   });
 
-  while (usedLabels < periodLabels.length) {
-    const pl = periodLabels[usedLabels];
-    pl.order = order++;
-    result.push(pl);
-    usedLabels++;
-  }
-
   return result;
 }
 
 function updateClock(){
   const el=$('jstClock'); if(!el)return;
   const jst=getTodayJST();
+  const day=jst.toLocaleString('en-US',{weekday:'short'});
   const mo=jst.toLocaleString('en-US',{month:'short'});
   const dt=jst.getDate();
   const pad=n=>String(n).padStart(2,'0');
-  el.textContent=mo+' '+dt+', '+pad(jst.getHours())+':'+pad(jst.getMinutes())+' JST';
+  el.innerHTML='<span class="jst-label">Japan</span> '+day+' '+mo+' '+dt+', '+pad(jst.getHours())+':'+pad(jst.getMinutes());
 }
 function updateTripStatus(){
   const el=$('tripStatus'); if(!el)return;
@@ -1059,11 +1055,17 @@ function renderOverview(){
       const inner=h.url?'<a href="'+ea(h.url)+'" target="_blank" rel="noopener">'+esc(h.text)+'<span class="ov-ext"> \u2197</span></a>':esc(h.text);
       return '<li class="ov-hl'+(h.star?' star':'')+'">'+ inner+'</li>';
     }).join('')+'</ul>';
-    const dot='<div class="ov-stop-left"><div class="ov-stop-dot"></div>'+(isLast?'':'<div class="ov-stop-line"></div>')+'</div>';
+    const line=isLast?'':'<div class="ov-stop-line"></div>';
     if(stop.waypoint){
-      return '<div class="ov-stop waypoint'+(isLast?' ov-stop-last':'')+'">'+dot+'<div class="ov-stop-right"><div class="ov-stop-head"><div class="ov-wp-badge">Day trip</div><div class="ov-stop-city ov-wp-city">'+esc(stop.city)+'</div><div class="ov-stop-dates">'+esc(stop.dates)+'</div></div><div class="ov-stop-hotel">'+esc(stop.hotel)+'</div>'+hlsHtml+'</div></div>';
+      return '<div class="ov-stop waypoint'+(isLast?' ov-stop-last':'')+'">'
+        +'<div class="ov-stop-left"><div class="ov-stop-dot"></div>'+line+'</div>'
+        +'<div class="ov-stop-right"><div class="ov-stop-head"><div class="ov-wp-badge">Day trip</div><div class="ov-stop-city ov-wp-city">'+esc(stop.city)+'</div><div class="ov-stop-dates">'+esc(stop.dates)+'</div></div>'
+        +'<div class="ov-stop-hotel">'+esc(stop.hotel)+'</div>'+hlsHtml+'</div></div>';
     }
-    return '<div class="ov-stop'+(isLast?' ov-stop-last':'')+'">'+dot+'<div class="ov-stop-right"><div class="ov-stop-head"><div class="ov-stop-city">'+esc(stop.city)+'</div><div class="ov-stop-dates">'+esc(stop.dates)+(stop.nights?' \u00b7 '+stop.nights+' night'+(stop.nights>1?'s':''):'')+'</div></div><div class="ov-stop-hotel">'+esc(stop.hotel)+(stop.phone?' &nbsp;\u00b7 <strong>'+esc(stop.phone)+'</strong>':'')+'</div>'+hlsHtml+'</div></div>';
+    return '<div class="ov-stop'+(isLast?' ov-stop-last':'')+'">'
+      +'<div class="ov-stop-left"><div class="ov-stop-dot"></div>'+line+'</div>'
+      +'<div class="ov-stop-right"><div class="ov-stop-head"><div class="ov-stop-city">'+esc(stop.city)+'</div><div class="ov-stop-dates">'+esc(stop.dates)+(stop.nights?' \u00b7 '+stop.nights+' night'+(stop.nights>1?'s':''):'')+'</div></div>'
+      +'<div class="ov-stop-hotel">'+esc(stop.hotel)+(stop.phone?' &nbsp;\u00b7 <strong>'+esc(stop.phone)+'</strong>':'')+'</div>'+hlsHtml+'</div></div>';
   }).join('');
 
   const now=new Date(), inTrip=now>=TRIP_START&&now<=TRIP_END;
@@ -1075,18 +1077,19 @@ function renderOverview(){
     return '<div class="hotel-cell"><div class="hotel-cell-city">'+esc(s.city.split('\u00b7')[0].trim())+'</div><div class="hotel-cell-name">'+esc(s.hotel.split('\u00b7')[0].trim())+'</div>'+phoneHtml+'<div class="hotel-cell-dates">'+esc(s.dates)+'</div></div>';
   }).join('');
 
-  // Flights card
-  const flightsHtml='<div class="ov-info-card">'
-    +'<div class="ov-flight-row"><div class="ov-flight-leg"><span class="ov-flight-dir">Depart</span><span class="ov-flight-detail">Wed Apr 15 \u00b7 LAX 11:20 AM \u2192 Tokyo HND</span><span class="ov-flight-sub">UA 39 \u00b7 Arrives Apr 16, 3:05 PM Japan time</span></div>'
-    +'<div class="ov-flight-leg"><span class="ov-flight-dir">Return</span><span class="ov-flight-detail">Wed Apr 29 \u00b7 Tokyo HND 6:10 PM \u2192 LAX</span><span class="ov-flight-sub">UA 38 \u00b7 Arrives same day 12:15 PM California time</span></div></div></div>';
-
-  // Timezone + contact card
-  const infoHtml='<div class="ov-info-card">'
-    +'<div class="ov-info-title">Time zone &amp; contact</div>'
-    +'<div class="ov-info-body">'
-    +'<p>Japan is <strong>16 hours ahead</strong> of California. When it\u2019s 8 AM at home, it\u2019s midnight in Japan.</p>'
-    +'<p>Our US phone numbers work in Japan via eSIM. Best way to reach us: <strong>iMessage or WhatsApp</strong>. We may be slow to respond during flights and in areas with spotty signal (Hakone mountains, subway tunnels).</p>'
-    +'</div></div>';
+  // Flights card with tracking links
+  const flightsHtml='<div class="ov-flights">'
+    +'<div class="ov-fl-leg"><div class="ov-fl-dir">Depart \u00b7 Wed Apr 15</div>'
+    +'<div class="ov-fl-airports"><span class="ov-fl-code">LAX</span><span class="ov-fl-arrow">\u2192</span><span class="ov-fl-code">HND</span></div>'
+    +'<div class="ov-fl-time">11:20 AM \u2192 Apr 16, 3:05 PM</div>'
+    +'<div class="ov-fl-detail">United UA 39 \u00b7 11h 45m \u00b7 787 Dreamliner</div>'
+    +'<a class="ov-fl-track" href="https://www.flightaware.com/live/flight/UAL39" target="_blank" rel="noopener">Track flight \u2197</a></div>'
+    +'<div class="ov-fl-leg"><div class="ov-fl-dir">Return \u00b7 Wed Apr 29</div>'
+    +'<div class="ov-fl-airports"><span class="ov-fl-code">HND</span><span class="ov-fl-arrow">\u2192</span><span class="ov-fl-code">LAX</span></div>'
+    +'<div class="ov-fl-time">6:10 PM \u2192 12:15 PM same day</div>'
+    +'<div class="ov-fl-detail">United UA 38 \u00b7 10h 5m \u00b7 787 Dreamliner</div>'
+    +'<a class="ov-fl-track" href="https://www.flightaware.com/live/flight/UAL38" target="_blank" rel="noopener">Track flight \u2197</a></div>'
+    +'</div>';
 
   // Today's plan (only shown during trip)
   let todayPlanHtml='';
@@ -1102,17 +1105,14 @@ function renderOverview(){
   }
 
   el.innerHTML=
-    '<div class="ov-hero"><div class="ov-hero-top"><div><div class="ov-eyebrow">April 15\u201329, 2026 &middot; 15 days</div><div class="ov-title">Japan</div><div class="ov-who">Gwendalynn &amp; Christina</div></div><div class="ov-cd" id="ovCd">'+cdHtml()+'</div></div>'
-    +(inTrip&&todayDay?'<div class="ov-in-japan"><div class="ov-currently-label">Currently in</div><div class="ov-currently-city">'+esc(todayDay.location)+'</div></div>':'')
-    +'</div>'
+    '<div class="ov-accent"><div class="ov-accent-left"><div class="ov-accent-title">Japan</div><div class="ov-accent-sub">April 15\u201329, 2026 \u00b7 15 days</div></div><div class="ov-accent-right" id="ovCd">'+cdHtml()+'</div></div>'
     +todayPlanHtml
     +'<div class="ov-section-label">The route</div><div class="ov-route">'+journeyHtml+'</div>'
     +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">View detailed day-by-day plan \u2192</button></div>'
     +'<div class="ov-section-label" style="margin-top:32px">Flights</div>'
     +flightsHtml
-    +infoHtml
-    +'<div class="ov-section-label" style="margin-top:24px">Hotels &amp; emergency contacts</div>'
-    +'<div class="ov-info-note">Dial +81 numbers as shown from any US phone. Tap to call.</div>'
+    +'<div class="ov-section-label" style="margin-top:28px">Hotels &amp; emergency contacts</div>'
+    +'<div class="ov-info-note">Dial +81 numbers as shown from any US phone. Tap to call. Reach us via iMessage or WhatsApp.</div>'
     +'<div class="family-strip"><div class="hotel-grid">'+hotelGrid+'</div></div>';
 
   if(ovTimer)clearInterval(ovTimer);
@@ -1202,7 +1202,9 @@ function renderDay(d){
 
   if(fsDay&&fsDay.activities&&fsDay.activities.length>0){
     const acts=sortActivitiesByTime([...fsDay.activities]);
-    bodyContent=acts.map(act=>{
+    const hasExpandable=acts.some(a=>a.type!=='period-label'&&!a.sub&&(a.notes||a.cost>0||a.dur||a.addr));
+    const expandAllBtn=hasExpandable?'<div class="expand-all-wrap"><button class="expand-all-btn" onclick="toggleExpandAll(\''+d.id+'\')">Expand all</button></div>':'';
+    bodyContent=expandAllBtn+acts.map(act=>{
       if(act.type==='period-label')return '<div class="period"><div class="period-label">'+esc(act.title)+'</div></div>';
       return renderFsItem(d.id,act,isEdit);
     }).join('');
@@ -1210,7 +1212,9 @@ function renderDay(d){
     const tipText=fsDay?.tip||d.tip||'';
     bodyContent+=tipText?'<div class="tip-block"><span class="tip-label">Tip </span>'+tipText+'</div>':'';
   } else {
-    bodyContent=d.periods.map(p=>'<div class="period"><div class="period-label">'+p.label+'</div>'+p.items.map(item=>renderStaticItem(item,d.id,isEdit)).join('')+'</div>').join('');
+    const hasExpandable=d.periods.some(p=>p.items.some(i=>!i.sub&&(i.notes||i.cost>0||i.dur||i.addr)));
+    const expandAllBtn=hasExpandable?'<div class="expand-all-wrap"><button class="expand-all-btn" onclick="toggleExpandAll(\''+d.id+'\')">Expand all</button></div>':'';
+    bodyContent=expandAllBtn+d.periods.map(p=>'<div class="period"><div class="period-label">'+p.label+'</div>'+p.items.map(item=>renderStaticItem(item,d.id,isEdit)).join('')+'</div>').join('');
     bodyContent+=isEdit?'<button class="add-act-btn" onclick="openAddAct(\''+d.id+'\')">+ Add activity</button>':'';
     bodyContent+=d.tip?'<div class="tip-block"><span class="tip-label">Tip </span>'+d.tip+'</div>':'';
   }
@@ -1232,12 +1236,26 @@ function renderDay(d){
 }
 
 // Toggle expand state of an activity row in-place (no full re-render)
-window.toggleActExpand=function(itemId){
+window.toggleActExpand=function(itemId, event){
+  // Don't toggle if clicking a link, button, or input inside the detail panel
+  if(event&&(event.target.closest('a')||event.target.closest('button')||event.target.closest('input')))return;
   const el=document.querySelector('[data-item-id="'+itemId+'"]'); if(!el)return;
   if(expandedItems.has(itemId)){expandedItems.delete(itemId);el.classList.remove('expanded');}
   else{expandedItems.add(itemId);el.classList.add('expanded');}
-  const btn=el.querySelector('.act-expand-btn');
-  if(btn)btn.textContent=el.classList.contains('expanded')?'\u25be':'\u25b8';
+};
+
+// Expand all / collapse all activities in a day
+window.toggleExpandAll=function(dayId){
+  const card=document.getElementById('card-'+dayId); if(!card)return;
+  const acts=card.querySelectorAll('.act[data-item-id]:not(.sub-item)');
+  const allExpanded=[...acts].every(a=>a.classList.contains('expanded'));
+  acts.forEach(a=>{
+    const id=a.dataset.itemId;
+    if(allExpanded){expandedItems.delete(id);a.classList.remove('expanded');}
+    else{expandedItems.add(id);a.classList.add('expanded');}
+  });
+  const btn=card.querySelector('.expand-all-btn');
+  if(btn)btn.textContent=allExpanded?'Expand all':'Collapse all';
 };
 
 function renderFsItem(dayId,act,isEdit){
@@ -1260,28 +1278,19 @@ function renderFsItem(dayId,act,isEdit){
     const notesLines=(act.notes||'').split('\n').filter(Boolean);
     const notesHtml=notesLines.map(l=>'<div class="act-detail-notes">'+esc(l)+'</div>').join('');
     const mapLink=act.addr?'<a class="act-detail-map" href="https://maps.google.com/?q='+encodeURIComponent(act.addr)+'" target="_blank" rel="noopener">View on map \u2197</a>':'';
-    const editBtns=isEdit
-      ?'<div class="act-detail-btns">'
-        +'<button class="fs-act-btn" onclick="openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button>'
-        +'<button class="fs-act-btn del" onclick="deleteAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Delete</button>'
-        +'</div>':'';
-    detailHtml='<div class="act-detail"><div class="act-detail-inner">'+meta+notesHtml+mapLink+editBtns+'</div></div>';
-  } else if(isEdit){
-    detailHtml='<div class="act-detail"><div class="act-detail-inner">'
-      +'<div class="act-detail-btns">'
-      +'<button class="fs-act-btn" onclick="openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button>'
-      +'<button class="fs-act-btn del" onclick="deleteAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Delete</button>'
-      +'</div></div></div>';
+    const editBtn=isEdit?'<button class="act-edit-btn" onclick="event.stopPropagation();openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button>':'';
+    detailHtml='<div class="act-detail"><div class="act-detail-inner">'+meta+notesHtml+mapLink+editBtn+'</div></div>';
+  } else if(isEdit) {
+    detailHtml='<div class="act-detail"><div class="act-detail-inner"><button class="act-edit-btn" onclick="event.stopPropagation();openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button></div></div>';
   }
 
-  const showExpand=hasDetails||(isEdit&&!isSub);
-  const expandBtn=showExpand
-    ?'<button class="act-expand-btn" onclick="toggleActExpand(\''+ea(act.id)+'\')">'+(isExp?'\u25be':'\u25b8')+'</button>':'';
+  const clickable=hasDetails||isEdit;
+  const clickAttr=clickable?' onclick="toggleActExpand(\''+ea(act.id)+'\',event)"':'';
 
-  return '<div class="act'+(isExp?' expanded':'')+(isBooked?' booked':'')+'" data-item-id="'+ea(act.id)+'"'+dragAttr+'>'
+  return '<div class="act'+(isExp?' expanded':'')+(isBooked?' booked':'')+(clickable?' clickable':'')+'" data-item-id="'+ea(act.id)+'"'+dragAttr+clickAttr+'>'
     +time
     +'<div class="act-body">'
-    +'<div class="act-main"><div class="act-text">'+esc(act.title)+tag+'</div>'+expandBtn+'</div>'
+    +'<div class="act-main"><div class="act-text">'+esc(act.title)+tag+'</div>'+(hasDetails?'<span class="act-chevron">\u25B8</span>':'')+'</div>'
     +detailHtml
     +'</div></div>';
 }
@@ -1310,13 +1319,12 @@ function renderStaticItem(item,dayId,isEdit){
     detailHtml='<div class="act-detail"><div class="act-detail-inner">'+meta+notesHtml+mapLink+'</div></div>';
   }
 
-  const expandBtn=hasDetails
-    ?'<button class="act-expand-btn" onclick="toggleActExpand(\''+itemId+'\')">'+(isExp?'\u25be':'\u25b8')+'</button>':'';
+  const clickAttr=hasDetails?' onclick="toggleActExpand(\''+itemId+'\',event)"':'';
 
-  return '<div class="act'+(isExp?' expanded':'')+(item.type==='booked'?' booked':'')+'" data-item-id="'+itemId+'">'
+  return '<div class="act'+(isExp?' expanded':'')+(item.type==='booked'?' booked':'')+(hasDetails?' clickable':'')+'" data-item-id="'+itemId+'"'+clickAttr+'>'
     +time
     +'<div class="act-body">'
-    +'<div class="act-main"><div class="act-text">'+esc(item.text||'')+tag+'</div>'+expandBtn+'</div>'
+    +'<div class="act-main"><div class="act-text">'+esc(item.text||'')+tag+'</div>'+(hasDetails?'<span class="act-chevron">\u25B8</span>':'')+'</div>'
     +detailHtml
     +'</div></div>';
 }
@@ -2086,9 +2094,8 @@ async function seedDays(){
       const dateId=dayIdToDate(dayId);
       let order=0; const activities=[];
       day.periods.forEach(p=>{
-        activities.push({id:dayId+'-pl-'+order,type:'period-label',title:p.label,order:order++});
+        // Period labels are now auto-generated from activity times — skip seeding them
         p.items.forEach(item=>{
-          // Use explicit item.cost if set, else extract from text as fallback
           let itemCost=item.cost||0;
           if(!itemCost){
             const m=(item.text||'').match(/[¥\u00a5]([\d,]+)/);
