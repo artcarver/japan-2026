@@ -52,6 +52,7 @@ let editActId      = null;
 let ovTimer        = null;
 let selectedCat    = 'food';
 let selectedPayer  = 'gwen';
+let selectedFor    = 'shared';
 let editExpId      = null;
 const expandedItems = new Set(); // tracks which activity items are expanded in-place
 
@@ -1589,10 +1590,12 @@ function renderBookings(){
 
 window.deleteBookedCost=async function(id){
   bookedCosts=bookedCosts.filter(c=>c.id!==id);
-  await db.collection('settings').doc('bookedCosts').set({items:bookedCosts});
+  try{await db.collection('settings').doc('bookedCosts').set({items:bookedCosts});}catch{}
   renderBudget();
   showToast('Removed','ok');
 };
+window.saveBookedItem=saveBookedItem;
+window.deleteBookedFromModal=deleteBookedFromModal;
 window.toggleDriveSection=function(){$('driveSection')?.classList.toggle('expanded');};
 
 function driveUrlToEmbed(url){
@@ -1714,22 +1717,53 @@ async function toggleCheck(id){
   else{try{localStorage.setItem('japan-checks',JSON.stringify(checks));}catch{}}
 }
 
-window.addCheckItem=function(secId){
+window.addCheckItem=async function(secId){
   const inp=$('clAdd-'+secId); if(!inp||!inp.value.trim())return;
   const sec=CHECKLIST.find(s=>s.id===secId); if(!sec)return;
   const newId='c-'+Date.now();
-  sec.items.push({id:newId,label:inp.value.trim(),sub:''});
+  sec.items.push({id:newId,label:inp.value.trim(),sub:'',custom:true});
   inp.value='';
   renderPlan();
   showToast('Task added','ok');
+  await saveChecklistStructure();
 };
-window.deleteCheckItem=function(secId,itemId){
+window.deleteCheckItem=async function(secId,itemId){
   const sec=CHECKLIST.find(s=>s.id===secId); if(!sec)return;
   sec.items=sec.items.filter(i=>i.id!==itemId);
   delete checks[itemId];
   renderPlan();
   showToast('Task removed');
+  await saveChecklistStructure();
+  if(currentUser){try{await db.collection('checks').doc('all').set(checks);}catch{}}
 };
+
+async function saveChecklistStructure(){
+  // Persist only custom-added items to Firestore so they survive refresh
+  const customItems={};
+  CHECKLIST.forEach(sec=>{
+    const custom=sec.items.filter(i=>i.custom);
+    if(custom.length>0)customItems[sec.id]=custom;
+  });
+  if(currentUser){
+    try{await db.collection('settings').doc('checklist').set({customItems});}catch{}
+  }
+  try{localStorage.setItem('japan-checklist-custom',JSON.stringify(customItems));}catch{}
+}
+async function loadChecklistCustomItems(){
+  let customItems=null;
+  if(currentUser){
+    try{const s=await db.collection('settings').doc('checklist').get(); if(s.exists)customItems=s.data().customItems||null;}catch{}
+  }
+  if(!customItems){try{customItems=JSON.parse(localStorage.getItem('japan-checklist-custom')||'null');}catch{}}
+  if(customItems){
+    Object.entries(customItems).forEach(([secId,items])=>{
+      const sec=CHECKLIST.find(s=>s.id===secId); if(!sec)return;
+      items.forEach(item=>{
+        if(!sec.items.find(i=>i.id===item.id)){sec.items.push({...item,custom:true});}
+      });
+    });
+  }
+}
 
 window.togglePack=function(id,val){
   const pc=JSON.parse(localStorage.getItem('japan-packing')||'{}');
@@ -1737,20 +1771,55 @@ window.togglePack=function(id,val){
   localStorage.setItem('japan-packing',JSON.stringify(pc));
   renderPlan();
 };
-window.addPackItem=function(){
+window.addPackItem=async function(){
   const inp=$('packAddInput'), sel=$('packCatSel');
   if(!inp||!sel||!inp.value.trim())return;
   const catName=sel.value.trim();
   const group=PACKING.find(g=>g.cat.startsWith(catName));
-  if(group){group.items.push(inp.value.trim()); inp.value=''; renderPlan(); showToast('Added to packing list','ok');}
+  if(group){group.items.push(inp.value.trim()); inp.value=''; renderPlan(); showToast('Added to packing list','ok'); await savePackingStructure();}
 };
-window.deletePackItem=function(gi,ii){
+window.deletePackItem=async function(gi,ii){
   if(PACKING[gi]&&PACKING[gi].items[ii]!==undefined){
     PACKING[gi].items.splice(ii,1);
+    // Clean up packing checks for shifted indices
+    const pc=JSON.parse(localStorage.getItem('japan-packing')||'{}');
+    const newPc={};
+    PACKING.forEach((group,gIdx)=>{group.items.forEach((_,iIdx)=>{
+      const oldKey='pk-'+gIdx+'-'+iIdx;
+      if(gIdx===gi&&iIdx>=ii){
+        // Shift keys down after deletion
+        const nextKey='pk-'+gIdx+'-'+(iIdx+1);
+        if(pc[nextKey])newPc[oldKey]=true;
+      }else{
+        if(pc[oldKey])newPc[oldKey]=true;
+      }
+    });});
+    localStorage.setItem('japan-packing',JSON.stringify(newPc));
     renderPlan();
     showToast('Removed from packing list');
+    await savePackingStructure();
   }
 };
+
+async function savePackingStructure(){
+  const data=PACKING.map(g=>({cat:g.cat,items:[...g.items]}));
+  if(currentUser){try{await db.collection('settings').doc('packing').set({lists:data});}catch{}}
+  try{localStorage.setItem('japan-packing-custom',JSON.stringify(data));}catch{}
+}
+async function loadPackingCustomItems(){
+  let saved=null;
+  if(currentUser){
+    try{const s=await db.collection('settings').doc('packing').get(); if(s.exists)saved=s.data().lists||null;}catch{}
+  }
+  if(!saved){try{saved=JSON.parse(localStorage.getItem('japan-packing-custom')||'null');}catch{}}
+  if(saved&&Array.isArray(saved)){
+    // Merge: for each saved category, if it matches a PACKING category, replace items
+    saved.forEach(sg=>{
+      const match=PACKING.find(g=>g.cat===sg.cat);
+      if(match){match.items=sg.items||[];}
+    });
+  }
+}
 
 // ── Budget ────────────────────────────────────────────────────
 function renderBudget(){
@@ -1766,132 +1835,209 @@ function renderBudget(){
     return;
   }
 
-  let gwenPaid=0, christinaPaid=0, settlement=0;
+  // ── Compute settlement breakdown ──
+  // Track what each person paid and what each person's fair share is
+  let gwenBookedPaid=0, christinaBookedPaid=0;
+  let gwenExpPaid=0, christinaExpPaid=0;
+  let gwenOwesTotal=0, christinaOwesTotal=0; // what each person's fair share is
+
   bookedCosts.forEach(c=>{
     if(!c.jpy)return;
-    if(c.paidBy==='gwen'){gwenPaid+=c.jpy; settlement+=c.jpy/2;}
-    else if(c.paidBy==='christina'){christinaPaid+=c.jpy; settlement-=c.jpy/2;}
-    else if(c.paidBy==='split'){gwenPaid+=c.jpy/2; christinaPaid+=c.jpy/2;}
+    const fw=c.forWhom||'shared';
+    // Track who paid
+    if(c.paidBy==='gwen') gwenBookedPaid+=c.jpy;
+    else if(c.paidBy==='christina') christinaBookedPaid+=c.jpy;
+    else if(c.paidBy==='split'){gwenBookedPaid+=c.jpy/2; christinaBookedPaid+=c.jpy/2;}
+    // Track who owes (fair share)
+    if(fw==='gwen'){gwenOwesTotal+=c.jpy;}
+    else if(fw==='christina'){christinaOwesTotal+=c.jpy;}
+    else{gwenOwesTotal+=c.jpy/2; christinaOwesTotal+=c.jpy/2;} // shared
   });
   expenses.forEach(e=>{
     const a=e.amount||0;
-    if(e.paidBy==='gwen'){gwenPaid+=a; settlement+=a/2;}
-    else if(e.paidBy==='christina'){christinaPaid+=a; settlement-=a/2;}
-    else if(e.paidBy==='split'){gwenPaid+=a/2; christinaPaid+=a/2;}
+    const fw=e.forWhom||(e.paidBy==='split'?'shared':'shared'); // legacy compat
+    // Track who paid
+    if(e.paidBy==='gwen') gwenExpPaid+=a;
+    else if(e.paidBy==='christina') christinaExpPaid+=a;
+    else if(e.paidBy==='split'){gwenExpPaid+=a/2; christinaExpPaid+=a/2;} // legacy
+    // Track who owes (fair share)
+    if(fw==='gwen'){gwenOwesTotal+=a;}
+    else if(fw==='christina'){christinaOwesTotal+=a;}
+    else{gwenOwesTotal+=a/2; christinaOwesTotal+=a/2;}
   });
+  const gwenPaid=gwenBookedPaid+gwenExpPaid;
+  const christinaPaid=christinaBookedPaid+christinaExpPaid;
   const bookedTotal=bookedCosts.reduce((s,c)=>s+(c.jpy||0),0);
   const expTotal=expenses.reduce((s,e)=>s+(e.amount||0),0);
   const grandTotal=bookedTotal+expTotal;
+  // Settlement: positive = Gwen overpaid relative to her share, Christina owes her
+  const settlement=gwenPaid-gwenOwesTotal;
+  const christinaOwes=settlement>0?settlement:0;
+  const gwenOwes=settlement<0?Math.abs(settlement):0;
 
-  const christinaOwes=settlement>0?settlement:0, gwenOwes=settlement<0?Math.abs(settlement):0;
   const isUSD=budgetCur==='USD';
   const displayed=expFilter==='all'?expenses:expenses.filter(e=>e.category===expFilter);
 
+  // ── Expense list by day ──
   const byDay={};
   displayed.forEach(e=>{const d=e.date||'unknown';if(!byDay[d])byDay[d]=[];byDay[d].push(e);});
   const sortedDays=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
   const expRowsHtml=displayed.length===0
     ?(expenses.length===0
-      ?'<div class="exp-empty"><div class="exp-empty-icon">&#129534;</div><div class="exp-empty-text">No expenses logged yet.<br>Every ramen, train ticket, and temple entry counts.</div><button class="exp-empty-cta" onclick="openExpenseModal()">+ Log your first expense</button></div>'
-      :'<div class="exp-empty"><div class="exp-empty-icon">&#128269;</div><div class="exp-empty-text">No expenses in this category.</div></div>'
+      ?'<div class="exp-empty"><div class="exp-empty-text">No expenses logged yet.</div><button class="exp-empty-cta" onclick="openExpenseModal()">+ Log your first expense</button></div>'
+      :'<div class="exp-empty"><div class="exp-empty-text">No expenses in this category.</div></div>'
     )
     :sortedDays.map(day=>{
       const dayTotal=byDay[day].reduce((s,e)=>s+(e.amount||0),0);
       let dayLabel=day;
       try{const dd=new Date(day+'T12:00:00');dayLabel=dd.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}catch{}
       return '<div class="exp-day-group">'
-        +'<div class="exp-day-hd"><span>'+dayLabel+'</span><span class="exp-day-total">\u00a5'+dayTotal.toLocaleString()+'</span></div>'
+        +'<div class="exp-day-hd"><span>'+dayLabel+'</span><span class="exp-day-total">'+fmt(dayTotal)+'</span></div>'
         +byDay[day].map(e=>'<div class="expense-item">'
           +'<div class="exp-cat-stripe" style="background:'+(CAT_COLORS[e.category]||'#ccc')+'"></div>'
-          +'<div class="exp-body"><div class="exp-top"><span class="exp-desc">'+esc(e.description||e.category||'')+'</span><span class="exp-amount">\u00a5'+(e.amount||0).toLocaleString()+'</span></div>'
-          +'<div class="exp-meta"><span>'+(e.paidBy==='gwen'?'Gwen paid':e.paidBy==='christina'?'Christina paid':'Split 50/50')+'</span><span class="exp-tag">'+esc(e.category||'')+'</span>'+(e.date?'<span style="color:var(--light);font-size:10px">'+e.date+'</span>':'')+'</div></div>'
-          +'<button class="exp-edit" data-id="'+ea(e.id||'')+'" title="Edit" style="background:none;border:none;border-left:1px solid var(--border-lt);padding:0 8px;cursor:pointer;color:var(--light);font-size:11px">\u270e</button>'
+          +'<div class="exp-body"><div class="exp-top"><span class="exp-desc">'+esc(e.description||e.category||'')+'</span><span class="exp-amount">'+fmt(e.amount||0)+'</span></div>'
+          +'<div class="exp-meta"><span>'+(e.paidBy==='gwen'?'Gwen paid':e.paidBy==='christina'?'Christina paid':'Split 50/50')+(e.forWhom&&e.forWhom!=='shared'?' \u00b7 for '+(e.forWhom==='gwen'?'Gwen':'Christina')+' only':'')+'</span><span class="exp-tag">'+esc(e.category||'')+'</span></div></div>'
+          +'<button class="exp-edit" data-id="'+ea(e.id||'')+'" title="Edit">\u270e</button>'
           +'<button class="exp-delete" data-id="'+ea(e.id||'')+'" title="Delete">&times;</button></div>'
         ).join('')+'</div>';
     }).join('');
 
-  el.innerHTML=
-    '<div class="budget-header">'
-    +'<div><div class="budget-eyebrow">Finances</div><div class="budget-title">Trip Budget</div></div>'
+  // ── Category totals for on-trip expenses ──
+  const catTotals={};
+  expenses.forEach(e=>{const c=e.category||'other';catTotals[c]=(catTotals[c]||0)+(e.amount||0);});
+
+  // ── Booked costs grouped by category ──
+  const bookedByCategory={};
+  bookedCosts.forEach(c=>{const cat=c.category||'Other';if(!bookedByCategory[cat])bookedByCategory[cat]=[];bookedByCategory[cat].push(c);});
+  const bookedCatOrder=['Flights','Hotels','Transport','Activities','Other'];
+
+  // ── Settlement ledger lines ──
+  const ledgerLines=[];
+  if(gwenBookedPaid>0)  ledgerLines.push({who:'Gwendalynn', type:'Pre-booked', amount:gwenBookedPaid});
+  if(christinaBookedPaid>0) ledgerLines.push({who:'Christina', type:'Pre-booked', amount:christinaBookedPaid});
+  if(gwenExpPaid>0)     ledgerLines.push({who:'Gwendalynn', type:'On-trip expenses', amount:gwenExpPaid});
+  if(christinaExpPaid>0) ledgerLines.push({who:'Christina', type:'On-trip expenses', amount:christinaExpPaid});
+  const gwenFairShare=gwenOwesTotal;
+  const christinaFairShare=christinaOwesTotal;
+
+  // ── BUILD HTML ──
+  let html='';
+
+  // Header
+  html+='<div class="budget-header">'
+    +'<div><div class="budget-title">Trip Budget</div></div>'
     +'<div class="budget-header-right">'
     +'<div class="cur-toggle"><button class="cur-btn'+(budgetCur==='JPY'?' active':'')+'" data-cur="JPY">\u00a5 JPY</button><button class="cur-btn'+(budgetCur==='USD'?' active':'')+'" data-cur="USD">$ USD</button></div>'
-    +'<button class="budget-add-btn" id="budgetAddBtn">+ Add expense</button></div></div>'
-    +'<div class="b-top-row">'
-    +'<div class="b-total-card"><div class="b-total-label">Total trip cost</div><div class="b-total-val">'+fmt(grandTotal)+'</div><div class="b-total-sub">'+(isUSD?'\u00a5'+Math.round(grandTotal).toLocaleString()+' JPY':'~$'+Math.round(grandTotal/exchRate).toLocaleString()+' USD')+'</div></div>'
-    +'<div class="b-share-card"><div class="b-share-label">Gwendalynn\'s share</div><div class="b-share-val">'+fmt(grandTotal/2)+'</div><div class="b-share-sub">half of all shared costs</div></div>'
-    +'<div class="b-share-card"><div class="b-share-label">Christina\'s share</div><div class="b-share-val">'+fmt(grandTotal/2)+'</div><div class="b-share-sub">half of all shared costs</div></div>'
-    +'</div>'
-    +'<div class="b-person-row">'
-    +'<div class="b-person-card"><div class="b-person-head"><div class="b-avatar b-avatar-g">G</div><span class="b-person-name">Gwendalynn</span></div>'
-    +'<div class="b-person-paid">'+fmt(gwenPaid)+'</div><div class="b-person-sub">fronted so far</div>'
-    +(gwenOwes>0?'<div class="b-chip b-chip-owes">Owes '+fmt(gwenOwes)+' to Christina</div>'
-      :christinaOwes>0?'<div class="b-chip b-chip-owed">Owed '+fmt(christinaOwes)+'</div>'
-      :'<div class="b-chip b-chip-even">Settled</div>')+'</div>'
-    +'<div class="b-person-card"><div class="b-person-head"><div class="b-avatar b-avatar-c">C</div><span class="b-person-name">Christina</span></div>'
-    +'<div class="b-person-paid">'+fmt(christinaPaid)+'</div><div class="b-person-sub">fronted so far</div>'
-    +(christinaOwes>0?'<div class="b-chip b-chip-owes">Owes '+fmt(christinaOwes)+' to Gwendalynn</div>'
-      :gwenOwes>0?'<div class="b-chip b-chip-owed">Owed '+fmt(gwenOwes)+'</div>'
-      :'<div class="b-chip b-chip-even">Settled</div>')+'</div>'
-    +'</div>'
-    +'<div class="b-table-wrap"><div class="b-table-hd"><span class="b-table-title">Pre-booked costs</span>'
-    +'<div style="display:flex;gap:6px">'
-    +'<button class="booked-edit-btn" id="bookedEditToggle">'+(bookedEditing?'Done':'Edit')+'</button>'
-    +'</div></div>'
-    +'<div class="b-table-scroll"><table class="b-table">'
-    +'<thead><tr><th>Category</th><th>Item</th><th>Amount</th><th>Paid by</th><th>Purchased</th></tr></thead>'
-    +'<tbody id="bcView" style="'+(bookedEditing?'display:none':'')+'">'+bookedCosts.map(c=>{
-      const catClass='b-cat-'+(c.category||'Other').toLowerCase().replace(' ','');
-      return '<tr><td><span class="b-cat-chip '+catClass+'">'+esc(c.category||'')+'</span></td>'
-        +'<td class="b-item-cell">'+esc(c.label)+(c.dates?'<div style="font-size:10px;color:var(--light);margin-top:1px">'+esc(c.dates)+'</div>':'')+'</td>'
-        +'<td class="b-amt-cell">'+fmt(c.jpy||0)+'</td>'
-        +'<td>'+(c.paidBy==='gwen'?'Gwendalynn':c.paidBy==='christina'?'Christina':'Split')+'</td>'
-        +'<td style="font-size:12px;color:var(--light)">'+esc(c.purchased||'')+'</td></tr>';
-    }).join('')+'</tbody>'
-    +'<tbody id="bcEdit" style="'+(bookedEditing?'':'display:none')+'">'+bookedCosts.map(c=>{
-      const cats=['Flights','Hotels','Transport','Activities','Other'];
-      return '<tr><td><select class="b-payer-sel" data-id="'+ea(c.id)+'" data-field="category" style="font-size:10px;padding:2px 4px">'+cats.map(cat=>'<option'+(c.category===cat?' selected':'')+'>'+cat+'</option>').join('')+'</select></td>'
-        +'<td class="b-item-cell"><input type="text" class="form-input" data-id="'+ea(c.id)+'" data-field="label" value="'+ea(c.label)+'" style="font-size:12px;padding:4px 6px;width:100%"></td>'
-        +'<td class="b-amt-cell"><input type="number" class="form-input" data-id="'+ea(c.id)+'" data-field="jpy" value="'+(c.jpy||0)+'" style="font-size:12px;padding:4px 6px;width:100px;font-family:var(--mono)"></td>'
-        +'<td><select class="b-payer-sel" data-id="'+ea(c.id)+'" data-field="paidBy">'
-        +'<option value="gwen"'+(c.paidBy==='gwen'?' selected':'')+'>Gwendalynn</option>'
-        +'<option value="christina"'+(c.paidBy==='christina'?' selected':'')+'>Christina</option>'
-        +'<option value="split"'+(c.paidBy==='split'?' selected':'')+'>Split</option>'
-        +'</select></td>'
-        +'<td style="white-space:nowrap"><input type="text" class="form-input" data-id="'+ea(c.id)+'" data-field="purchased" value="'+ea(c.purchased||'')+'" placeholder="e.g. Jan 25" style="font-size:11px;padding:3px 6px;width:80px;display:inline-block">'
-        +'<button class="conf-toggle-btn" onclick="deleteBookedCost(\''+ea(c.id)+'\')" style="color:var(--red);margin-left:4px" title="Delete">&times;</button></td></tr>';
-    }).join('')
-    +'<tr class="b-save-row"><td colspan="5" style="display:flex;gap:8px;align-items:center">'
-    +'<button class="b-save-btn" id="bcSaveBtn">Save changes</button>'
-    +'<button class="booked-edit-btn" id="bcAddBtn" style="margin-left:auto">+ Add item</button>'
-    +'</td></tr>'
-    +'</tbody>'
-    +'<tfoot><tr><td colspan="2">Total pre-booked</td><td class="b-amt-cell">'+fmt(bookedTotal)+'</td><td colspan="2"></td></tr></tfoot>'
-    +'</table></div></div>'
-    +'<div class="exp-list-hd"><span class="exp-list-title">On-trip expenses ('+expenses.length+')</span>'
-    +'<div class="exp-filter-row">'
-    +'<button class="exp-filter-btn'+(expFilter==='all'?' active':'')+'" data-filter="all">All</button>'
-    +Object.keys(CAT_COLORS).map(cat=>'<button class="exp-filter-btn'+(expFilter===cat?' active':'')+'" data-filter="'+cat+'">'+cat.charAt(0).toUpperCase()+cat.slice(1)+'</button>').join('')
-    +'</div></div>'
-    +expRowsHtml
-    +'<div style="height:40px"></div>';
+    +'</div></div>';
 
+  // ── Section 1: Overview totals ──
+  html+='<div class="b-top-row">'
+    +'<div class="b-total-card"><div class="b-total-label">Total trip cost</div><div class="b-total-val">'+fmt(grandTotal)+'</div>'
+    +'<div class="b-total-sub">'+(isUSD?'\u00a5'+Math.round(grandTotal).toLocaleString()+' JPY':'~$'+Math.round(grandTotal/exchRate).toLocaleString()+' USD')+'</div>'
+    +'<div class="b-total-breakdown"><span>Pre-booked '+fmt(bookedTotal)+'</span><span>On-trip '+fmt(expTotal)+'</span></div></div>'
+    +'<div class="b-share-card"><div class="b-share-label">Gwen\'s fair share</div><div class="b-share-val">'+fmt(gwenFairShare)+'</div><div class="b-share-sub">'+(gwenFairShare===christinaFairShare?'50/50 split':'includes personal items')+'</div>'
+    +'<div class="b-share-label" style="margin-top:10px">Christina\'s fair share</div><div class="b-share-val">'+fmt(christinaFairShare)+'</div><div class="b-share-sub">'+(gwenFairShare===christinaFairShare?'50/50 split':'includes personal items')+'</div>'
+    +'</div></div>';
+
+  // ── Section 2: Settlement ──
+  html+='<div class="settle-wrap">'
+    +'<div class="settle-hd"><span class="settle-title">Settlement</span></div>'
+    +'<div class="settle-body">';
+
+  // Settlement result banner
+  if(Math.round(settlement)===0){
+    html+='<div class="settle-result settle-even">All settled up -- no one owes anything.</div>';
+  }else if(christinaOwes>0){
+    html+='<div class="settle-result settle-owes">'
+      +'<div class="settle-arrow"><div class="b-avatar b-avatar-c" style="width:24px;height:24px;font-size:11px">C</div>'
+      +'<span class="settle-arrow-line"></span>'
+      +'<span class="settle-arrow-amt">'+fmt(christinaOwes)+'</span>'
+      +'<span class="settle-arrow-line"></span>'
+      +'<div class="b-avatar b-avatar-g" style="width:24px;height:24px;font-size:11px">G</div></div>'
+      +'<div class="settle-result-text">Christina owes Gwendalynn <strong>'+fmt(christinaOwes)+'</strong></div></div>';
+  }else{
+    html+='<div class="settle-result settle-owes">'
+      +'<div class="settle-arrow"><div class="b-avatar b-avatar-g" style="width:24px;height:24px;font-size:11px">G</div>'
+      +'<span class="settle-arrow-line"></span>'
+      +'<span class="settle-arrow-amt">'+fmt(gwenOwes)+'</span>'
+      +'<span class="settle-arrow-line"></span>'
+      +'<div class="b-avatar b-avatar-c" style="width:24px;height:24px;font-size:11px">C</div></div>'
+      +'<div class="settle-result-text">Gwendalynn owes Christina <strong>'+fmt(gwenOwes)+'</strong></div></div>';
+  }
+
+  // Detailed ledger
+  html+='<div class="settle-ledger">'
+    +'<div class="settle-ledger-hd"><span>Who paid</span><span>Category</span><span>Amount</span></div>';
+  ledgerLines.forEach(l=>{
+    const isG=l.who==='Gwendalynn';
+    html+='<div class="settle-ledger-row">'
+      +'<span class="settle-who"><span class="b-avatar '+(isG?'b-avatar-g':'b-avatar-c')+'" style="width:20px;height:20px;font-size:10px">'+(isG?'G':'C')+'</span>'+esc(l.who)+'</span>'
+      +'<span class="settle-type">'+esc(l.type)+'</span>'
+      +'<span class="settle-amt">'+fmt(l.amount)+'</span></div>';
+  });
+  html+='<div class="settle-ledger-row settle-ledger-total">'
+    +'<span class="settle-who">Total paid</span><span></span><span class="settle-amt">'+fmt(gwenPaid+christinaPaid)+'</span></div>';
+  html+='<div class="settle-ledger-row"><span class="settle-who"><span class="b-avatar b-avatar-g" style="width:20px;height:20px;font-size:10px">G</span>Gwen\'s fair share</span><span></span><span class="settle-amt">'+fmt(gwenFairShare)+'</span></div>';
+  html+='<div class="settle-ledger-row"><span class="settle-who"><span class="b-avatar b-avatar-c" style="width:20px;height:20px;font-size:10px">C</span>Christina\'s fair share</span><span></span><span class="settle-amt">'+fmt(christinaFairShare)+'</span></div>';
+  html+='</div>'; // end ledger
+  html+='</div></div>'; // end settle-body, settle-wrap
+
+  // ── Section 3: Pre-booked costs ──
+  html+='<div class="b-table-wrap"><div class="b-table-hd"><span class="b-table-title">Pre-booked costs</span>'
+    +'<span class="b-table-total">'+fmt(bookedTotal)+'</span></div>';
+
+  // Card-based list instead of table
+  html+='<div class="bc-list">';
+  bookedCatOrder.forEach(cat=>{
+    const items=bookedByCategory[cat]; if(!items||items.length===0)return;
+    const catTotal=items.reduce((s,c)=>s+(c.jpy||0),0);
+    const catClass='b-cat-'+(cat||'Other').toLowerCase().replace(' ','');
+    html+='<div class="bc-cat-group">'
+      +'<div class="bc-cat-hd"><span class="b-cat-chip '+catClass+'">'+esc(cat)+'</span><span class="bc-cat-total">'+fmt(catTotal)+'</span></div>';
+    items.forEach(c=>{
+      html+='<div class="bc-item" data-bcid="'+ea(c.id)+'">'
+        +'<div class="bc-item-main">'
+        +'<div class="bc-item-label">'+esc(c.label)+(c.dates?'<span class="bc-item-dates">'+esc(c.dates)+'</span>':'')+'</div>'
+        +'<div class="bc-item-right"><span class="bc-item-amt">'+fmt(c.jpy||0)+'</span></div></div>'
+        +'<div class="bc-item-meta"><span>'+(c.paidBy==='gwen'?'Gwen paid':c.paidBy==='christina'?'Christina paid':'Split')+(c.forWhom&&c.forWhom!=='shared'?' \u00b7 for '+(c.forWhom==='gwen'?'Gwen':'Christina')+' only':'')+'</span>'
+        +(c.purchased?'<span>Purchased '+esc(c.purchased)+'</span>':'')+'</div></div>';
+    });
+    html+='</div>';
+  });
+  html+='</div>'; // end bc-list
+  html+='<div class="bc-actions">'
+    +'<button class="booked-edit-btn" id="bcAddBtn">+ Add pre-booked item</button>'
+    +'</div></div>'; // end bc-actions, b-table-wrap
+
+  // ── Section 4: On-trip expenses ──
+  html+='<div class="exp-section">'
+    +'<div class="exp-list-hd"><span class="exp-list-title">On-trip expenses</span>'
+    +'<button class="budget-add-btn" id="budgetAddBtn">+ Add expense</button></div>';
+
+  // Category filter with totals
+  html+='<div class="exp-filter-row">'
+    +'<button class="exp-filter-btn'+(expFilter==='all'?' active':'')+'" data-filter="all">All'+(expTotal>0?' <span class="efb-total">'+fmt(expTotal)+'</span>':'')+'</button>';
+  Object.keys(CAT_COLORS).forEach(cat=>{
+    const ct=catTotals[cat]||0;
+    html+='<button class="exp-filter-btn'+(expFilter===cat?' active':'')+'" data-filter="'+cat+'">'+cat.charAt(0).toUpperCase()+cat.slice(1)+(ct>0?' <span class="efb-total">'+fmt(ct)+'</span>':'')+'</button>';
+  });
+  html+='</div>';
+  html+=expRowsHtml;
+  html+='</div>'; // end exp-section
+  html+='<div style="height:40px"></div>';
+
+  el.innerHTML=html;
+
+  // ── Event listeners ──
   el.querySelectorAll('.cur-btn').forEach(btn=>btn.addEventListener('click',()=>{budgetCur=btn.dataset.cur;renderBudget();}));
   $('budgetAddBtn')?.addEventListener('click',openExpenseModal);
-  $('bookedEditToggle')?.addEventListener('click',()=>{bookedEditing=!bookedEditing;renderBudget();});
-  $('bcSaveBtn')?.addEventListener('click',async()=>{
-    el.querySelectorAll('[data-id][data-field]').forEach(el=>{
-      const item=bookedCosts.find(c=>c.id===el.dataset.id); if(!item)return;
-      const f=el.dataset.field, v=el.value;
-      if(f==='jpy'){item.jpy=parseInt(v,10)||0;item.usd=Math.round(item.jpy/exchRate);}
-      else item[f]=v;
+  $('bcAddBtn')?.addEventListener('click',()=>openBookedModal());
+  el.querySelectorAll('.bc-item').forEach(item=>{
+    item.addEventListener('click',()=>{
+      const id=item.dataset.bcid;
+      const c=bookedCosts.find(x=>x.id===id);
+      if(c)openBookedModal(c);
     });
-    bookedEditing=false;
-    await db.collection('settings').doc('bookedCosts').set({items:bookedCosts});
-    showToast('Saved','ok'); renderBudget();
-  });
-  $('bcAddBtn')?.addEventListener('click',()=>{
-    bookedCosts.push({id:'bc-'+Date.now(),label:'New item',category:'Other',jpy:0,usd:0,paidBy:'gwen'});
-    renderBudget();
   });
   el.querySelectorAll('.exp-filter-btn').forEach(btn=>btn.addEventListener('click',()=>{expFilter=btn.dataset.filter;renderBudget();}));
   el.querySelectorAll('.exp-delete').forEach(btn=>btn.addEventListener('click',async e=>{
@@ -1904,6 +2050,65 @@ function renderBudget(){
   }));
 }
 
+// ── Pre-booked cost modal ─────────────────────────────────
+let editBookedId=null;
+function openBookedModal(item){
+  editBookedId=item?item.id:null;
+  const isEdit=!!item;
+  if($('bcModalTitle'))$('bcModalTitle').textContent=isEdit?'Edit pre-booked item':'Add pre-booked item';
+  if($('bcLabel'))$('bcLabel').value=item?item.label:'';
+  if($('bcAmount'))$('bcAmount').value=item?(item.jpy||''):'';
+  if($('bcCategory')){$('bcCategory').value=item?item.category:'Hotels';}
+  if($('bcPaidBy'))$('bcPaidBy').value=item?(item.paidBy||'gwen'):'gwen';
+  if($('bcForWhom'))$('bcForWhom').value=item?(item.forWhom||'shared'):'shared';
+  if($('bcDates'))$('bcDates').value=item?(item.dates||''):'';
+  if($('bcPurchased'))$('bcPurchased').value=item?(item.purchased||''):'';
+  const delBtn=$('bcDeleteBtn');
+  if(delBtn)delBtn.style.display=isEdit?'':'none';
+  const saveBtn=$('bcSaveBtn2');
+  if(saveBtn)saveBtn.textContent=isEdit?'Save changes':'Add item';
+  $('bcErr')?.classList.add('hidden');
+  openModal('bookedModal');
+  setTimeout(()=>$('bcLabel')?.focus(),80);
+}
+window.openBookedModal=openBookedModal;
+
+async function saveBookedItem(){
+  const label=$('bcLabel')?.value.trim();
+  if(!label){if($('bcErr')){$('bcErr').textContent='Enter a name.';$('bcErr').classList.remove('hidden');}return;}
+  const jpy=parseInt($('bcAmount')?.value||'0',10);
+  const data={
+    label,
+    jpy, usd:Math.round(jpy/exchRate),
+    category:$('bcCategory')?.value||'Other',
+    paidBy:$('bcPaidBy')?.value||'gwen',
+    forWhom:$('bcForWhom')?.value||'shared',
+    dates:$('bcDates')?.value.trim()||'',
+    purchased:$('bcPurchased')?.value.trim()||'',
+  };
+  if(editBookedId){
+    const item=bookedCosts.find(c=>c.id===editBookedId);
+    if(item)Object.assign(item,data);
+  }else{
+    data.id='bc-'+Date.now();
+    bookedCosts.push(data);
+  }
+  try{await db.collection('settings').doc('bookedCosts').set({items:bookedCosts});}catch{}
+  closeModal('bookedModal');
+  showToast(editBookedId?'Updated':'Added','ok');
+  renderBudget();
+}
+
+async function deleteBookedFromModal(){
+  if(!editBookedId)return;
+  if(!confirm('Delete this pre-booked item?'))return;
+  bookedCosts=bookedCosts.filter(c=>c.id!==editBookedId);
+  try{await db.collection('settings').doc('bookedCosts').set({items:bookedCosts});}catch{}
+  closeModal('bookedModal');
+  showToast('Removed','ok');
+  renderBudget();
+}
+
 // ── Expense modal ─────────────────────────────────────────────
 function openEditExpense(id){
   const exp=expenses.find(e=>e.id===id); if(!exp)return;
@@ -1914,8 +2119,12 @@ function openEditExpense(id){
   if($('expDate'))  $('expDate').value=exp.date||'';
   selectedCat=exp.category||'food';
   selectedPayer=exp.paidBy||'gwen';
+  // Migrate legacy: old "split" paidBy → paidBy=gwen + forWhom=shared
+  if(selectedPayer==='split'){selectedPayer='gwen';}
+  selectedFor=exp.forWhom||'shared';
   document.querySelectorAll('#expCatChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.cat===selectedCat));
   document.querySelectorAll('#expPayerChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.payer===selectedPayer));
+  document.querySelectorAll('#expForChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.for===selectedFor));
   // Show date input, hide quick-date chips
   if($('expDate'))$('expDate').style.display='block';
   if($('expQuickDates'))$('expQuickDates').style.display='none';
@@ -1940,6 +2149,8 @@ function openExpenseModal(){
   document.querySelectorAll('#expCatChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.cat==='food'));
   document.querySelectorAll('#expPayerChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.payer===selectedPayer));
   selectedCat='food';
+  selectedFor='shared';
+  document.querySelectorAll('#expForChips .chip').forEach(c=>c.classList.toggle('active',c.dataset.for==='shared'));
   $('expErr')?.classList.add('hidden');
   document.querySelectorAll('.qd-btn').forEach(b=>b.classList.toggle('active',b.dataset.offset==='0'));
   if($('expDate'))$('expDate').style.display='none';
@@ -1959,6 +2170,11 @@ document.getElementById('expPayerChips')?.addEventListener('click',e=>{
   const btn=e.target.closest('.chip'); if(!btn)return;
   document.querySelectorAll('#expPayerChips .chip').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active'); selectedPayer=btn.dataset.payer||'gwen';
+});
+document.getElementById('expForChips')?.addEventListener('click',e=>{
+  const btn=e.target.closest('.chip'); if(!btn)return;
+  document.querySelectorAll('#expForChips .chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active'); selectedFor=btn.dataset.for||'shared';
 });
 document.getElementById('expQuickDates')?.addEventListener('click',e=>{
   const btn=e.target.closest('.qd-btn'); if(!btn)return;
@@ -1985,7 +2201,7 @@ async function saveExpense(){
       amount, category:selectedCat,
       description:$('expNote')?.value.trim()||selectedCat,
       paidBy:selectedPayer,
-      split:selectedPayer==='split',
+      forWhom:selectedFor,
       date:$('expDate')?.value||'',
     };
     if(editExpId){
@@ -2134,7 +2350,7 @@ auth.onAuthStateChanged(async user=>{
     updateTabVisibility(true);
     // Auto-set default payer to whoever is signed in
     selectedPayer=user.email==='cmelikian@gmail.com'?'christina':'gwen';
-    await Promise.all([loadAllNotes(), loadChecksFromDB(), loadBookedCostsFromDB(), loadDriveSettings()]);
+    await Promise.all([loadAllNotes(), loadChecksFromDB(), loadBookedCostsFromDB(), loadDriveSettings(), loadChecklistCustomItems(), loadPackingCustomItems()]);
     renderPlan();
     refreshNoteDisplays(); setupEditors();
     subscribeExpenses(); subscribeDays();
@@ -2248,6 +2464,10 @@ window.exportTripData=async function(){
       itinerary,notes:{...notes},confirmations:CONFIRMATIONS,
       prebooked:[...bookedCosts],expenses:[...expenses],
       overview:OVERVIEW_DATA,checklistState:{...checks},groups:GROUPS,
+      // Custom items added by editors
+      checklistCustomItems:(()=>{const ci={};CHECKLIST.forEach(sec=>{const custom=sec.items.filter(i=>i.custom);if(custom.length>0)ci[sec.id]=custom;});return ci;})(),
+      packingLists:PACKING.map(g=>({cat:g.cat,items:[...g.items]})),
+      packingState:JSON.parse(localStorage.getItem('japan-packing')||'{}'),
     };
     const blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob);
@@ -2285,6 +2505,25 @@ window.importTripData=async function(){
       if(data.notes)await Promise.all(Object.entries(data.notes).map(([id,text])=>text?db.collection('notes').doc(id).set({text,updatedAt:new Date()}):Promise.resolve()));
       if(data.prebooked){bookedCosts=data.prebooked;await db.collection('settings').doc('bookedCosts').set({items:bookedCosts});}
       if(data.checklistState){Object.assign(checks,data.checklistState);await db.collection('checks').doc('all').set(checks);}
+      if(data.checklistCustomItems){
+        await db.collection('settings').doc('checklist').set({customItems:data.checklistCustomItems});
+        try{localStorage.setItem('japan-checklist-custom',JSON.stringify(data.checklistCustomItems));}catch{}
+      }
+      if(data.packingLists){
+        await db.collection('settings').doc('packing').set({lists:data.packingLists});
+        try{localStorage.setItem('japan-packing-custom',JSON.stringify(data.packingLists));}catch{}
+      }
+      if(data.packingState){
+        try{localStorage.setItem('japan-packing',JSON.stringify(data.packingState));}catch{}
+      }
+      if(data.expenses&&data.expenses.length>0){
+        const batch=db.batch();
+        data.expenses.forEach(exp=>{
+          const ref=exp.id?db.collection('expenses').doc(exp.id):db.collection('expenses').doc();
+          batch.set(ref,{...exp,createdAt:exp.createdAt||firebase.firestore.FieldValue.serverTimestamp()});
+        });
+        await batch.commit();
+      }
       showToast('Import complete \u2014 refreshing','ok');
       setTimeout(()=>location.reload(),1200);
     }catch(e){console.error('Import failed:',e);showToast('Import failed: '+e.message,'err');}
@@ -2339,6 +2578,18 @@ window.closeLightbox=function(){$('lightbox')?.classList.add('hidden');};
 try{Object.assign(checks,JSON.parse(localStorage.getItem('japan-checks')||'{}'));}catch{}
 loadLocalExpenses();
 try{driveFolderUrl=localStorage.getItem('japan-drive-url')||'';}catch{}
+// Load cached custom checklist/packing items from localStorage (Firestore load happens after auth)
+try{
+  const ci=JSON.parse(localStorage.getItem('japan-checklist-custom')||'null');
+  if(ci){Object.entries(ci).forEach(([secId,items])=>{
+    const sec=CHECKLIST.find(s=>s.id===secId); if(!sec)return;
+    items.forEach(item=>{if(!sec.items.find(i=>i.id===item.id))sec.items.push({...item,custom:true});});
+  });}
+}catch{}
+try{
+  const pl=JSON.parse(localStorage.getItem('japan-packing-custom')||'null');
+  if(pl&&Array.isArray(pl)){pl.forEach(sg=>{const match=PACKING.find(g=>g.cat===sg.cat);if(match)match.items=sg.items||[];});}
+}catch{}
 
 db.collection('settings').doc('drive').get()
   .then(s=>{if(s.exists&&s.data()?.folderUrl)driveFolderUrl=s.data().folderUrl;})
