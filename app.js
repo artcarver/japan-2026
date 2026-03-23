@@ -203,12 +203,24 @@ function updateClock(){
   const pad=n=>String(n).padStart(2,'0');
   el.innerHTML=day+' '+mo+' '+dt+', '+pad(jst.getHours())+':'+pad(jst.getMinutes())+' <span class="jst-suffix">JST</span>';
 }
+function japanTimeHtml(){
+  const jst=getTodayJST();
+  const day=jst.toLocaleString('en-US',{weekday:'long'});
+  const mo=jst.toLocaleString('en-US',{month:'long'});
+  const dt=jst.getDate();
+  const pad=n=>String(n).padStart(2,'0');
+  const h=jst.getHours(), m=pad(jst.getMinutes());
+  const ampm=h>=12?'PM':'AM';
+  const h12=h===0?12:h>12?h-12:h;
+  return 'Current time in Japan: <strong>'+day+', '+mo+' '+dt+' \u00b7 '+h12+':'+m+' '+ampm+'</strong> JST';
+}
 function updateTripStatus(){
   const el=$('tripStatus'); if(!el)return;
   const now=new Date(), todayId=getTodayDayId();
-  if(now<TRIP_START){
-    const d=Math.ceil((TRIP_START-now)/86400000);
-    el.innerHTML='Trip starts in <strong>'+d+' day'+(d===1?'':'s')+'</strong>';
+  if(now<T_DEPART){
+    const d=Math.floor((T_DEPART-now)/86400000);
+    if(d>0) el.innerHTML='Trip starts in <strong>'+d+' day'+(d===1?'':'s')+'</strong>';
+    else el.innerHTML='<strong>Departing today</strong>';
   }else if(now>TRIP_END){
     el.innerHTML='Trip complete &middot; Apr 15\u201329, 2026';
   }else{
@@ -1125,6 +1137,7 @@ function renderOverview(){
 
   el.innerHTML=
     '<div class="ov-accent"><div class="ov-accent-left"><div class="ov-accent-title">Japan</div><div class="ov-accent-sub">April 15\u201329, 2026 \u00b7 15 days</div></div><div class="ov-accent-right" id="ovCd">'+cdHtml()+'</div></div>'
+    +'<div class="ov-japan-time" id="ovJapanTime">'+japanTimeHtml()+'</div>'
     +todayPlanHtml
     +'<div class="ov-section-label">The route</div><div class="ov-route">'+journeyHtml+'</div>'
     +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">View detailed day-by-day plan \u2192</button></div>'
@@ -1136,7 +1149,10 @@ function renderOverview(){
 
   if(ovTimer)clearInterval(ovTimer);
   const closeToDepart=now<T_DEPART&&(T_DEPART-now)<86400000;
-  ovTimer=setInterval(()=>{const c=$('ovCd');if(c)c.innerHTML=cdHtml();}, closeToDepart?1000:60000);
+  ovTimer=setInterval(()=>{
+    const c=$('ovCd');if(c)c.innerHTML=cdHtml();
+    const jt=$('ovJapanTime');if(jt)jt.innerHTML=japanTimeHtml();
+  }, closeToDepart?1000:60000);
 }
 
 // ── Itinerary ─────────────────────────────────────────────────
@@ -1229,18 +1245,18 @@ function renderDay(d){
     bodyContent+=d.periods.map(p=>'<div class="period"><div class="period-label">'+p.label+'</div>'+p.items.map(item=>renderStaticItem(item,d.id,isEdit)).join('')+'</div>').join('');
   }
 
-  if(isEdit)bodyContent+='<button class="add-act-btn" onclick="openAddAct(\''+d.id+'\')">+ Add activity</button>';
+  if(isEdit)bodyContent+='<div class="add-act-wrap"><button class="add-act-btn" onclick="openAddAct(\''+d.id+'\')">+ Add activity</button></div>';
 
-  // Tip
-  if(tip)bodyContent+='<div class="day-tip"><div class="day-tip-label">Tip</div><div class="day-tip-text">'+esc(tip)+'</div></div>';
+  // Tip and notes go outside the timeline
+  let afterTimeline='';
+  if(tip)afterTimeline+='<div class="day-tip"><div class="day-tip-label">Tip</div><div class="day-tip-text">'+esc(tip)+'</div></div>';
 
-  // Notes section
   if(isEdit){
-    bodyContent+='<div class="notes-section">'
+    afterTimeline+='<div class="notes-section">'
       +'<div class="notes-hd"><span class="notes-label">Notes</span><span class="notes-save-ind" id="save-'+d.id+'"></span></div>'
       +'<textarea class="notes-edit" data-day="'+d.id+'" placeholder="Add notes for this day..."></textarea></div>';
   }else if(noteText){
-    bodyContent+='<div class="notes-section">'
+    afterTimeline+='<div class="notes-section">'
       +'<div class="notes-hd"><span class="notes-label">Notes</span></div>'
       +'<div class="notes-read-only">'+noteText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
   }
@@ -1257,7 +1273,7 @@ function renderDay(d){
     +'<div class="day-header-right"><span class="day-count">'+actLabel+'</span><span class="day-toggle">&#9660;</span></div>'
     +'</div>'
     +'<div class="day-body"><div class="day-body-inner"><div class="timeline">'+bodyContent
-    +'</div></div></div></div>';
+    +'</div>'+afterTimeline+'</div></div></div>';
 }
 
 // Toggle expand state of an activity row in-place (no full re-render)

@@ -340,6 +340,13 @@ header {
 .ov-currently-city { font-family: var(--serif); font-size: var(--fs-xl); opacity: 0.9; }
 
 /* Section labels */
+.ov-japan-time {
+  font-size: var(--fs-base); color: var(--muted); text-align: center;
+  padding: 12px 16px; margin-bottom: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-lg); line-height: 1.4;
+}
+.ov-japan-time strong { color: var(--text); font-weight: var(--fw-medium); }
 .ov-section-label {
   font-family: var(--serif); font-size: var(--fs-lg); font-weight: var(--fw-normal);
   letter-spacing: 0; color: var(--text);
@@ -596,7 +603,6 @@ a.hotel-cell-phone:hover { text-decoration: underline; }
   border: 2px solid var(--card);
   box-shadow: 0 0 0 1.5px var(--border);
   z-index: 1; flex-shrink: 0;
-  transition: box-shadow var(--speed);
 }
 .act[data-cat="hotel"]       .act-dot { background: #5C4A8A; box-shadow: 0 0 0 1.5px #D0C8F0; }
 .act[data-cat="transport"]   .act-dot { background: #3D6B9A; box-shadow: 0 0 0 1.5px #C0D4EC; }
@@ -648,11 +654,11 @@ body.edit-mode .act.expanded .act-edit-inline { display: inline-block; }
 .act.expanded .act-inline-meta { display: none; }
 
 /* Expand all button */
-.expand-all-wrap { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.expand-all-wrap { display: flex; justify-content: flex-end; margin-bottom: 2px; }
 .expand-all-btn {
   background: none; border: none; cursor: pointer;
-  font-size: var(--fs-xs); color: var(--light); font-family: var(--sans);
-  padding: 2px 0; transition: color var(--speed); letter-spacing: 0;
+  font-size: 10px; color: var(--xlight); font-family: var(--sans);
+  padding: 2px 0; transition: color var(--speed); letter-spacing: 0.02em;
 }
 .expand-all-btn:hover { color: var(--red); }
 
@@ -720,44 +726,46 @@ body.edit-mode .act.expanded .act-edit-inline { display: inline-block; }
 
 /* Day tip */
 .day-tip {
-  margin-top: 12px; padding: 10px 12px;
-  background: var(--amber-bg); border: 1px solid var(--amber-bd);
-  border-radius: var(--r); font-size: var(--fs-xs); line-height: 1.5;
+  margin-top: 10px; padding: 8px 10px;
+  background: var(--amber-bg); border-left: 3px solid var(--amber-bd);
+  border-radius: 0 var(--r) var(--r) 0;
+  font-size: var(--fs-xs); line-height: 1.5;
 }
 .day-tip-label {
   font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.06em;
-  color: var(--amber); margin-bottom: 2px;
+  color: var(--amber); margin-bottom: 1px; font-size: 10px;
 }
 .day-tip-text { color: var(--muted); }
 
 /* Notes section */
-.notes-section { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-lt); }
+.notes-section { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-lt); }
 .notes-hd {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .notes-label {
-  font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: 0.06em;
-  text-transform: uppercase; color: var(--light);
+  font-size: 10px; font-weight: var(--fw-bold); letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--xlight);
 }
 .notes-save-ind { font-size: var(--fs-xs); color: var(--green); }
 .notes-edit {
-  width: 100%; min-height: 60px; resize: vertical;
-  padding: 8px 10px; font-size: var(--fs-sm); font-family: var(--sans);
-  color: var(--text); background: var(--bg); border: 1px solid var(--border);
+  width: 100%; min-height: 48px; resize: vertical;
+  padding: 6px 8px; font-size: var(--fs-xs); font-family: var(--sans);
+  color: var(--text); background: var(--bg); border: 1px solid var(--border-lt);
   border-radius: var(--r); outline: none; line-height: 1.5;
   transition: border-color var(--speed), background var(--speed);
 }
 .notes-edit:focus { border-color: var(--red); background: var(--card); }
 .notes-read-only {
-  font-size: var(--fs-sm); color: var(--muted); line-height: 1.5;
-  padding: 4px 0;
+  font-size: var(--fs-xs); color: var(--muted); line-height: 1.5;
+  padding: 2px 0;
 }
 
+.add-act-wrap { padding-left: 0; margin-top: 4px; }
 .add-act-btn {
-  margin-top: 8px; width: 100%; padding: 8px;
-  background: none; border: 1px dashed var(--border);
-  border-radius: var(--r); font-size: var(--fs-sm); color: var(--muted);
+  padding: 5px 12px;
+  background: none; border: 1px dashed var(--border-lt);
+  border-radius: var(--r); font-size: var(--fs-xs); color: var(--xlight);
   cursor: pointer; letter-spacing: 0;
   transition: border-color var(--speed), color var(--speed);
 }
@@ -1480,8 +1488,8 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shado
 .exp-fab-icon { line-height: 1; margin-top: -1px; }
 
 .cw-fab {
-  position: fixed; bottom: 64px;
-  right: 20px; z-index: 90;
+  position: fixed; bottom: 74px;
+  right: 24px; z-index: 90;
   width: 36px; height: 36px; border-radius: var(--r);
   background: var(--card); border: 1px solid var(--border);
   font-size: var(--fs-xs); font-weight: var(--fw-medium);
@@ -1561,9 +1569,9 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shado
 @media (max-width: 760px) {
   .bottom-nav { display: flex; }
   .top-tabs { display: none; }
-  #mainContent { padding-bottom: 80px; }
+  #mainContent { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
   .exp-fab { bottom: calc(68px + env(safe-area-inset-bottom)); }
-  .cw-fab  { bottom: calc(112px + env(safe-area-inset-bottom)); }
+  .cw-fab  { bottom: calc(122px + env(safe-area-inset-bottom)); }
   .ov-accent { padding: 16px 30px; margin-left: -14px; margin-right: -14px; }
   .ov-accent-title { font-size: var(--fs-xl); }
   .ov-cd-num { font-size: var(--fs-2xl); }
@@ -1608,7 +1616,7 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shado
 }
 
 @media (max-width: 480px) {
-  #mainContent { padding: 16px 14px 80px; }
+  #mainContent { padding: 16px 14px calc(100px + env(safe-area-inset-bottom)); }
   #panel-overview { margin-top: -16px; }
   .ov-title { font-size: var(--fs-2xl); }
   .dest-pills { padding: 6px 14px; justify-content: flex-start; }
@@ -1616,6 +1624,11 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shado
   .header-inner { padding: 8px 14px; }
   .trip-status { display: none; }
   .logo-serif { font-size: var(--fs-sm); }
+  .day-card.expanded .day-body-inner { padding: 6px 12px 12px; }
+  .timeline { padding-left: 16px; }
+  .act-time { min-width: 52px; font-size: 10px; }
+  .act-dot { left: -16px; top: 10px; width: 7px; height: 7px; }
+  .timeline::before { left: 3px; }
 }
 
 /* ════════════════════════════════════════════════
