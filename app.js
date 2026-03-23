@@ -255,8 +255,7 @@ async function fetchRate(){
   }catch{}
   const el=$('cwRate'); if(el)el.textContent=rateIsLive?'1 USD = \u00a5'+exchRate.toFixed(0)+' JPY (live)':'1 USD \u2248 \u00a5'+Math.round(exchRate)+' JPY (est.)';
 }
-$('cwFab')?.addEventListener('click',()=>$('currencyWidget')?.classList.toggle('hidden'));
-$('cwClose')?.addEventListener('click',()=>$('currencyWidget')?.classList.add('hidden'));
+$('cwFab')?.addEventListener('click',()=>{openModal('currencyModal');setTimeout(()=>$('jpyIn')?.focus(),80);});
 $('jpyIn')?.addEventListener('input',()=>{const v=parseFloat($('jpyIn').value);$('usdIn').value=isNaN(v)?'':(v/exchRate).toFixed(2);});
 $('usdIn')?.addEventListener('input',()=>{const v=parseFloat($('usdIn').value);$('jpyIn').value=isNaN(v)?'':(v*exchRate).toFixed(0);});
 
@@ -1906,6 +1905,7 @@ function renderBudget(){
   html+='<div class="budget-header">'
     +'<div><div class="budget-title">Trip Budget</div></div>'
     +'<div class="budget-header-right">'
+    +'<button class="budget-cw-btn" id="budgetCwBtn" title="Currency converter">\u00a5 \u21c4 $</button>'
     +'<div class="cur-toggle"><button class="cur-btn'+(budgetCur==='JPY'?' active':'')+'" data-cur="JPY">\u00a5 JPY</button><button class="cur-btn'+(budgetCur==='USD'?' active':'')+'" data-cur="USD">$ USD</button></div>'
     +'</div></div>';
 
@@ -1961,54 +1961,60 @@ function renderBudget(){
   html+='</div>'; // end ledger
   html+='</div></div>'; // end settle-body, settle-wrap
 
-  // ── Section 3: Pre-booked costs ──
-  html+='<div class="b-table-wrap"><div class="b-table-hd"><span class="b-table-title">Pre-booked costs</span>'
+  // ── Build pre-booked section HTML ──
+  let prebookedHtml='<div class="b-table-wrap"><div class="b-table-hd"><span class="b-table-title">Pre-booked costs</span>'
     +'<span class="b-table-total">'+fmt(bookedTotal)+'</span></div>';
-
-  // Card-based list instead of table
-  html+='<div class="bc-list">';
+  prebookedHtml+='<div class="bc-list">';
   bookedCatOrder.forEach(cat=>{
     const items=bookedByCategory[cat]; if(!items||items.length===0)return;
     const catTotal=items.reduce((s,c)=>s+(c.jpy||0),0);
     const catClass='b-cat-'+(cat||'Other').toLowerCase().replace(' ','');
-    html+='<div class="bc-cat-group">'
+    prebookedHtml+='<div class="bc-cat-group">'
       +'<div class="bc-cat-hd"><span class="b-cat-chip '+catClass+'">'+esc(cat)+'</span><span class="bc-cat-total">'+fmt(catTotal)+'</span></div>';
     items.forEach(c=>{
-      html+='<div class="bc-item" data-bcid="'+ea(c.id)+'">'
+      prebookedHtml+='<div class="bc-item" data-bcid="'+ea(c.id)+'">'
         +'<div class="bc-item-main">'
         +'<div class="bc-item-label">'+esc(c.label)+(c.dates?'<span class="bc-item-dates">'+esc(c.dates)+'</span>':'')+'</div>'
         +'<div class="bc-item-right"><span class="bc-item-amt">'+fmt(c.jpy||0)+'</span></div></div>'
         +'<div class="bc-item-meta"><span>'+(c.paidBy==='gwen'?'Gwen paid':c.paidBy==='christina'?'Christina paid':'Split')+(c.forWhom&&c.forWhom!=='shared'?' \u00b7 for '+(c.forWhom==='gwen'?'Gwen':'Christina')+' only':'')+'</span>'
         +(c.purchased?'<span>Purchased '+esc(c.purchased)+'</span>':'')+'</div></div>';
     });
-    html+='</div>';
+    prebookedHtml+='</div>';
   });
-  html+='</div>'; // end bc-list
-  html+='<div class="bc-actions">'
+  prebookedHtml+='</div>';
+  prebookedHtml+='<div class="bc-actions">'
     +'<button class="booked-edit-btn" id="bcAddBtn">+ Add pre-booked item</button>'
-    +'</div></div>'; // end bc-actions, b-table-wrap
+    +'</div></div>';
 
-  // ── Section 4: On-trip expenses ──
-  html+='<div class="exp-section">'
+  // ── Build on-trip expenses section HTML ──
+  let expensesHtml='<div class="exp-section">'
     +'<div class="exp-list-hd"><span class="exp-list-title">On-trip expenses</span>'
     +'<button class="budget-add-btn" id="budgetAddBtn">+ Add expense</button></div>';
-
-  // Category filter with totals
-  html+='<div class="exp-filter-row">'
+  expensesHtml+='<div class="exp-filter-row">'
     +'<button class="exp-filter-btn'+(expFilter==='all'?' active':'')+'" data-filter="all">All'+(expTotal>0?' <span class="efb-total">'+fmt(expTotal)+'</span>':'')+'</button>';
   Object.keys(CAT_COLORS).forEach(cat=>{
     const ct=catTotals[cat]||0;
-    html+='<button class="exp-filter-btn'+(expFilter===cat?' active':'')+'" data-filter="'+cat+'">'+cat.charAt(0).toUpperCase()+cat.slice(1)+(ct>0?' <span class="efb-total">'+fmt(ct)+'</span>':'')+'</button>';
+    expensesHtml+='<button class="exp-filter-btn'+(expFilter===cat?' active':'')+'" data-filter="'+cat+'">'+cat.charAt(0).toUpperCase()+cat.slice(1)+(ct>0?' <span class="efb-total">'+fmt(ct)+'</span>':'')+'</button>';
   });
-  html+='</div>';
-  html+=expRowsHtml;
-  html+='</div>'; // end exp-section
+  expensesHtml+='</div>';
+  expensesHtml+=expRowsHtml;
+  expensesHtml+='</div>';
+
+  // During the trip, show expenses first (most used). Before/after, show pre-booked first.
+  const now=new Date();
+  const duringTrip=now>=TRIP_START&&now<=TRIP_END;
+  if(duringTrip){
+    html+=expensesHtml+prebookedHtml;
+  }else{
+    html+=prebookedHtml+expensesHtml;
+  }
   html+='<div style="height:40px"></div>';
 
   el.innerHTML=html;
 
   // ── Event listeners ──
   el.querySelectorAll('.cur-btn').forEach(btn=>btn.addEventListener('click',()=>{budgetCur=btn.dataset.cur;renderBudget();}));
+  $('budgetCwBtn')?.addEventListener('click',()=>{openModal('currencyModal');setTimeout(()=>$('jpyIn')?.focus(),80);});
   $('budgetAddBtn')?.addEventListener('click',openExpenseModal);
   $('bcAddBtn')?.addEventListener('click',()=>openBookedModal());
   el.querySelectorAll('.bc-item').forEach(item=>{
@@ -2159,16 +2165,19 @@ document.getElementById('expForChips')?.addEventListener('click',e=>{
 });
 document.getElementById('expQuickDates')?.addEventListener('click',e=>{
   const btn=e.target.closest('.qd-btn'); if(!btn)return;
+  document.querySelectorAll('.qd-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
   if(btn.id==='expPickDate'){
-    if($('expDate'))$('expDate').style.display=$('expDate').style.display==='none'?'block':'none';
+    if($('expDate'))$('expDate').style.display='block';
     return;
   }
+  // Today or Yesterday -- auto-set date and hide the date input
+  if($('expDate'))$('expDate').style.display='none';
   const off=parseInt(btn.dataset.offset||'0',10);
   const base=new Date(getTodayJST()); base.setDate(base.getDate()+off);
   const s=TRIP_START, f=TRIP_END;
   const clamped=base<s?s:base>f?f:base;
   if($('expDate'))$('expDate').value=clamped.toISOString().split('T')[0];
-  document.querySelectorAll('.qd-btn').forEach(b=>b.classList.toggle('active',b===btn));
 });
 
 async function saveExpense(){

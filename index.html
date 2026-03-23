@@ -89,28 +89,30 @@
 
   <!-- Expense FAB — always visible when signed in -->
   <button class="exp-fab hidden" id="expFab" title="Log an expense">
-    <span class="exp-fab-icon">&#165;</span>
+    <span class="exp-fab-icon">+</span>
   </button>
 
-  <!-- Currency converter -->
-  <div class="currency-widget hidden" id="currencyWidget">
-    <div class="cw-hd">
-      <span class="cw-title">Currency</span>
-      <button class="cw-close" id="cwClose">&times;</button>
-    </div>
-    <div class="cw-body">
-      <div class="cw-row">
-        <span class="cw-flag">&#165;</span>
-        <input type="number" class="cw-input" id="jpyIn" placeholder="0" inputmode="decimal">
-        <span class="cw-code">JPY</span>
+  <!-- Currency converter modal -->
+  <div class="modal-overlay" id="currencyModal">
+    <div class="modal-card modal-sm">
+      <div class="modal-hd">
+        <h2 class="modal-title">Currency converter</h2>
+        <button class="modal-x" onclick="closeModal('currencyModal')">&times;</button>
       </div>
-      <div class="cw-swap">&#8645;</div>
-      <div class="cw-row">
-        <span class="cw-flag">$</span>
-        <input type="number" class="cw-input" id="usdIn" placeholder="0" inputmode="decimal">
-        <span class="cw-code">USD</span>
+      <div class="modal-body">
+        <div class="cw-row">
+          <span class="cw-flag">&#165;</span>
+          <input type="number" class="cw-input" id="jpyIn" placeholder="0" inputmode="decimal">
+          <span class="cw-code">JPY</span>
+        </div>
+        <div class="cw-swap">&#8645;</div>
+        <div class="cw-row">
+          <span class="cw-flag">$</span>
+          <input type="number" class="cw-input" id="usdIn" placeholder="0" inputmode="decimal">
+          <span class="cw-code">USD</span>
+        </div>
+        <div class="cw-rate" id="cwRate">Loading rate&hellip;</div>
       </div>
-      <div class="cw-rate" id="cwRate">Loading rate&hellip;</div>
     </div>
   </div>
   <button class="cw-fab" id="cwFab" title="Currency converter">&#165;/$</button>

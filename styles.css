@@ -1114,6 +1114,13 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shado
   transition: background var(--speed);
 }
 .budget-add-btn:hover { background: var(--red-d); }
+.budget-cw-btn {
+  background: none; border: 1px solid var(--border);
+  padding: 5px 10px; border-radius: var(--r); font-size: var(--fs-xs);
+  font-weight: var(--fw-medium); cursor: pointer; color: var(--muted);
+  transition: all var(--speed); font-family: var(--sans); letter-spacing: 0;
+}
+.budget-cw-btn:hover { border-color: var(--red); color: var(--red); }
 
 /* Stats */
 .b-top-row {
@@ -1461,15 +1468,16 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shado
 .exp-fab {
   position: fixed; bottom: 20px;
   right: 20px; z-index: 90;
-  width: 36px; height: 36px; border-radius: var(--r);
+  width: 44px; height: 44px; border-radius: 50%;
   background: var(--red); color: #fff; border: none;
-  cursor: pointer; font-size: var(--fs-base); font-weight: var(--fw-bold);
+  cursor: pointer; font-size: 22px; font-weight: var(--fw-normal);
   box-shadow: 0 2px 10px rgba(184,92,56,.35);
   display: flex; align-items: center; justify-content: center;
-  transition: background var(--speed), box-shadow var(--speed);
+  transition: background var(--speed), box-shadow var(--speed), transform var(--speed);
+  line-height: 1;
 }
-.exp-fab:hover { background: var(--red-d); box-shadow: 0 3px 14px rgba(184,92,56,.45); }
-.exp-fab-icon { line-height: 1; }
+.exp-fab:hover { background: var(--red-d); box-shadow: 0 3px 14px rgba(184,92,56,.45); transform: scale(1.05); }
+.exp-fab-icon { line-height: 1; margin-top: -1px; }
 
 .cw-fab {
   position: fixed; bottom: 64px;
@@ -1485,36 +1493,19 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shado
 }
 .cw-fab:hover { border-color: var(--red); color: var(--red); }
 
-.currency-widget {
-  position: fixed; bottom: calc(60px + env(safe-area-inset-bottom));
-  right: 20px; z-index: 90; width: 240px;
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--r-xl); box-shadow: var(--sh-lg);
-  animation: fadeUp 0.16s ease both;
-  overflow: hidden;
-}
-.cw-hd {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 14px; border-bottom: 1px solid var(--border-lt);
-}
-.cw-title { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text); letter-spacing: 0; }
-.cw-close {
-  background: none; border: none; cursor: pointer;
-  color: var(--light); font-size: var(--fs-base); line-height: 1;
-}
-.cw-body { padding: 14px; }
+/* Currency converter (inside modal) */
 .cw-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .cw-flag { font-size: var(--fs-base); font-weight: var(--fw-bold); color: var(--muted); min-width: 16px; }
 .cw-input {
-  flex: 1; padding: 8px 10px; font-size: 16px; font-family: var(--mono);
+  flex: 1; padding: 10px 12px; font-size: var(--fs-xl); font-family: var(--mono);
   font-weight: var(--fw-medium); color: var(--text); background: var(--bg);
   border: 1px solid var(--border); border-radius: var(--r); width: 0;
   transition: border-color var(--speed), background var(--speed);
 }
-.cw-input:focus { outline: none; border-color: var(--red); }
+.cw-input:focus { outline: none; border-color: var(--red); background: var(--card); }
 .cw-code { font-size: var(--fs-xs); color: var(--light); min-width: 28px; font-weight: var(--fw-bold); }
-.cw-swap { text-align: center; margin-bottom: 8px; color: var(--light); font-size: var(--fs-base); }
-.cw-rate { font-size: var(--fs-xs); color: var(--light); text-align: center; margin-top: 8px; }
+.cw-swap { text-align: center; margin-bottom: 8px; color: var(--light); font-size: var(--fs-lg); }
+.cw-rate { font-size: var(--fs-xs); color: var(--light); text-align: center; margin-top: 4px; }
 
 /* ════════════════════════════════════════════════
    TOAST + LIGHTBOX
@@ -1572,8 +1563,7 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shado
   .top-tabs { display: none; }
   #mainContent { padding-bottom: 80px; }
   .exp-fab { bottom: calc(68px + env(safe-area-inset-bottom)); }
-  .cw-fab  { bottom: calc(112px + env(safe-area-inset-bottom)); right: 20px; }
-  .currency-widget { bottom: calc(156px + env(safe-area-inset-bottom)); right: 12px; width: calc(100vw - 24px); max-width: 260px; }
+  .cw-fab  { bottom: calc(112px + env(safe-area-inset-bottom)); }
   .ov-accent { padding: 16px 30px; margin-left: -14px; margin-right: -14px; }
   .ov-accent-title { font-size: var(--fs-xl); }
   .ov-cd-num { font-size: var(--fs-2xl); }
