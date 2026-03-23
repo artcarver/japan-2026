@@ -201,7 +201,7 @@ function updateClock(){
   const mo=jst.toLocaleString('en-US',{month:'short'});
   const dt=jst.getDate();
   const pad=n=>String(n).padStart(2,'0');
-  el.innerHTML='<span class="jst-label">Japan</span> '+day+' '+mo+' '+dt+', '+pad(jst.getHours())+':'+pad(jst.getMinutes());
+  el.innerHTML=day+' '+mo+' '+dt+', '+pad(jst.getHours())+':'+pad(jst.getMinutes())+' <span class="jst-suffix">JST</span>';
 }
 function updateTripStatus(){
   const el=$('tripStatus'); if(!el)return;
@@ -315,7 +315,7 @@ window.addEventListener('resize', updatePillsOffset);
 function buildDestPills(){
   updatePillsOffset();
   const el=$('destPills'); if(!el)return;
-  el.innerHTML=GROUPS.map((g,i)=>'<button class="dest-pill" data-group="'+i+'">'+esc(g.label)+'</button>').join('');
+  el.innerHTML=GROUPS.map((g,i)=>'<button class="dest-pill" data-group="'+i+'"><span class="dest-pill-dot" style="background:'+g.color+'"></span>'+esc(g.label)+'</button>').join('');
   let clickedPill=null, clickLockTimer=null;
   el.querySelectorAll('.dest-pill').forEach(pill=>{
     pill.addEventListener('click',()=>{
@@ -1043,7 +1043,7 @@ function DEFAULT_BOOKED_COSTS_fn(){
     {id:'bc9',label:'Quintessa Hotel Ginza \u00b7 1 night',   category:'Hotels',    jpy:24713,  usd:155,  paidBy:'gwen', dates:'Apr 28\u201329', purchased:'Jan 25, 2026'},
   ];
 }
-const CAT_COLORS={food:'#E91E8C',drinks:'#C0392B',transport:'#4A90D9',shopping:'#F39C12',activities:'#27AE60',other:'#8E8E8E'};
+const CAT_COLORS={food:'#E91E8C',transport:'#4A90D9',sightseeing:'#8B5CF6',nightlife:'#EC4899',nature:'#10B981',shopping:'#F39C12',activities:'#27AE60',other:'#8E8E8E'};
 
 
 // ═══════════════════════════════════════════════════════════
@@ -1143,8 +1143,6 @@ function renderOverview(){
 // ── Itinerary ─────────────────────────────────────────────────
 function renderItinerary(){
   const el=$('panel-itinerary'); if(!el)return;
-  const segFlexes=[5,2,4,2,1];
-  const summaryBar='<div class="trip-summary-bar"><div class="tsb-top"><span class="tsb-title">JAPAN 2026 \u00b7 ROUTE</span><span class="tsb-dates">APR 15\u201329 \u00b7 15 DAYS</span></div><div class="tsb-bar">'+GROUPS.map((g,i)=>'<div class="tl-seg" style="flex:'+segFlexes[i]+';background:'+g.color+'"></div>').join('')+'</div><div class="tsb-labels">'+GROUPS.map(g=>'<div class="tsb-label-item"><div class="tsb-dot" style="background:'+g.color+'"></div>'+esc(g.label)+' <span style="color:var(--light)">'+esc(g.dates)+'</span></div>').join('')+'</div></div>';
 
   const hasPast=Object.keys(DAYS).some(id=>getDayClass(id)==='past');
   const toolbar=hasPast?'<div class="itin-toolbar"><button class="past-toggle-btn" id="pastToggleBtn">'+(hidePastDays?'Show past days':'Hide past days')+'</button></div>':'';
@@ -1152,7 +1150,7 @@ function renderItinerary(){
   const sections=GROUPS.map((g,i)=>{
     const vis=g.ids.filter(id=>!(hidePastDays&&getDayClass(id)==='past'));
     if(!vis.length)return '';
-    return '<div class="dest-section" id="section-'+i+'"><div class="dest-header"><span class="dest-name">'+esc(g.label)+'</span><span class="dest-dates-label">'+esc(g.dates)+'</span></div>'+vis.map(id=>renderDay(DAYS[id])).join('')+'</div>';
+    return '<div class="dest-section" id="section-'+i+'"><div class="dest-header"><span class="dest-dot" style="background:'+g.color+'"></span><span class="dest-name">'+esc(g.label)+'</span><span class="dest-dates-label">'+esc(g.dates)+'</span></div>'+vis.map(id=>renderDay(DAYS[id])).join('')+'</div>';
   }).join('');
 
   el.innerHTML=toolbar+sections;
@@ -1163,7 +1161,6 @@ function renderItinerary(){
       card.classList.toggle('expanded');
       if(card.classList.contains('expanded')){
         expandedCards.add(dayId);
-        injectDayActsSection(dayId);
         initSortable(dayId);
       } else {
         expandedCards.delete(dayId);
@@ -1175,7 +1172,6 @@ function renderItinerary(){
     const card=document.getElementById('card-'+dayId);
     if(card&&!card.classList.contains('expanded')){
       card.classList.add('expanded');
-      injectDayActsSection(dayId);
       initSortable(dayId);
     }
   });
@@ -1189,7 +1185,6 @@ function renderItinerary(){
     if(card){
       card.classList.add('expanded');
       expandedCards.add(todayId);
-      injectDayActsSection(todayId);
       initSortable(todayId);
     }
     if(todayIdx>=0&&todayIdx<dayKeys.length-1){
@@ -1198,7 +1193,6 @@ function renderItinerary(){
       if(tmrwCard){
         tmrwCard.classList.add('expanded');
         expandedCards.add(tmrwId);
-        injectDayActsSection(tmrwId);
         initSortable(tmrwId);
       }
     }
@@ -1209,40 +1203,59 @@ function renderItinerary(){
     },300);
   }
   $('pastToggleBtn')?.addEventListener('click',()=>{hidePastDays=!hidePastDays;try{localStorage.setItem('japan-hidePast',hidePastDays?'1':'0');}catch{}renderItinerary();buildDestPills();});
+
+  // Wire up notes editors
+  setupEditors();
 }
 
 function renderDay(d){
   const cls=getDayClass(d.id), isToday=cls==='today';
   const noteText=notes[d.id]||'';
-  const noteRead=noteText?noteText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'):(currentUser?'<em>No notes yet \u2014 type below to add.</em>':'<em>No notes yet.</em>');
+  const isEdit=!!currentUser;
 
   const dateId=dayIdToDate(d.id), fsDay=firestoreDays[dateId];
-  const isEdit=!!currentUser;
-  let bodyContent;
+  const tip=fsDay?.tip||d.tip||'';
+  let bodyContent='';
+
+  // Expand all button
+  bodyContent+='<div class="expand-all-wrap"><button class="expand-all-btn" onclick="toggleExpandAll(\''+d.id+'\')">Expand all</button></div>';
 
   if(fsDay&&fsDay.activities&&fsDay.activities.length>0){
     const acts=sortActivitiesByTime([...fsDay.activities]);
-    const expandAllBtn='<div class="expand-all-wrap"><button class="expand-all-btn" onclick="toggleExpandAll(\''+d.id+'\')">Expand all</button></div>';
-    bodyContent=expandAllBtn+acts.map(act=>{
+    bodyContent+=acts.map(act=>{
       if(act.type==='period-label')return '<div class="period"><div class="period-label">'+esc(act.title)+'</div></div>';
       return renderFsItem(d.id,act,isEdit);
     }).join('');
-    bodyContent+=isEdit?'<button class="add-act-btn" onclick="openAddAct(\''+d.id+'\')">+ Add activity</button>':'';
-
   } else {
-    const expandAllBtn='<div class="expand-all-wrap"><button class="expand-all-btn" onclick="toggleExpandAll(\''+d.id+'\')">Expand all</button></div>';
-    bodyContent=expandAllBtn+d.periods.map(p=>'<div class="period"><div class="period-label">'+p.label+'</div>'+p.items.map(item=>renderStaticItem(item,d.id,isEdit)).join('')+'</div>').join('');
-    bodyContent+=isEdit?'<button class="add-act-btn" onclick="openAddAct(\''+d.id+'\')">+ Add activity</button>':'';
+    bodyContent+=d.periods.map(p=>'<div class="period"><div class="period-label">'+p.label+'</div>'+p.items.map(item=>renderStaticItem(item,d.id,isEdit)).join('')+'</div>').join('');
+  }
 
+  if(isEdit)bodyContent+='<button class="add-act-btn" onclick="openAddAct(\''+d.id+'\')">+ Add activity</button>';
+
+  // Tip
+  if(tip)bodyContent+='<div class="day-tip"><div class="day-tip-label">Tip</div><div class="day-tip-text">'+esc(tip)+'</div></div>';
+
+  // Notes section
+  if(isEdit){
+    bodyContent+='<div class="notes-section">'
+      +'<div class="notes-hd"><span class="notes-label">Notes</span><span class="notes-save-ind" id="save-'+d.id+'"></span></div>'
+      +'<textarea class="notes-edit" data-day="'+d.id+'" placeholder="Add notes for this day..."></textarea></div>';
+  }else if(noteText){
+    bodyContent+='<div class="notes-section">'
+      +'<div class="notes-hd"><span class="notes-label">Notes</span></div>'
+      +'<div class="notes-read-only">'+noteText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
   }
 
   const title=fsDay?.title||d.title, location=fsDay?.location||d.location;
+  const actCount=(fsDay?.activities||d.periods?.reduce((s,p)=>s+p.items.length,0)||0);
+  const actLabel=typeof actCount==='number'?actCount+' item'+(actCount!==1?'s':''):'';
+
   return '<div class="day-card '+cls+'" id="card-'+d.id+'">'
     +'<div class="day-header">'
     +'<div class="day-header-left"><span class="day-date">'+d.date+'</span>'
     +'<div class="day-title-wrap"><div class="day-title">'+esc(title)+(isToday?'<span class="today-badge">TODAY</span>':'')+'</div>'
     +'<div class="day-location">'+esc(location)+'</div></div></div>'
-    +'<div class="day-header-right"><span class="day-toggle">&#9660;</span></div>'
+    +'<div class="day-header-right"><span class="day-count">'+actLabel+'</span><span class="day-toggle">&#9660;</span></div>'
     +'</div>'
     +'<div class="day-body"><div class="day-body-inner"><div class="timeline">'+bodyContent
     +'</div></div></div></div>';
@@ -1300,6 +1313,12 @@ function renderFsItem(dayId,act,isEdit){
   const editBtn=isEdit?'<button class="act-edit-inline" onclick="event.stopPropagation();openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button>':'';
 
   const cat=act.category||'activity';
+  // Inline meta visible even when collapsed
+  const inlineParts=[];
+  if(act.dur)inlineParts.push('<span class="act-inline-dur">'+esc(act.dur)+'</span>');
+  if(act.cost>0)inlineParts.push('<span class="act-inline-cost">\u00a5'+Math.round(act.cost).toLocaleString()+'</span>');
+  const inlineMeta=inlineParts.length?'<div class="act-inline-meta">'+inlineParts.join('')+'</div>':'';
+
   return '<div class="act'+(isExp?' expanded':'')+(isBooked?' booked':'')+(clickable?' clickable':'')+'" data-cat="'+ea(cat)+'" data-item-id="'+ea(act.id)+'"'+dragAttr+clickAttr+'>'
     +'<div class="act-dot"></div>'
     +time
@@ -1308,6 +1327,7 @@ function renderFsItem(dayId,act,isEdit){
     +(hasDetails?'<span class="act-chevron">\u25B8</span>':'')
     +editBtn
     +'</div>'
+    +inlineMeta
     +detailHtml
     +'</div></div>';
 }
@@ -1338,12 +1358,19 @@ function renderStaticItem(item,dayId,isEdit){
 
   const clickAttr=hasDetails?' onclick="toggleActExpand(\''+itemId+'\',event)"':'';
 
-  const icat=item.category||(item.type==='booked'?'booked':'activity');
+  const icat=item.category||detectCategory(item.text||'',item.type,item.notes||'');
+  // Inline meta visible even when collapsed
+  const siParts=[];
+  if(item.dur)siParts.push('<span class="act-inline-dur">'+esc(item.dur)+'</span>');
+  if(item.cost>0)siParts.push('<span class="act-inline-cost">\u00a5'+Math.round(item.cost).toLocaleString()+'</span>');
+  const siMeta=siParts.length?'<div class="act-inline-meta">'+siParts.join('')+'</div>':'';
+
   return '<div class="act'+(isExp?' expanded':'')+(item.type==='booked'?' booked':'')+(hasDetails?' clickable':'')+'" data-cat="'+icat+'" data-item-id="'+itemId+'"'+clickAttr+'>'
     +'<div class="act-dot"></div>'
     +time
     +'<div class="act-body">'
     +'<div class="act-main"><div class="act-text">'+esc(item.text||'')+tag+'</div>'+(hasDetails?'<span class="act-chevron">\u25B8</span>':'')+'</div>'
+    +siMeta
     +detailHtml
     +'</div></div>';
 }
@@ -1372,55 +1399,9 @@ function findConfForItem(text){
   return null;
 }
 
-// ── Firestore day activities injection ────────────────────────
-function injectDayActsSection(dayId){
-  const card=document.getElementById('card-'+dayId);
-  if(!card||!card.classList.contains('expanded'))return;
-  if(!currentUser)return;
-  const dayBody=card.querySelector('.day-body-inner');
-  if(dayBody&&dayBody.querySelector('.add-act-btn'))return;
-  card.querySelector('.day-acts-section')?.remove();
-  const acts=getDayActivities(dayId)||[];
-  const sec=document.createElement('div');
-  sec.className='day-acts-section';
-  sec.innerHTML='<div class="day-acts-label">Your additions</div>'
-    +'<div class="day-acts-list" id="acts-list-'+dayId+'">'+renderFsActivities(dayId,acts)+'</div>'
-    +'<button class="add-act-btn" onclick="openAddAct(\''+dayId+'\')">+ Add activity, note, or reminder</button>';
-  const ns=card.querySelector('.notes-section');
-  ns?dayBody.insertBefore(sec,ns):dayBody.appendChild(sec);
-}
-
 function getDayActivities(dayId){
   const dateId=dayIdToDate(dayId);
   return firestoreDays[dateId]?sortActivitiesByTime([...(firestoreDays[dateId].activities||[])]):null;
-}
-
-function renderFsActivities(dayId,acts){
-  if(!acts||!acts.length)return currentUser
-    ?'<div class="fs-empty"><div class="fs-empty-icon">&#128197;</div><div class="fs-empty-text">Nothing added yet</div></div>'
-    :'<div class="fs-empty"><div class="fs-empty-icon">&#128197;</div><div class="fs-empty-text">Sign in to add activities</div></div>';
-  return acts.map(act=>{
-    const cat=act.category||'other';
-    const cost=act.cost&&act.cost>0?(act.currency==='JPY'?'\u00a5'+Math.round(act.cost).toLocaleString():'$'+Number(act.cost).toFixed(2)):'';
-    const thumb=act.driveUrl?driveUrlToThumb(act.driveUrl):null;
-    const photo=thumb
-      ?'<div class="fs-act-photo" onclick="openLightbox(\''+ea(thumb)+'\',\''+ea(act.driveUrl||'')+'\')">'
-        +'<img src="'+ea(thumb)+'" alt="" loading="lazy" onerror="this.closest(\'.fs-act-photo\').style.display=\'none\'">'
-        +'<div class="fs-act-photo-label">Google Drive photo</div></div>'
-      :'';
-    return '<div class="fs-act-card" draggable="'+!!currentUser+'" data-act-id="'+ea(act.id)+'" data-day-id="'+ea(dayId)+'">'
-      +'<div class="fs-act-stripe cat-stripe-'+cat+'"></div><div class="fs-act-body">'
-      +'<div class="fs-act-top"><span class="fs-act-title">'+esc(act.title||'')+'</span>'+(act.time?'<span class="fs-act-time">'+fmt12h(act.time)+'</span>':'')+'</div>'
-      +'<div class="fs-act-meta"><span class="fs-act-tag cat-'+cat+'">'+esc(cat)+'</span>'+(cost?'<span class="fs-act-cost">'+cost+'</span>':'')+'</div>'
-      +(act.notes?'<div class="fs-act-notes">'+esc(act.notes)+'</div>':'')
-      +photo+'</div>'
-      +(currentUser
-        ?'<div class="fs-act-actions">'
-          +'<button class="fs-act-btn" onclick="openEditAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Edit</button>'
-          +'<button class="fs-act-btn del" onclick="deleteAct(\''+ea(dayId)+'\',\''+ea(act.id)+'\')">Delete</button>'
-          +'</div>':''
-      )+'</div>';
-  }).join('');
 }
 
 function driveUrlToThumb(url){
@@ -1594,8 +1575,6 @@ window.deleteBookedCost=async function(id){
   renderBudget();
   showToast('Removed','ok');
 };
-window.saveBookedItem=saveBookedItem;
-window.deleteBookedFromModal=deleteBookedFromModal;
 window.toggleDriveSection=function(){$('driveSection')?.classList.toggle('expanded');};
 
 function driveUrlToEmbed(url){
@@ -1935,9 +1914,9 @@ function renderBudget(){
     +'<div class="b-total-card"><div class="b-total-label">Total trip cost</div><div class="b-total-val">'+fmt(grandTotal)+'</div>'
     +'<div class="b-total-sub">'+(isUSD?'\u00a5'+Math.round(grandTotal).toLocaleString()+' JPY':'~$'+Math.round(grandTotal/exchRate).toLocaleString()+' USD')+'</div>'
     +'<div class="b-total-breakdown"><span>Pre-booked '+fmt(bookedTotal)+'</span><span>On-trip '+fmt(expTotal)+'</span></div></div>'
-    +'<div class="b-share-card"><div class="b-share-label">Gwen\'s fair share</div><div class="b-share-val">'+fmt(gwenFairShare)+'</div><div class="b-share-sub">'+(gwenFairShare===christinaFairShare?'50/50 split':'includes personal items')+'</div>'
-    +'<div class="b-share-label" style="margin-top:10px">Christina\'s fair share</div><div class="b-share-val">'+fmt(christinaFairShare)+'</div><div class="b-share-sub">'+(gwenFairShare===christinaFairShare?'50/50 split':'includes personal items')+'</div>'
-    +'</div></div>';
+    +'<div class="b-share-card"><div class="b-share-label">Gwen\'s fair share</div><div class="b-share-val">'+fmt(gwenFairShare)+'</div><div class="b-share-sub">'+(gwenFairShare===christinaFairShare?'50/50 split':'includes personal items')+'</div></div>'
+    +'<div class="b-share-card"><div class="b-share-label">Christina\'s fair share</div><div class="b-share-val">'+fmt(christinaFairShare)+'</div><div class="b-share-sub">'+(gwenFairShare===christinaFairShare?'50/50 split':'includes personal items')+'</div></div>'
+    +'</div>';
 
   // ── Section 2: Settlement ──
   html+='<div class="settle-wrap">'
@@ -2098,6 +2077,7 @@ async function saveBookedItem(){
   showToast(editBookedId?'Updated':'Added','ok');
   renderBudget();
 }
+window.saveBookedItem=saveBookedItem;
 
 async function deleteBookedFromModal(){
   if(!editBookedId)return;
@@ -2108,6 +2088,7 @@ async function deleteBookedFromModal(){
   showToast('Removed','ok');
   renderBudget();
 }
+window.deleteBookedFromModal=deleteBookedFromModal;
 
 // ── Expense modal ─────────────────────────────────────────────
 function openEditExpense(id){
@@ -2275,7 +2256,6 @@ async function seedDays(){
       const dateId=dayIdToDate(dayId);
       let order=0; const activities=[];
       day.periods.forEach(p=>{
-        // Period labels are now auto-generated from activity times — skip seeding them
         p.items.forEach(item=>{
           let itemCost=item.cost||0;
           if(!itemCost){
@@ -2287,7 +2267,7 @@ async function seedDays(){
             time:item.time||'',
             title:item.text||'',
             desc:'',
-            category:item.category||(item.type==='booked'?'hotel':'activity'),
+            category:item.category||detectCategory(item.text||'',item.type,item.notes||''),
             booked:item.type==='booked'||item.booked||false,
             conf:'',
             addr:item.addr||'',
@@ -2308,6 +2288,42 @@ async function seedDays(){
     });
     await Promise.all(ops);
   }catch(e){console.error('Seed failed',e);}
+}
+
+// Smart category detection from activity text and notes
+function detectCategory(text, type, notes){
+  const t=((text||'')+' '+(notes||'')).toLowerCase();
+  // Transport (flights, trains, buses, boats, transfers)
+  if(/\bua \d+\b|shinkansen|hikari|nozomi|kodama|fuji.excursion|thunderbird|hokuriku/.test(t))return 'transport';
+  if(/\bjr .* line|tozan railway|ropeway|bus via|local train|sagano line|nara line/.test(t))return 'transport';
+  if(/return to (?:shinjuku|gora|kyoto|hotel|osaka|tokyo)|depart hotel|arrive (?:haneda|kyoto|gora|osaka|station)/.test(t))return 'transport';
+  if(/lake ashi .* boat|sightseeing boat|collect luggage/.test(t))return 'transport';
+  // Hotel (check in/out, ryokan specifics)
+  if(/check.?in\b|check.?out\b/.test(t))return 'hotel';
+  if(/breakfast (?:at|buffet at) (?:ryokan|hotel|intergate|granvia|gracery|quintessa|tensui)/.test(t))return 'hotel';
+  // Nature (parks, gardens, onsen, walks, natural scenery)
+  if(/park(?!ing)|garden|bamboo|owakudani|onsen|yukata|rotenburo|walk trail|kenroku|philosopher|oishi park/.test(t))return 'nature';
+  if(/nara .* deer|deer\b|hamarikyu/.test(t))return 'nature';
+  // Sightseeing (temples, shrines, castles, landmarks, historic districts)
+  if(/temple|shrine|senso-ji|fushimi inari|great buddha|hase-dera|todai-ji|tenryu-ji|engaku-ji/.test(t))return 'sightseeing';
+  if(/kasuga|hachimangu|kiyomizu|pagoda|chureito/.test(t))return 'sightseeing';
+  if(/shibuya scramble|togetsukyo|ninenzaka|sannenzaka|kanazawa castle|osaka castle/.test(t))return 'sightseeing';
+  if(/samurai|higashi chaya|gion|hanamikoji|ginza .* stroll|ginza streets|ginza evening/.test(t))return 'sightseeing';
+  if(/omotesando|takeshita|yanaka\b|nagamachi/.test(t))return 'sightseeing';
+  if(/hakone shrine|meiji shrine/.test(t))return 'sightseeing';
+  // Nightlife (bars, evening entertainment, atmospheric streets at night)
+  if(/golden gai|kabukicho|omoide yokocho|bar\b|bars\b|pontocho|wander.*night/.test(t))return 'nightlife';
+  // Food (meals, markets, food streets)
+  if(/dinner|lunch|breakfast|ramen|kaiseki|tsukiji|nishiki market|omicho market|dotonbori|street stalls|seafood|kuromon/.test(t))return 'food';
+  if(/omoide yokocho/.test(t))return 'food';
+  // Shopping (shopping streets, arcades, specialty stores)
+  if(/kappabashi|nakamise|teramachi|shinkyogoku|shopping/.test(t))return 'shopping';
+  // Activity (museums, experiences, entertainment, unique activities)
+  if(/museum|teamlab|akihabara|aquarium|kaiyukan|explore|azabudai/.test(t))return 'activity';
+  if(/takkyubin|arrange/.test(t))return 'other';
+  // Booked fallback
+  if(type==='booked')return 'hotel';
+  return 'activity';
 }
 
 // ── Auth ──────────────────────────────────────────────────────
@@ -2397,11 +2413,6 @@ async function loadDriveSettings(){
 }
 
 function refreshNoteDisplays(){
-  document.querySelectorAll('.notes-read').forEach(el=>{
-    const ta=el.nextElementSibling; if(!ta)return;
-    const dayId=ta.dataset.day, text=notes[dayId]||'';
-    el.innerHTML=text?text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'):'<em>No notes yet \u2014 sign in to add notes.</em>';
-      });
   document.querySelectorAll('.notes-edit').forEach(ta=>{ta.value=notes[ta.dataset.day]||'';});
 }
 
@@ -2416,8 +2427,6 @@ function setupEditors(){
       timer=setTimeout(async()=>{
         const dayId=ta.dataset.day, text=ta.value;
         notes[dayId]=text;
-                const readEl=ta.previousElementSibling;
-        if(readEl)readEl.innerHTML=text?text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'):'<em>No notes yet \u2014 sign in to add notes.</em>';
         try{
           await db.collection('notes').doc(dayId).set({text,updatedAt:new Date()});
           if(ind){ind.textContent='Saved';setTimeout(()=>{if(ind)ind.textContent='';},1800);}

@@ -148,10 +148,13 @@
         <div class="form-group half">
           <label class="form-label">Category</label>
           <select class="form-input form-select" id="actCategory">
-            <option value="activity">Activity</option>
-            <option value="food">Food</option>
+            <option value="sightseeing">Sightseeing</option>
+            <option value="food">Food &amp; Drink</option>
             <option value="transport">Transport</option>
             <option value="hotel">Hotel</option>
+            <option value="nature">Nature &amp; Outdoors</option>
+            <option value="nightlife">Nightlife</option>
+            <option value="activity">Activity</option>
             <option value="shopping">Shopping</option>
             <option value="other">Other</option>
           </select>
@@ -212,9 +215,9 @@
       <div class="form-group">
         <label class="form-label">Category</label>
         <div class="chip-row" id="expCatChips">
-          <button class="chip active" data-cat="food">Food</button>
-          <button class="chip" data-cat="drinks">Drinks</button>
+          <button class="chip active" data-cat="food">Food &amp; Drink</button>
           <button class="chip" data-cat="transport">Transport</button>
+          <button class="chip" data-cat="sightseeing">Sightseeing</button>
           <button class="chip" data-cat="shopping">Shopping</button>
           <button class="chip" data-cat="activities">Activities</button>
           <button class="chip" data-cat="other">Other</button>
@@ -225,7 +228,14 @@
         <div class="chip-row" id="expPayerChips">
           <button class="chip payer-chip active" data-payer="gwen">Gwendalynn</button>
           <button class="chip payer-chip" data-payer="christina">Christina</button>
-          <button class="chip payer-chip" data-payer="split">Split 50/50</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">For whom</label>
+        <div class="chip-row" id="expForChips">
+          <button class="chip for-chip active" data-for="shared">Shared</button>
+          <button class="chip for-chip" data-for="gwen">Gwen only</button>
+          <button class="chip for-chip" data-for="christina">Christina only</button>
         </div>
       </div>
       <div class="form-group">
@@ -247,6 +257,69 @@
       <button class="btn-primary" id="expSaveBtn">Add expense</button>
     </div>
     <div class="modal-err hidden" id="expErr"></div>
+  </div>
+</div>
+
+<!-- ═══ PRE-BOOKED COST MODAL ═══ -->
+<div class="modal-overlay" id="bookedModal">
+  <div class="modal-card">
+    <div class="modal-hd">
+      <h2 class="modal-title" id="bcModalTitle">Add pre-booked item</h2>
+      <button class="modal-x" onclick="closeModal('bookedModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Item name *</label>
+        <input type="text" class="form-input" id="bcLabel" placeholder="e.g. Hotel Granvia Kyoto &middot; 4 nights">
+      </div>
+      <div class="form-row">
+        <div class="form-group half">
+          <label class="form-label">Amount <span class="form-hint">&yen; JPY</span></label>
+          <input type="number" class="form-input" id="bcAmount" placeholder="0" min="0" inputmode="numeric">
+        </div>
+        <div class="form-group half">
+          <label class="form-label">Category</label>
+          <select class="form-input form-select" id="bcCategory">
+            <option value="Flights">Flights</option>
+            <option value="Hotels" selected>Hotels</option>
+            <option value="Transport">Transport</option>
+            <option value="Activities">Activities</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Paid by</label>
+        <select class="form-input form-select" id="bcPaidBy">
+          <option value="gwen">Gwendalynn</option>
+          <option value="christina">Christina</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">For whom</label>
+        <select class="form-input form-select" id="bcForWhom">
+          <option value="shared">Shared (split 50/50)</option>
+          <option value="gwen">Gwen only</option>
+          <option value="christina">Christina only</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group half">
+          <label class="form-label">Trip dates <span class="form-hint">optional</span></label>
+          <input type="text" class="form-input" id="bcDates" placeholder="e.g. Apr 16-20">
+        </div>
+        <div class="form-group half">
+          <label class="form-label">Purchased <span class="form-hint">optional</span></label>
+          <input type="text" class="form-input" id="bcPurchased" placeholder="e.g. Jan 25, 2026">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger" id="bcDeleteBtn" style="display:none;margin-right:auto" onclick="deleteBookedFromModal()">Delete</button>
+      <button class="btn-secondary" onclick="closeModal('bookedModal')">Cancel</button>
+      <button class="btn-primary" id="bcSaveBtn2" onclick="saveBookedItem()">Add item</button>
+    </div>
+    <div class="modal-err hidden" id="bcErr"></div>
   </div>
 </div>
 
