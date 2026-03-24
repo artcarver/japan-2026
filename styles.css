@@ -129,9 +129,11 @@ body.dark .b-cat-other     { background: var(--card-2); color: var(--muted); }
   body:not(.light) .b-cat-hotels    { background: #1E1430; color: #A78BFA; }
   body:not(.light) .b-cat-transport { background: #0D1F18; color: #4ADE80; }
   body:not(.light) .b-cat-activities { background: #1A1400; color: #FCD34D; }
-}/* ── RESET ── */
+}
+
+/* ── RESET ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; }
 body {
   font-family: var(--sans);
   background: var(--bg);
@@ -140,7 +142,7 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   transition: background var(--speed), color var(--speed);
-  padding-bottom: env(safe-area-inset-bottom);
+  -webkit-overflow-scrolling: touch;
 }
 .hidden { display: none !important; }
 a { color: inherit; }
@@ -151,6 +153,7 @@ canvas.blossom {
   position: fixed; inset: 0;
   pointer-events: none; z-index: 0;
   opacity: 0.055;
+  will-change: transform;
 }
 
 /* ════════════════════════════════════════════════
@@ -598,23 +601,22 @@ a.hotel-cell-phone:hover { text-decoration: underline; }
 /* Category dot */
 .act-dot {
   position: absolute;
-  left: -20px; top: 11px;
-  width: 9px; height: 9px; border-radius: 50%;
-  border: 2px solid var(--card);
-  box-shadow: 0 0 0 1.5px var(--border);
+  left: -20px; top: 10px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--border);
   z-index: 1; flex-shrink: 0;
 }
-.act[data-cat="hotel"]       .act-dot { background: #5C4A8A; box-shadow: 0 0 0 1.5px #D0C8F0; }
-.act[data-cat="transport"]   .act-dot { background: #3D6B9A; box-shadow: 0 0 0 1.5px #C0D4EC; }
-.act[data-cat="food"]        .act-dot { background: #B8842A; box-shadow: 0 0 0 1.5px #ECD4A0; }
-.act[data-cat="activity"]    .act-dot { background: #6A8A72; box-shadow: 0 0 0 1.5px #C4D8C8; }
-.act[data-cat="sightseeing"] .act-dot { background: #C0392B; box-shadow: 0 0 0 1.5px #F0C0B8; }
-.act[data-cat="nightlife"]   .act-dot { background: #8A5A70; box-shadow: 0 0 0 1.5px #DCC8D4; }
-.act[data-cat="nature"]      .act-dot { background: #2E7D5B; box-shadow: 0 0 0 1.5px #B8D9C4; }
-.act[data-cat="shopping"]    .act-dot { background: #C87D1A; box-shadow: 0 0 0 1.5px #ECD4A0; }
-.act[data-cat="other"]       .act-dot { background: var(--xlight); box-shadow: 0 0 0 1.5px var(--border); }
-.act[data-cat="drinks"]     .act-dot { background: #B8842A; box-shadow: 0 0 0 1.5px #ECD4A0; }
-.act[data-cat="booked"]     .act-dot { background: var(--green); box-shadow: 0 0 0 1.5px var(--green-bd); }
+.act[data-cat="hotel"]       .act-dot { background: #5C4A8A; }
+.act[data-cat="transport"]   .act-dot { background: #3D6B9A; }
+.act[data-cat="food"]        .act-dot { background: #B8842A; }
+.act[data-cat="activity"]    .act-dot { background: #6A8A72; }
+.act[data-cat="sightseeing"] .act-dot { background: #C0392B; }
+.act[data-cat="nightlife"]   .act-dot { background: #8A5A70; }
+.act[data-cat="nature"]      .act-dot { background: #2E7D5B; }
+.act[data-cat="shopping"]    .act-dot { background: #C87D1A; }
+.act[data-cat="other"]       .act-dot { background: var(--xlight); }
+.act[data-cat="drinks"]      .act-dot { background: #B8842A; }
+.act[data-cat="booked"]      .act-dot { background: var(--green); }
 
 .act-body { flex: 1; min-width: 0; }
 .act-main { display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; }
@@ -626,7 +628,7 @@ a.hotel-cell-phone:hover { text-decoration: underline; }
 
 /* Clickable rows */
 .act.clickable { cursor: pointer; border-radius: var(--r); transition: background var(--speed); }
-.act.clickable:hover { background: var(--bg); margin: 0 -6px; padding: 5px 6px; }
+.act.clickable:hover { background: var(--bg); }
 
 /* Chevron — small triangle after title */
 .act-chevron {
@@ -794,14 +796,14 @@ body.dark .cat-nature      { background: #064E3B; color: #6EE7B7; }
 body.dark .cat-shopping    { background: #78350F; color: #FCD34D; }
 
 /* Dark mode dot colors */
-body.dark .act[data-cat="hotel"]       .act-dot { background: #A78BFA; box-shadow: 0 0 0 1.5px #2E1065; }
-body.dark .act[data-cat="transport"]   .act-dot { background: #6FA8F5; box-shadow: 0 0 0 1.5px #1E3A8A; }
-body.dark .act[data-cat="food"]        .act-dot { background: #FCD34D; box-shadow: 0 0 0 1.5px #78350F; }
-body.dark .act[data-cat="activity"]    .act-dot { background: #6EE7B7; box-shadow: 0 0 0 1.5px #064E3B; }
-body.dark .act[data-cat="sightseeing"] .act-dot { background: #F87171; box-shadow: 0 0 0 1.5px #7F1D1D; }
-body.dark .act[data-cat="nightlife"]   .act-dot { background: #F9A8D4; box-shadow: 0 0 0 1.5px #831843; }
-body.dark .act[data-cat="nature"]      .act-dot { background: #34D399; box-shadow: 0 0 0 1.5px #064E3B; }
-body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shadow: 0 0 0 1.5px #78350F; }
+body.dark .act[data-cat="hotel"]       .act-dot { background: #A78BFA; }
+body.dark .act[data-cat="transport"]   .act-dot { background: #6FA8F5; }
+body.dark .act[data-cat="food"]        .act-dot { background: #FCD34D; }
+body.dark .act[data-cat="activity"]    .act-dot { background: #6EE7B7; }
+body.dark .act[data-cat="sightseeing"] .act-dot { background: #F87171; }
+body.dark .act[data-cat="nightlife"]   .act-dot { background: #F9A8D4; }
+body.dark .act[data-cat="nature"]      .act-dot { background: #34D399; }
+body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; }
 
 @media (prefers-color-scheme: dark) {
   body:not(.light) .cat-activity    { background: #064E3B; color: #6EE7B7; }
@@ -812,14 +814,14 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shado
   body:not(.light) .cat-nightlife   { background: #831843; color: #F9A8D4; }
   body:not(.light) .cat-nature      { background: #064E3B; color: #6EE7B7; }
   body:not(.light) .cat-shopping    { background: #78350F; color: #FCD34D; }
-  body:not(.light) .act[data-cat="hotel"]       .act-dot { background: #A78BFA; box-shadow: 0 0 0 1.5px #2E1065; }
-  body:not(.light) .act[data-cat="transport"]   .act-dot { background: #6FA8F5; box-shadow: 0 0 0 1.5px #1E3A8A; }
-  body:not(.light) .act[data-cat="food"]        .act-dot { background: #FCD34D; box-shadow: 0 0 0 1.5px #78350F; }
-  body:not(.light) .act[data-cat="activity"]    .act-dot { background: #6EE7B7; box-shadow: 0 0 0 1.5px #064E3B; }
-  body:not(.light) .act[data-cat="sightseeing"] .act-dot { background: #F87171; box-shadow: 0 0 0 1.5px #7F1D1D; }
-  body:not(.light) .act[data-cat="nightlife"]   .act-dot { background: #F9A8D4; box-shadow: 0 0 0 1.5px #831843; }
-  body:not(.light) .act[data-cat="nature"]      .act-dot { background: #34D399; box-shadow: 0 0 0 1.5px #064E3B; }
-  body:not(.light) .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shadow: 0 0 0 1.5px #78350F; }
+  body:not(.light) .act[data-cat="hotel"]       .act-dot { background: #A78BFA; }
+  body:not(.light) .act[data-cat="transport"]   .act-dot { background: #6FA8F5; }
+  body:not(.light) .act[data-cat="food"]        .act-dot { background: #FCD34D; }
+  body:not(.light) .act[data-cat="activity"]    .act-dot { background: #6EE7B7; }
+  body:not(.light) .act[data-cat="sightseeing"] .act-dot { background: #F87171; }
+  body:not(.light) .act[data-cat="nightlife"]   .act-dot { background: #F9A8D4; }
+  body:not(.light) .act[data-cat="nature"]      .act-dot { background: #34D399; }
+  body:not(.light) .act[data-cat="shopping"]    .act-dot { background: #FBBF24; }
 }
 
 .cat-stripe-activity    { background: var(--cat-activity); }
@@ -1627,7 +1629,7 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; box-shado
   .day-card.expanded .day-body-inner { padding: 6px 12px 12px; }
   .timeline { padding-left: 16px; }
   .act-time { min-width: 52px; font-size: 10px; }
-  .act-dot { left: -16px; top: 10px; width: 7px; height: 7px; }
+  .act-dot { left: -16px; top: 10px; width: 8px; height: 8px; }
   .timeline::before { left: 3px; }
 }
 
