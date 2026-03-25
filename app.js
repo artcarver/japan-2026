@@ -1165,7 +1165,7 @@ function renderItinerary(){
   const sections=GROUPS.map((g,i)=>{
     const vis=g.ids.filter(id=>!(hidePastDays&&getDayClass(id)==='past'));
     if(!vis.length)return '';
-    return '<div class="dest-section" id="section-'+i+'"><div class="dest-header"><span class="dest-dot" style="background:'+g.color+'"></span><span class="dest-name">'+esc(g.label)+'</span><span class="dest-dates-label">'+esc(g.dates)+'</span></div>'+vis.map(id=>renderDay(DAYS[id])).join('')+'</div>';
+    return '<div class="dest-section" id="section-'+i+'"><div class="dest-header"><span class="dest-name">'+esc(g.label)+'</span><span class="dest-dates-label">'+esc(g.dates)+'</span></div>'+vis.map(id=>renderDay(DAYS[id])).join('')+'</div>';
   }).join('');
 
   el.innerHTML=toolbar+sections;

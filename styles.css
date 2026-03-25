@@ -494,11 +494,10 @@ a.hotel-cell-phone:hover { text-decoration: underline; }
 
 .dest-section { margin-bottom: 32px; }
 .dest-header {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: baseline; gap: 10px;
   padding-bottom: 8px; border-bottom: 1px solid var(--border);
   margin-bottom: 10px;
 }
-.dest-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .dest-name {
   font-family: var(--serif); font-size: var(--fs-lg); font-weight: var(--fw-normal);
   letter-spacing: 0; color: var(--text);
