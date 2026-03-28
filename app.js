@@ -698,10 +698,13 @@ const DAYS = {
     {label:'Morning',items:[
       {time:'10:00 AM',text:'Check out Hotel Granvia Kyoto',type:'booked',
        notes:'Conf: #23151SF060529'},
-      {text:'Thunderbird Limited Express: Kyoto \u2192 Kanazawa',
-       notes:'~2 hrs \u00b7 ~\u00a56,000\u20137,000/person (~$38\u201344) \u00b7 Multiple departures, aim for mid-morning'},
+      {time:'10:37 AM',text:'Thunder-Bird 15 \u00b7 Kyoto \u2192 Tsuruga',type:'booked',cost:7720,
+       notes:'Res: 47842 \u00b7 Receipt ID: ADN1766K \u00b7 ¥15,440 total for 2\nCar 4, Seats 10-A & 10-B \u00b7 Arrives Tsuruga 11:30 \u00b7 9-min transfer\nPick up physical tickets at JR West machine before boarding \u00b7 bring Visa ending 2990 + 4-digit PIN'},
+      {time:'11:39 AM',text:'Tsurugi 16 \u00b7 Tsuruga \u2192 Kanazawa',type:'booked',sub:true,
+       notes:'Car 7, Seats 9-D & 9-E \u00b7 Arrives Kanazawa 12:36'},
     ]},
     {label:'Afternoon',items:[
+      {time:'12:36 PM',text:'Arrive Kanazawa Station'},
       {time:'3:00 PM',text:'Check in Hotel Intergate Kanazawa',type:'booked',
        notes:'Conf: 20260125110822242 \u00b7 Expedia: 73356721260247\nSuperior Twin \u00b7 Breakfast buffet included \u00b7 2-5 Takaokamachi \u00b7 +81-76-205-1122',
        addr:'Hotel Intergate Kanazawa, 2-5 Takaokamachi, Kanazawa'},
@@ -746,10 +749,12 @@ const DAYS = {
 
   apr28:{id:'apr28',date:'TUE APR 28',title:'Depart Kanazawa \u2192 Tokyo Ginza',location:'Kanazawa \u2192 Tokyo \u00b7 Ginza',periods:[
     {label:'Morning',items:[
-      {time:'8:00 AM',text:'Breakfast buffet at Hotel Intergate \u00b7 included'},
-      {time:'10:00 AM',text:'Check out \u00b7 by 11:00 AM'},
-      {text:'Hokuriku Shinkansen \u00b7 Kanazawa \u2192 Tokyo',cost:14000,
-       notes:'~2.5 hrs \u00b7 Multiple departures mid-morning \u00b7 Kagayaki or Hakutaka'},
+      {time:'7:00 AM',text:'Breakfast buffet at Hotel Intergate \u00b7 included',
+       notes:'Allow time \u2014 train departs at 9:07 AM. Aim to finish by 8:15 AM.'},
+      {time:'8:30 AM',text:'Check out \u00b7 by 8:30 AM',
+       notes:'Hotel checkout is by 11:00 AM but train departs 9:07 \u2014 check out early and walk to Kanazawa Station (~10 min)'},
+      {time:'9:07 AM',text:'Kagayaki 506 \u00b7 Kanazawa \u2192 Tokyo',type:'booked',cost:15000,
+       notes:'Res: 41398 \u00b7 Receipt ID: ADN1800K \u00b7 \u00a530,000 total for 2\nCar 7, Seats 5-D & 5-E \u00b7 Arrives Tokyo 11:36 \u00b7 Non-stop ~2.5 hrs\nPick up physical tickets at JR West machine before boarding \u00b7 bring Visa ending 2990 + 4-digit PIN'},
     ]},
     {label:'Afternoon',items:[
       {time:'2:30 PM',text:'Hamarikyu Gardens',dur:'~1 hr',cost:300,
@@ -787,56 +792,56 @@ const DAYS = {
 };
 
 const OVERVIEW_DATA = [
-  {city:'Tokyo',dates:'Apr 16\u201320',nights:4,hotel:'Hotel Gracery Shinjuku \u00b7 Kabukicho, Shinjuku',phone:'+81 3 6833 1111',
+  {city:'Tokyo',dates:'Apr 16\u201320',nights:4,dayIds:['apr16','apr17','apr18','apr19'],hotel:'Hotel Gracery Shinjuku \u00b7 Kabukicho, Shinjuku',phone:'+81 3 6833 1111',
    highlights:[
      {text:'teamLab Borderless \u2014 immersive digital art filling entire rooms',star:true,url:'https://borderless.teamlab.art/en/'},
      {text:'Senso-ji at dawn \u2014 incense smoke and empty lantern-lit corridors',star:true,url:'https://www.senso-ji.jp/english/'},
      {text:'Shibuya Scramble Crossing \u2014 the world\'s busiest intersection'},
      {text:'Golden Gai \u2014 forty tiny themed bars, each seating about eight people',url:'https://maps.google.com/?q=Golden+Gai+Shinjuku+Tokyo'},
    ]},
-  {city:'Kamakura',dates:'Apr 19 \u00b7 day trip',nights:0,waypoint:true,hotel:'Day trip from Tokyo \u00b7 45 min by JR',
+  {city:'Kamakura',dates:'Apr 19 \u00b7 day trip',nights:0,dayIds:['apr19'],waypoint:true,hotel:'Day trip from Tokyo \u00b7 45 min by JR',
    highlights:[
      {text:'Kotoku-in \u2014 13th-century bronze Great Buddha, 13 metres tall',star:true},
      {text:'Hase-dera Temple \u2014 ocean views, cave system, 11,000 Jizo statues'},
      {text:'Shirasu (whitebait) rice bowl \u2014 the Kamakura coastal specialty'},
    ]},
-  {city:'Kawaguchiko',dates:'Apr 20 \u00b7 morning only',nights:0,waypoint:true,hotel:'Transit stop en route to Hakone',
+  {city:'Kawaguchiko',dates:'Apr 20 \u00b7 morning only',nights:0,dayIds:['apr20'],waypoint:true,hotel:'Transit stop en route to Hakone',
    highlights:[
      {text:'Oishi Park \u2014 Mt. Fuji reflected in the lake with cherry blossoms',star:true},
      {text:'Chureito Pagoda \u2014 five-story pagoda framing Fuji from above'},
    ]},
-  {city:'Hakone',dates:'Apr 20\u201322',nights:2,hotel:'Tensui Saryo Ryokan \u00b7 Gora \u00b7 private outdoor onsen',phone:'+81-570-062-302',
+  {city:'Hakone',dates:'Apr 20\u201322',nights:2,dayIds:['apr20','apr21'],hotel:'Tensui Saryo Ryokan \u00b7 Gora \u00b7 private outdoor onsen',phone:'+81-570-062-302',
    highlights:[
      {text:'Private rotenburo on the deck \u2014 a hot spring under the stars at midnight',star:true},
      {text:'10-course kaiseki dinner both evenings',star:true},
      {text:'Owakudani volcanic ropeway \u2014 active sulfur craters and black eggs',url:'https://www.hakoneropeway.co.jp/en/'},
      {text:'Lake Ashi boat cruise \u2014 torii gate rising from the water',url:'https://www.hakone-kankosen.co.jp/foreign/en/'},
    ]},
-  {city:'Kyoto',dates:'Apr 22\u201326',nights:4,hotel:'Hotel Granvia Kyoto \u00b7 connected to Kyoto Station',phone:'+81-75-344-8888',
+  {city:'Kyoto',dates:'Apr 22\u201326',nights:4,dayIds:['apr22','apr23','apr24','apr25'],hotel:'Hotel Granvia Kyoto \u00b7 connected to Kyoto Station',phone:'+81-75-344-8888',
    highlights:[
      {text:'Fushimi Inari at 6 AM \u2014 10,000 vermilion torii gates, empty at dawn',star:true,url:'https://inari.jp/en/'},
      {text:'Arashiyama bamboo grove \u2014 towering stalks swaying overhead',star:true},
      {text:'Gion at dusk \u2014 wooden alleyways, lantern glow, chance to spot a geiko'},
      {text:"Philosopher's Path \u2014 2 km canal walk lined with cherry trees"},
    ]},
-  {city:'Nara',dates:'Apr 24 \u00b7 day trip',nights:0,waypoint:true,hotel:'Day trip from Kyoto \u00b7 45 min by JR Nara Line',
+  {city:'Nara',dates:'Apr 24 \u00b7 day trip',nights:0,dayIds:['apr24'],waypoint:true,hotel:'Day trip from Kyoto \u00b7 45 min by JR Nara Line',
    highlights:[
      {text:'Hundreds of freely roaming deer bowing for crackers in Nara Park',star:true},
      {text:"Todai-ji \u2014 the world's largest wooden building, giant bronze Buddha inside",star:true},
      {text:'Kasuga Taisha Shrine \u2014 3,000 stone and bronze lanterns, forested paths'},
    ]},
-  {city:'Osaka',dates:'Apr 25 \u00b7 day trip',nights:0,waypoint:true,hotel:'Day trip from Kyoto \u00b7 30 min by JR Shinkaisoku',
+  {city:'Osaka',dates:'Apr 25 \u00b7 day trip',nights:0,dayIds:['apr25'],waypoint:true,hotel:'Day trip from Kyoto \u00b7 30 min by JR Shinkaisoku',
    highlights:[
      {text:'Kaiyukan Aquarium \u2014 whale sharks in a four-storey Pacific Ocean tank',star:true,url:'https://www.kaiyukan.com/language/eng/'},
      {text:'Dotonbori \u2014 takoyaki, okonomiyaki, the Glico Running Man sign'},
    ]},
-  {city:'Kanazawa',dates:'Apr 26\u201328',nights:2,hotel:'Hotel Intergate Kanazawa \u00b7 2-5 Takaokamachi',phone:'+81-76-205-1122',
+  {city:'Kanazawa',dates:'Apr 26\u201328',nights:2,dayIds:['apr26','apr27'],hotel:'Hotel Intergate Kanazawa \u00b7 2-5 Takaokamachi',phone:'+81-76-205-1122',
    highlights:[
      {text:"Kenroku-en \u2014 one of Japan's three great gardens",star:true,url:'https://www.pref.ishikawa.jp/siro-niwa/kenrokuen/e/'},
      {text:"21st Century Museum \u2014 Leandro Erlich's Swimming Pool installation",star:true,url:'https://www.kanazawa21.jp/en/'},
      {text:'Higashi Chaya District \u2014 preserved geisha quarter, gold leaf cafes'},
    ]},
-  {city:'Tokyo \u00b7 Ginza',dates:'Apr 28\u201329',nights:1,hotel:'Quintessa Hotel Tokyo Ginza \u00b7 4-11-4 Ginza',phone:'+81 3-6264-1351',
+  {city:'Tokyo \u00b7 Ginza',dates:'Apr 28\u201329',nights:1,dayIds:['apr28','apr29'],hotel:'Quintessa Hotel Tokyo Ginza \u00b7 4-11-4 Ginza',phone:'+81 3-6264-1351',
    highlights:[
      {text:'Tsukiji Outer Market farewell breakfast \u2014 fresh sushi and grilled scallops',star:true},
      {text:'Ginza evening stroll \u2014 the perfect last night in Japan'},
@@ -1050,7 +1055,9 @@ function DEFAULT_BOOKED_COSTS_fn(){
     {id:'bc5',label:'Tensui Saryo Ryokan \u00b7 2 nights',    category:'Hotels',    jpy:126340, usd:794,  paidBy:'gwen', dates:'Apr 20\u201322', purchased:'Jan 22, 2026'},
     {id:'bc6',label:'Shinkansen HIKARI 637',                  category:'Transport', jpy:23800,  usd:150,  paidBy:'gwen', dates:'Apr 22', purchased:'Mar 20, 2026'},
     {id:'bc7',label:'Hotel Granvia Kyoto \u00b7 4 nights',    category:'Hotels',    jpy:268256, usd:1686, paidBy:'gwen', dates:'Apr 22\u201326', purchased:'Jan 25, 2026'},
+    {id:'bc10',label:'Thunder-Bird 15 + Tsurugi 16 \u00b7 Kyoto \u2192 Kanazawa', category:'Transport', jpy:15440, usd:97, paidBy:'gwen', dates:'Apr 26', purchased:'Mar 27, 2026'},
     {id:'bc8',label:'Hotel Intergate Kanazawa \u00b7 2 nights',category:'Hotels',   jpy:39004,  usd:245,  paidBy:'gwen', dates:'Apr 26\u201328', purchased:'Jan 25, 2026'},
+    {id:'bc11',label:'Kagayaki 506 \u00b7 Kanazawa \u2192 Tokyo', category:'Transport', jpy:30000, usd:189, paidBy:'gwen', dates:'Apr 28', purchased:'Mar 27, 2026'},
     {id:'bc9',label:'Quintessa Hotel Ginza \u00b7 1 night',   category:'Hotels',    jpy:24713,  usd:155,  paidBy:'gwen', dates:'Apr 28\u201329', purchased:'Jan 25, 2026'},
   ];
 }
@@ -1080,27 +1087,38 @@ function cdHtml(){
 // ── Overview ──────────────────────────────────────────────────
 function renderOverview(){
   const el=$('panel-overview'); if(!el)return;
+  const now=new Date(), inTrip=now>=TRIP_START&&now<=TRIP_END;
+  const todayId=getTodayDayId(), todayDay=todayId?DAYS[todayId]:null;
+
+  // ── Stop status: past / current / upcoming ────────────────
+  function stopStatus(stop){
+    if(!inTrip||!todayId||!stop.dayIds||!stop.dayIds.length)return '';
+    if(stop.dayIds.includes(todayId))return 'stop-current';
+    const todayDate=DAY_DATES[todayId];
+    if(stop.dayIds.every(id=>DAY_DATES[id]&&DAY_DATES[id]<todayDate))return 'stop-past';
+    return '';
+  }
+
   const journeyHtml=OVERVIEW_DATA.map((stop,i)=>{
     const isLast=i===OVERVIEW_DATA.length-1;
+    const status=stopStatus(stop);
+    const herePill=status==='stop-current'?'<span class="ov-here-pill">here</span>':'';
     const hlsHtml='<ul class="ov-hls">'+stop.highlights.map(h=>{
       const inner=h.url?'<a href="'+ea(h.url)+'" target="_blank" rel="noopener">'+esc(h.text)+'<span class="ov-ext"> \u2197</span></a>':esc(h.text);
       return '<li class="ov-hl'+(h.star?' star':'')+'">'+ inner+'</li>';
     }).join('')+'</ul>';
     const line=isLast?'':'<div class="ov-stop-line"></div>';
     if(stop.waypoint){
-      return '<div class="ov-stop waypoint'+(isLast?' ov-stop-last':'')+'">'
+      return '<div class="ov-stop waypoint '+status+(isLast?' ov-stop-last':'')+'">'
         +'<div class="ov-stop-left"><div class="ov-stop-dot"></div>'+line+'</div>'
-        +'<div class="ov-stop-right"><div class="ov-stop-head"><div class="ov-wp-badge">Day trip</div><div class="ov-stop-city ov-wp-city">'+esc(stop.city)+'</div><div class="ov-stop-dates">'+esc(stop.dates)+'</div></div>'
+        +'<div class="ov-stop-right"><div class="ov-stop-head"><div class="ov-wp-badge">Day trip</div><div class="ov-stop-city ov-wp-city">'+esc(stop.city)+herePill+'</div><div class="ov-stop-dates">'+esc(stop.dates)+'</div></div>'
         +'<div class="ov-stop-hotel">'+esc(stop.hotel)+'</div>'+hlsHtml+'</div></div>';
     }
-    return '<div class="ov-stop'+(isLast?' ov-stop-last':'')+'">'
+    return '<div class="ov-stop '+status+(isLast?' ov-stop-last':'')+'">'
       +'<div class="ov-stop-left"><div class="ov-stop-dot"></div>'+line+'</div>'
-      +'<div class="ov-stop-right"><div class="ov-stop-head"><div class="ov-stop-city">'+esc(stop.city)+'</div><div class="ov-stop-dates">'+esc(stop.dates)+(stop.nights?' \u00b7 '+stop.nights+' night'+(stop.nights>1?'s':''):'')+'</div></div>'
+      +'<div class="ov-stop-right"><div class="ov-stop-head"><div class="ov-stop-city">'+esc(stop.city)+herePill+'</div><div class="ov-stop-dates">'+esc(stop.dates)+(stop.nights?' \u00b7 '+stop.nights+' night'+(stop.nights>1?'s':''):'')+'</div></div>'
       +'<div class="ov-stop-hotel">'+esc(stop.hotel)+'</div>'+hlsHtml+'</div></div>';
   }).join('');
-
-  const now=new Date(), inTrip=now>=TRIP_START&&now<=TRIP_END;
-  const todayId=getTodayDayId(), todayDay=todayId?DAYS[todayId]:null;
 
   // Hotel grid with tappable phone numbers
   const hotelGrid=OVERVIEW_DATA.filter(s=>!s.waypoint).map(s=>{
@@ -1136,10 +1154,10 @@ function renderOverview(){
   }
 
   el.innerHTML=
-    '<div class="ov-accent"><div class="ov-accent-left"><div class="ov-accent-title">Japan</div><div class="ov-accent-sub">April 15\u201329, 2026 \u00b7 15 days</div></div><div class="ov-accent-right" id="ovCd">'+cdHtml()+'</div></div>'
+    '<div class="ov-accent"><div class="ov-accent-left"><div class="ov-accent-byline">Gwendalynn \u0026 Christina</div><div class="ov-accent-title">Japan 2026</div><div class="ov-accent-sub">April 15\u201329 \u00b7 15 days</div></div><div class="ov-accent-right" id="ovCd">'+cdHtml()+'</div></div>'
     +'<div class="ov-japan-time" id="ovJapanTime">'+japanTimeHtml()+'</div>'
     +todayPlanHtml
-    +'<div class="ov-section-label">The route</div><div class="ov-route">'+journeyHtml+'</div>'
+    +'<div class="ov-section-label">The route<span class="ov-section-label-sub">5 cities \u00b7 15 days</span></div><div class="ov-route">'+journeyHtml+'</div>'
     +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">View detailed day-by-day plan \u2192</button></div>'
     +'<div class="ov-section-label" style="margin-top:32px">Flights</div>'
     +flightsHtml

@@ -324,8 +324,9 @@ header {
 .ov-accent::after {
   content: '\65E5\672C'; font-family: var(--serif); font-size: 72px;
   position: absolute; right: 14px; bottom: -6px;
-  color: rgba(255,255,255,.08); pointer-events: none; line-height: 1;
+  color: rgba(255,255,255,.13); pointer-events: none; line-height: 1;
 }
+.ov-accent-byline { font-size: var(--fs-xs); opacity: 0.55; letter-spacing: 0.04em; margin-bottom: 5px; position: relative; }
 .ov-accent-title { font-family: var(--serif); font-size: var(--fs-2xl); line-height: 1; position: relative; }
 .ov-accent-sub { font-size: var(--fs-sm); opacity: 0.75; margin-top: 4px; position: relative; }
 .ov-accent-right { text-align: right; position: relative; }
@@ -344,17 +345,19 @@ header {
 
 /* Section labels */
 .ov-japan-time {
-  font-size: var(--fs-base); color: var(--muted); text-align: center;
-  padding: 12px 16px; margin-bottom: 20px;
-  background: var(--card); border: 1px solid var(--border);
+  font-size: var(--fs-sm); color: var(--muted); text-align: center;
+  padding: 10px 16px; margin-bottom: 20px;
+  background: var(--red-bg); border: 1px solid rgba(184,92,56,.18);
   border-radius: var(--r-lg); line-height: 1.4;
 }
-.ov-japan-time strong { color: var(--text); font-weight: var(--fw-medium); }
+.ov-japan-time strong { color: var(--red); font-weight: var(--fw-medium); }
 .ov-section-label {
   font-family: var(--serif); font-size: var(--fs-lg); font-weight: var(--fw-normal);
   letter-spacing: 0; color: var(--text);
   padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 10px;
+  display: flex; align-items: baseline; gap: 10px;
 }
+.ov-section-label-sub { font-family: var(--sans); font-size: var(--fs-xs); color: var(--light); font-weight: var(--fw-normal); }
 
 /* Route timeline */
 .ov-route { margin-bottom: 28px; }
@@ -366,6 +369,28 @@ header {
 .ov-stop-last .ov-stop-line { display: none; }
 .ov-stop-right { flex: 1; padding: 0 0 22px 16px; }
 .ov-stop-last .ov-stop-right { padding-bottom: 0; }
+
+/* Stop states — past, current */
+.ov-stop.stop-past .ov-stop-dot { background: var(--xlight); box-shadow: 0 0 0 1.5px var(--xlight); border-color: var(--bg); }
+.ov-stop.stop-past.waypoint .ov-stop-dot { border-color: var(--xlight); }
+.ov-stop.stop-past .ov-stop-line { background: var(--red); opacity: 0.35; }
+.ov-stop.stop-past .ov-stop-city { color: var(--light); }
+.ov-stop.stop-past .ov-stop-dates { opacity: 0.6; }
+.ov-stop.stop-past .ov-stop-hotel { color: var(--light); font-weight: var(--fw-normal); }
+.ov-stop.stop-past .ov-hls { opacity: 0.5; }
+
+.ov-stop.stop-current .ov-stop-dot { background: var(--red); box-shadow: 0 0 0 3px rgba(184,92,56,.18), 0 0 0 1.5px var(--red); animation: pulse 2.2s ease-in-out infinite; }
+.ov-stop.stop-current .ov-stop-city { color: var(--red); }
+
+/* "Here" pill — shown next to current city name */
+.ov-here-pill {
+  display: inline-block; font-family: var(--sans); font-size: 9px;
+  font-weight: var(--fw-bold); letter-spacing: 0.06em; text-transform: uppercase;
+  background: var(--red); color: #fff;
+  padding: 2px 7px; border-radius: 10px;
+  margin-left: 8px; vertical-align: middle;
+  position: relative; top: -2px;
+}
 
 /* Overnight cities - strong presence */
 .ov-stop-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
