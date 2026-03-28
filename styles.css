@@ -316,9 +316,8 @@ header {
 /* Terracotta accent strip */
 .ov-accent {
   background: var(--red); color: #fff;
-  padding: 20px 40px; border-radius: 0 0 var(--r-xl) var(--r-xl);
-  margin-bottom: 28px; margin-left: -20px; margin-right: -20px; display: flex;
-  align-items: center; justify-content: space-between; gap: 16px;
+  border-radius: 0 0 var(--r-xl) var(--r-xl);
+  margin-bottom: 28px; margin-left: -20px; margin-right: -20px;
   position: relative; overflow: hidden;
 }
 .ov-accent::after {
@@ -326,6 +325,19 @@ header {
   position: absolute; right: 14px; bottom: -6px;
   color: rgba(255,255,255,.13); pointer-events: none; line-height: 1;
 }
+.ov-accent-inner {
+  padding: 20px 40px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  position: relative;
+}
+.ov-accent-stripe {
+  background: rgba(0,0,0,.18);
+  border-top: 1px solid rgba(255,255,255,.1);
+  padding: 9px 40px;
+  font-size: var(--fs-sm); color: rgba(255,255,255,.6);
+  position: relative; z-index: 1;
+}
+.ov-accent-stripe strong { color: rgba(255,255,255,.9); font-weight: var(--fw-medium); }
 .ov-accent-byline { font-size: var(--fs-xs); opacity: 0.55; letter-spacing: 0.04em; margin-bottom: 5px; position: relative; }
 .ov-accent-title { font-family: var(--serif); font-size: var(--fs-2xl); line-height: 1; position: relative; }
 .ov-accent-sub { font-size: var(--fs-sm); opacity: 0.75; margin-top: 4px; position: relative; }
@@ -344,13 +356,6 @@ header {
 .ov-currently-city { font-family: var(--serif); font-size: var(--fs-xl); opacity: 0.9; }
 
 /* Section labels */
-.ov-japan-time {
-  font-size: var(--fs-sm); color: var(--muted); text-align: center;
-  padding: 10px 16px; margin-bottom: 20px;
-  background: var(--red-bg); border: 1px solid rgba(184,92,56,.18);
-  border-radius: var(--r-lg); line-height: 1.4;
-}
-.ov-japan-time strong { color: var(--red); font-weight: var(--fw-medium); }
 .ov-section-label {
   font-family: var(--serif); font-size: var(--fs-lg); font-weight: var(--fw-normal);
   letter-spacing: 0; color: var(--text);
@@ -1598,7 +1603,9 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; }
   #mainContent { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
   .exp-fab { bottom: calc(68px + env(safe-area-inset-bottom)); }
   .cw-fab  { bottom: calc(122px + env(safe-area-inset-bottom)); }
-  .ov-accent { padding: 16px 30px; margin-left: -14px; margin-right: -14px; }
+  .ov-accent { margin-left: -14px; margin-right: -14px; }
+  .ov-accent-inner { padding: 16px 30px 14px; }
+  .ov-accent-stripe { padding: 8px 30px; }
   .ov-accent-title { font-size: var(--fs-xl); }
   .ov-cd-num { font-size: var(--fs-2xl); }
   .ov-stop-city { font-size: var(--fs-xl); }
@@ -1638,7 +1645,9 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; }
 @media (min-width: 1024px) {
   #mainContent { max-width: 1100px; padding: 28px 40px 60px; }
   #panel-overview { margin-top: -28px; }
-  .ov-accent { margin-left: -40px; margin-right: -40px; padding: 24px 56px; }
+  .ov-accent { margin-left: -40px; margin-right: -40px; }
+  .ov-accent-inner { padding: 24px 56px 20px; }
+  .ov-accent-stripe { padding: 9px 56px; }
 }
 
 @media (max-width: 480px) {

@@ -1154,8 +1154,7 @@ function renderOverview(){
   }
 
   el.innerHTML=
-    '<div class="ov-accent"><div class="ov-accent-left"><div class="ov-accent-byline">Gwendalynn \u0026 Christina</div><div class="ov-accent-title">Japan 2026</div><div class="ov-accent-sub">April 15\u201329 \u00b7 15 days</div></div><div class="ov-accent-right" id="ovCd">'+cdHtml()+'</div></div>'
-    +'<div class="ov-japan-time" id="ovJapanTime">'+japanTimeHtml()+'</div>'
+    '<div class="ov-accent"><div class="ov-accent-inner"><div class="ov-accent-left"><div class="ov-accent-byline">Gwendalynn \u0026 Christina</div><div class="ov-accent-title">Japan 2026</div><div class="ov-accent-sub">April 15\u201329 \u00b7 15 days</div></div><div class="ov-accent-right" id="ovCd">'+cdHtml()+'</div></div><div class="ov-accent-stripe" id="ovJapanTime">'+japanTimeHtml()+'</div></div>'
     +todayPlanHtml
     +'<div class="ov-section-label">The route<span class="ov-section-label-sub">5 cities \u00b7 15 days</span></div><div class="ov-route">'+journeyHtml+'</div>'
     +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">View detailed day-by-day plan \u2192</button></div>'
