@@ -62,12 +62,14 @@ const TRIP_END   = new Date('2026-04-29T23:59:59');
 const T_DEPART   = new Date('2026-04-15T11:20:00-07:00');
 const T_ARRIVE   = new Date('2026-04-16T15:05:00+09:00');
 
+// NOTE: Use Date constructor (not date-only ISO strings) so these are local midnight,
+// not UTC midnight. new Date('2026-04-15') parses as UTC and shows as Apr 14 in PDT.
 const DAY_DATES = {
-  apr15:new Date('2026-04-15'), apr16:new Date('2026-04-16'), apr17:new Date('2026-04-17'),
-  apr18:new Date('2026-04-18'), apr19:new Date('2026-04-19'), apr20:new Date('2026-04-20'),
-  apr21:new Date('2026-04-21'), apr22:new Date('2026-04-22'), apr23:new Date('2026-04-23'),
-  apr24:new Date('2026-04-24'), apr25:new Date('2026-04-25'), apr26:new Date('2026-04-26'),
-  apr27:new Date('2026-04-27'), apr28:new Date('2026-04-28'), apr29:new Date('2026-04-29'),
+  apr15:new Date(2026,3,15), apr16:new Date(2026,3,16), apr17:new Date(2026,3,17),
+  apr18:new Date(2026,3,18), apr19:new Date(2026,3,19), apr20:new Date(2026,3,20),
+  apr21:new Date(2026,3,21), apr22:new Date(2026,3,22), apr23:new Date(2026,3,23),
+  apr24:new Date(2026,3,24), apr25:new Date(2026,3,25), apr26:new Date(2026,3,26),
+  apr27:new Date(2026,3,27), apr28:new Date(2026,3,28), apr29:new Date(2026,3,29),
 };
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -218,7 +220,11 @@ function updateTripStatus(){
   const el=$('tripStatus'); if(!el)return;
   const now=new Date(), todayId=getTodayDayId();
   if(now<T_DEPART){
-    const d=Math.floor((T_DEPART-now)/86400000);
+    // Compare calendar dates (local midnight) so "1 day" shows correctly even when
+    // <24h remain but departure is still on the next calendar day.
+    const todayMid=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const departMid=new Date(2026,3,15);
+    const d=Math.round((departMid-todayMid)/86400000);
     if(d>0) el.innerHTML='Trip starts in <strong>'+d+' day'+(d===1?'':'s')+'</strong>';
     else el.innerHTML='<strong>Departing today</strong>';
   }else if(now>TRIP_END){
@@ -1071,9 +1077,15 @@ const CAT_COLORS={food:'#E91E8C',transport:'#4A90D9',sightseeing:'#8B5CF6',night
 function cdHtml(){
   const now=new Date(), DAY=86400000, pad=n=>String(n).padStart(2,'0');
   if(now<T_DEPART){
-    const ms=T_DEPART-now, d=Math.floor(ms/DAY);
+    const ms=T_DEPART-now;
+    // Use calendar-day diff (local midnight) so "Tomorrow" and day counts are correct
+    // even when <24h remain but departure is still on the next calendar day.
+    // Math.floor(ms/DAY) would give 0 for ~22h and wrongly show the live timer.
+    const todayMid=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const departMid=new Date(2026,3,15); // April 15 local midnight
+    const d=Math.round((departMid-todayMid)/DAY);
     if(d>1) return '<span class="ov-cd-num">'+d+'</span><span class="ov-cd-label">days until departure</span><span class="ov-cd-sub">Apr 15 \u00b7 LAX 11:20 AM</span>';
-    if(d===1){const h=Math.floor((ms%DAY)/3600000);return '<span class="ov-cd-num">Tomorrow</span><span class="ov-cd-sub">'+h+'h until departure</span>';}
+    if(d===1){const h=Math.floor(ms/3600000);return '<span class="ov-cd-num">Tomorrow</span><span class="ov-cd-sub">'+h+'h until departure</span>';}
     const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);
     return '<span class="ov-cd-num" style="font-size:36px">'+pad(h)+':'+pad(m)+':'+pad(s)+'</span><span class="ov-cd-label">until departure</span>';
   }
@@ -1165,7 +1177,11 @@ function renderOverview(){
     +'<div class="family-strip"><div class="hotel-grid">'+hotelGrid+'</div></div>';
 
   if(ovTimer)clearInterval(ovTimer);
-  const closeToDepart=now<T_DEPART&&(T_DEPART-now)<86400000;
+  // Only use 1-second ticking on the actual departure day (d===0); "Tomorrow" only needs hourly updates
+  const todayMidCd=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const departMidCd=new Date(2026,3,15);
+  const daysLeftCd=Math.round((departMidCd-todayMidCd)/86400000);
+  const closeToDepart=now<T_DEPART&&daysLeftCd===0;
   ovTimer=setInterval(()=>{
     const c=$('ovCd');if(c)c.innerHTML=cdHtml();
     const jt=$('ovJapanTime');if(jt)jt.innerHTML=japanTimeHtml();
