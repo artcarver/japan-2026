@@ -57,6 +57,10 @@ let editExpId      = null;
 const expandedItems = new Set(); // tracks which activity items are expanded in-place
 
 // ── Trip dates ────────────────────────────────────────────────
+// Set PHOTOS_URL to your shared Google Photos album link.
+// Leave empty ('') to hide the photos card on the Overview.
+const PHOTOS_URL = '';
+
 const TRIP_START = new Date('2026-04-15T00:00:00');
 const TRIP_END   = new Date('2026-04-29T23:59:59');
 const T_DEPART   = new Date('2026-04-15T11:20:00-07:00');
@@ -1165,9 +1169,19 @@ function renderOverview(){
       +'</div>';
   }
 
+  // Photos card — only rendered when PHOTOS_URL is set
+  const photosHtml=PHOTOS_URL
+    ?'<a class="ov-photos-card" href="'+ea(PHOTOS_URL)+'" target="_blank" rel="noopener">'
+      +'<span class="ov-photos-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span>'
+      +'<span class="ov-photos-text"><span class="ov-photos-label">Photos from Japan</span><span class="ov-photos-sub">See what Gwen &amp; Christina are up to</span></span>'
+      +'<span class="ov-photos-arrow">\u2192</span>'
+      +'</a>'
+    :'';
+
   el.innerHTML=
     '<div class="ov-accent"><div class="ov-accent-inner"><div class="ov-accent-left"><div class="ov-accent-byline">Gwendalynn \u0026 Christina</div><div class="ov-accent-title">Japan 2026</div><div class="ov-accent-sub">April 15\u201329 \u00b7 15 days</div></div><div class="ov-accent-right" id="ovCd">'+cdHtml()+'</div></div><div class="ov-accent-stripe" id="ovJapanTime">'+japanTimeHtml()+'</div></div>'
     +todayPlanHtml
+    +photosHtml
     +'<div class="ov-section-label">The route<span class="ov-section-label-sub">5 cities \u00b7 15 days</span></div><div class="ov-route">'+journeyHtml+'</div>'
     +'<div class="ov-cta-row"><button class="ov-cta" onclick="switchTab(\'itinerary\')">View detailed day-by-day plan \u2192</button></div>'
     +'<div class="ov-section-label" style="margin-top:32px">Flights</div>'
@@ -1195,13 +1209,22 @@ function renderItinerary(){
   const hasPast=Object.keys(DAYS).some(id=>getDayClass(id)==='past');
   const toolbar=hasPast?'<div class="itin-toolbar"><button class="past-toggle-btn" id="pastToggleBtn">'+(hidePastDays?'Show past days':'Hide past days')+'</button></div>':'';
 
+  const todayExists=!!getTodayDayId();
+  const viewerHintText=todayExists
+    ? "<strong>Today's plan is open below.</strong> Tap any other day to see what's planned."
+    : 'Tap any day to see the full schedule, maps, and details.';
+  const viewerHint='<div class="viewer-hint">'
+    +'<span class="viewer-hint-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>'
+    +'<span class="viewer-hint-text">'+viewerHintText+'</span>'
+    +'</div>';
+
   const sections=GROUPS.map((g,i)=>{
     const vis=g.ids.filter(id=>!(hidePastDays&&getDayClass(id)==='past'));
     if(!vis.length)return '';
     return '<div class="dest-section" id="section-'+i+'"><div class="dest-header"><span class="dest-name">'+esc(g.label)+'</span><span class="dest-dates-label">'+esc(g.dates)+'</span></div>'+vis.map(id=>renderDay(DAYS[id])).join('')+'</div>';
   }).join('');
 
-  el.innerHTML=toolbar+sections;
+  el.innerHTML=viewerHint+toolbar+sections;
 
   el.querySelectorAll('.day-header').forEach(h=>{
     h.addEventListener('click',()=>{
@@ -2431,7 +2454,7 @@ auth.onAuthStateChanged(async user=>{
     refreshAllPanels();
   }else{
     document.body.classList.remove('edit-mode');
-    if(btn){btn.classList.remove('signed-in');btn.textContent='Sign in';}
+    if(btn){btn.classList.remove('signed-in');btn.textContent='Editor login';}
     $('expFab')?.classList.add('hidden');
     updateTabVisibility(false);
     unsubscribeExpenses(); unsubDays();

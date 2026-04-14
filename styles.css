@@ -14,8 +14,8 @@
   /* Text */
   --text:       #16120C;
   --muted:      #4A4541;
-  --light:      #7A736C;
-  --xlight:     #A8A29C;
+  --light:      #605A54;   /* was #7A736C — bumped to ~5.5:1 on card bg */
+  --xlight:     #767069;   /* was #A8A29C — bumped to ~4.7:1 on card bg */
 
   /* Borders */
   --border:     #D8D0C6;
@@ -80,9 +80,8 @@ body.dark {
   --today-bg:   #1A1C28;
   --text:       #E8EAED;
   --muted:      #9AA0A6;
-  --light:      #7A8085;
-  --xlight:     #4A4E52;
-  --border:     #3C4043;
+  --light:      #8C9196;   /* was #7A8085 — improved contrast on dark card */
+  --xlight:     #7A7F84;   /* was #4A4E52 — was nearly invisible on dark bg */
   --border-lt:  #282C30;
   --red-bg:     #221510;
   --green-bg:   #0D1F18;
@@ -104,8 +103,8 @@ body.dark {
     --today-bg:   #1A1C28;
     --text:       #E8EAED;
     --muted:      #9AA0A6;
-    --light:      #7A8085;
-    --xlight:     #4A4E52;
+    --light:      #8C9196;
+    --xlight:     #7A7F84;
     --border:     #3C4043;
     --border-lt:  #282C30;
     --red-bg:     #221510;
@@ -559,7 +558,7 @@ a.hotel-cell-phone:hover { text-decoration: underline; }
 .day-card.today .day-header:hover { background: var(--today-bg); }
 
 .day-header-left { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; flex: 1; min-width: 0; }
-.day-date { font-family: var(--mono); font-size: var(--fs-xs); color: var(--xlight); white-space: nowrap; letter-spacing: 0; flex-shrink: 0; }
+.day-date { font-family: var(--sans); font-size: var(--fs-xs); color: var(--xlight); white-space: nowrap; letter-spacing: 0; flex-shrink: 0; }
 .day-title-wrap { min-width: 0; }
 .day-title { font-size: var(--fs-base); font-weight: var(--fw-medium); color: var(--text); line-height: 1.3; }
 .day-card.past .day-title { color: var(--light); font-weight: var(--fw-normal); }
@@ -571,7 +570,7 @@ a.hotel-cell-phone:hover { text-decoration: underline; }
 }
 .day-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .day-count { font-size: var(--fs-xs); color: var(--xlight); }
-.day-toggle { font-size: var(--fs-xs); color: var(--light); transition: transform var(--speed); }
+.day-toggle { font-size: 16px; color: var(--xlight); transition: transform var(--speed); }
 
 .day-body {
   display: grid;
@@ -1657,7 +1656,7 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; }
   .dest-pills { padding: 6px 14px; justify-content: flex-start; }
   .top-tabs { padding: 0 14px; }
   .header-inner { padding: 8px 14px; }
-  .trip-status { display: none; }
+  .trip-status { font-size: var(--fs-xs); }
   .logo-serif { font-size: var(--fs-sm); }
   .day-card.expanded .day-body-inner { padding: 6px 12px 12px; }
   .timeline { padding-left: 16px; }
@@ -1725,3 +1724,41 @@ body.dark .act[data-cat="shopping"]    .act-dot { background: #FBBF24; }
   white-space: nowrap;
 }
 .pack-progress-text span { color: var(--red); font-weight: var(--fw-bold); }
+
+/* ════════════════════════════════════════════════
+   PHOTOS CARD — overview link to shared album
+════════════════════════════════════════════════ */
+.ov-photos-card {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 14px 18px;
+  margin-bottom: 20px; box-shadow: var(--sh);
+  text-decoration: none; color: inherit;
+  transition: border-color var(--speed), box-shadow var(--speed);
+}
+.ov-photos-card:hover { border-color: var(--red); box-shadow: var(--sh-lg); }
+.ov-photos-icon {
+  width: 40px; height: 40px; border-radius: var(--r);
+  background: var(--red-bg); color: var(--red);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ov-photos-text { flex: 1; min-width: 0; }
+.ov-photos-label { font-size: var(--fs-base); font-weight: var(--fw-medium); color: var(--text); }
+.ov-photos-sub { font-size: var(--fs-sm); color: var(--muted); margin-top: 2px; }
+.ov-photos-arrow { color: var(--red); flex-shrink: 0; font-size: var(--fs-lg); }
+
+/* ════════════════════════════════════════════════
+   VIEWER HINT — itinerary tap affordance
+════════════════════════════════════════════════ */
+.viewer-hint {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border-lt);
+  border-radius: var(--r-lg); padding: 11px 16px;
+  margin-bottom: 16px; box-shadow: var(--sh);
+}
+.viewer-hint-icon { color: var(--red); flex-shrink: 0; }
+.viewer-hint-text { font-size: var(--fs-sm); color: var(--muted); line-height: 1.4; }
+.viewer-hint-text strong { color: var(--text); font-weight: var(--fw-medium); }
+/* Hide for editors — they already know the UI */
+body.edit-mode .viewer-hint { display: none; }
