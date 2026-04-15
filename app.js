@@ -2133,7 +2133,7 @@ function renderBudget(){
     html+=prebookedHtml+expensesHtml;
   }
   html+='<div style="height:40px"></div>';
-html += '<div style="padding: 0 16px 40px 16px;"><button class="budget-add-btn" onclick="openSettleModal()" style="background:#2ecc71; border-color:#2ecc71; width:100%; height:52px; font-size:16px; font-weight:700; border-radius:12px; box-shadow:0 4px 15px rgba(46,204,113,0.25)">\u2713 Settle Up / Repayment</button></div>';
+html += '<div style="display:flex; justify-content:center; padding-bottom:40px;"><button class="budget-add-btn" onclick="openSettleModal()" style="background:#2ecc71; border-color:#2ecc71; width:auto; height:auto; padding:8px 24px; font-size:13px; font-weight:600; opacity:0.9;">Settle Up</button></div>';
   el.innerHTML=html;
 
   // ── Event listeners ──
