@@ -2113,7 +2113,6 @@ function renderBudget(){
   // ── Build on-trip expenses section HTML ──
   let expensesHtml='<div class="exp-section">'
     +'<div class="exp-list-hd"><span class="exp-list-title">On-trip expenses</span>'
-     +'<button class="budget-add-btn" onclick="openSettleModal()" style="background:var(--green); border-color:var(--green); margin-right:8px; font-size:11px; padding:4px 8px; width:auto; height:auto;">Settle Up</button>'
     +'<button class="budget-add-btn" id="budgetAddBtn">+ Add expense</button></div>';
   expensesHtml+='<div class="exp-filter-row">'
     +'<button class="exp-filter-btn'+(expFilter==='all'?' active':'')+'" data-filter="all">All'+(expTotal>0?' <span class="efb-total">'+fmt(expTotal)+'</span>':'')+'</button>';
@@ -2134,7 +2133,7 @@ function renderBudget(){
     html+=prebookedHtml+expensesHtml;
   }
   html+='<div style="height:40px"></div>';
-
+html += '<div style="padding: 0 16px 40px 16px;"><button class="budget-add-btn" onclick="openSettleModal()" style="background:#2ecc71; border-color:#2ecc71; width:100%; height:52px; font-size:16px; font-weight:700; border-radius:12px; box-shadow:0 4px 15px rgba(46,204,113,0.25)">\u2713 Settle Up / Repayment</button></div>';
   el.innerHTML=html;
 
   // ── Event listeners ──
@@ -2336,20 +2335,7 @@ async function saveExpense(){
   }
 }
 $('expSaveBtn')?.addEventListener('click',saveExpense);
-window.openSettleModal = function() {
-  openExpenseModal();
-  if($('expModalTitle')) $('expModalTitle').textContent = 'Settle Up / Repayment';
-  if($('expNote')) $('expNote').value = 'Repayment / Settlement';
-  selectedCat = 'settlement';
-  // If you are Gwen, this repayment is for Christina; if you are Christina, it's for Gwen.
-  selectedFor = (selectedPayer === 'gwen') ? 'christina' : 'gwen';
-  
-  // Refresh the UI chips in the modal
-  document.querySelectorAll('#expCatChips .chip').forEach(c => c.classList.toggle('active', c.dataset.cat === 'settlement'));
-  document.querySelectorAll('#expForChips .chip').forEach(c => c.classList.toggle('active', c.dataset.for === selectedFor));
-  
-  if($('expAmount')) $('expAmount').focus();
-};
+
 // ── Expense Firestore ─────────────────────────────────────────
 function subscribeExpenses(){
   if(expUnsub)expUnsub();
