@@ -2748,3 +2748,34 @@ fetchRate();
 
 setInterval(updateClock,30000);
 setInterval(updateTripStatus,60000);
+window.openSettleModal = function() {
+  openExpenseModal();
+  const isUSD = (budgetCur === 'USD');
+  if($('expModalTitle')) $('expModalTitle').textContent = isUSD ? 'Settle Up ($ USD)' : 'Settle Up (¥ JPY)';
+  if($('expNote')) $('expNote').value = 'Settlement repayment (' + (isUSD ? 'USD' : 'JPY') + ')';
+  
+  selectedCat = 'settlement';
+  // If you are logged in, the person you are paying is the "Other" person
+  selectedFor = (selectedPayer === 'gwen') ? 'christina' : 'gwen';
+  
+  document.querySelectorAll('#expCatChips .chip').forEach(c => c.classList.toggle('active', c.dataset.cat === 'settlement'));
+  document.querySelectorAll('#expForChips .chip').forEach(c => c.classList.toggle('active', c.dataset.for === selectedFor));
+
+  // This interceptor converts USD to JPY right before the standard save function runs
+  const btn = $('expSaveBtn');
+  if (!btn._settleWired) {
+    const intercept = () => {
+      if (selectedCat === 'settlement' && budgetCur === 'USD') {
+        const usdVal = parseFloat($('expAmount').value);
+        if (usdVal && !isNaN(usdVal)) {
+           $('expAmount').value = Math.round(usdVal * exchRate);
+        }
+      }
+    };
+    btn.addEventListener('mousedown', intercept, { capture: true });
+    window.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') intercept();
+    }, { capture: true });
+    btn._settleWired = true;
+  }
+};
