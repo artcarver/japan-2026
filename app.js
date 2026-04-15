@@ -1395,7 +1395,7 @@ function renderFsItem(dayId,act,isEdit){
 
   if(isSub)return '<div class="act sub-item"><div class="act-time"></div><div class="act-body"><div class="act-sub">'+esc(act.title)+'</div></div></div>';
 
-  const hasDetails=!!(act.notes||act.dur||act.addr);
+  const hasDetails=!!(act.notes||act.dur);
   const isExp=expandedItems.has(act.id);
   const dragAttr=isEdit?' draggable="true" data-act-id="'+ea(act.id)+'" data-day-id="'+ea(dayId)+'"':'';
 
@@ -1406,8 +1406,7 @@ function renderFsItem(dayId,act,isEdit){
     const meta=metaParts.length?'<div class="act-detail-meta">'+metaParts.join('')+'</div>':'';
     const notesLines=(act.notes||'').split('\n').filter(Boolean);
     const notesHtml=notesLines.map(l=>'<div class="act-detail-notes">'+esc(l)+'</div>').join('');
-    const mapLink=act.addr?'<a class="act-detail-map" href="https://maps.google.com/?q='+encodeURIComponent(act.addr)+'" target="_blank" rel="noopener">View on map \u2197</a>':'';
-    detailHtml='<div class="act-detail"><div class="act-detail-inner"><div class="act-detail-body">'+meta+notesHtml+mapLink+'</div></div></div>';
+    detailHtml='<div class="act-detail"><div class="act-detail-inner"><div class="act-detail-body">'+meta+notesHtml+'</div></div></div>';
   }
 
   const clickable=hasDetails;
@@ -1441,7 +1440,7 @@ function renderStaticItem(item,dayId,isEdit){
   if(isSub)return '<div class="act sub-item"><div class="act-time"></div><div class="act-body"><div class="act-sub">'+esc(item.text||'')+'</div></div></div>';
 
   const conf=item.type==='booked'?findConfForItem(item.text):null;
-  const hasDetails=!!(item.notes||item.dur||item.addr||conf);
+  const hasDetails=!!(item.notes||item.dur||conf);
   const itemId=dayId+'-s-'+(item.time||'x').replace(/[:\s]/g,'')+'-'+(item.text||'').replace(/\s/g,'').slice(0,8);
   const isExp=expandedItems.has(itemId);
 
@@ -1452,8 +1451,7 @@ function renderStaticItem(item,dayId,isEdit){
     const meta=metaParts.length?'<div class="act-detail-meta">'+metaParts.join('')+'</div>':'';
     const notesLines=((item.notes||'')+(conf?'\n'+conf:'')).split('\n').filter(Boolean);
     const notesHtml=notesLines.map(l=>'<div class="act-detail-notes">'+esc(l)+'</div>').join('');
-    const mapLink=item.addr?'<a class="act-detail-map" href="https://maps.google.com/?q='+encodeURIComponent(item.addr)+'" target="_blank" rel="noopener">View on map \u2197</a>':'';
-    detailHtml='<div class="act-detail"><div class="act-detail-inner"><div class="act-detail-body">'+meta+notesHtml+mapLink+'</div></div></div>';
+    detailHtml='<div class="act-detail"><div class="act-detail-inner"><div class="act-detail-body">'+meta+notesHtml+'</div></div></div>';
   }
 
   const clickAttr=hasDetails?' onclick="toggleActExpand(\''+itemId+'\',event)"':'';
@@ -2042,8 +2040,8 @@ function renderBudget(){
     +'</div>';
 
   // ── Section 2: Settlement ──
-  html+='<div class="settle-wrap">'\
-    +'<div class="settle-hd"><span class="settle-title">Settlement</span></div>'\
+  html+='<div class="settle-wrap">'
+    +'<div class="settle-hd"><span class="settle-title">Settlement</span></div>'
     +'<div class="settle-body">';
 
   // Settlement result banner
