@@ -398,7 +398,7 @@ header {
 
 /* Overnight cities - strong presence */
 .ov-stop-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
-.ov-stop-city { font-family: var(--serif); font-size: var(--fs-2xl); font-weight: var(--fw-normal); color: var(--text); }
+.ov-stop-city { font-family: var(--serif); font-size: var(--fs-xl); font-weight: var(--fw-normal); color: var(--text); }
 .ov-stop-dates { font-size: var(--fs-base); color: var(--light); }
 .ov-stop-hotel { font-size: var(--fs-base); color: var(--text); font-weight: var(--fw-medium); margin-bottom: 12px; line-height: 1.5; }
 .ov-stop-hotel strong { color: var(--text); font-weight: var(--fw-bold); }
@@ -551,7 +551,7 @@ a.hotel-cell-phone:hover { text-decoration: underline; }
 
 .day-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 18px; cursor: pointer; user-select: none; gap: 12px;
+  padding: 14px 18px; cursor: pointer; user-select: none; gap: 12px;
   transition: background var(--speed);
 }
 .day-header:hover { background: var(--bg); }
@@ -570,7 +570,7 @@ a.hotel-cell-phone:hover { text-decoration: underline; }
 }
 .day-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .day-count { font-size: var(--fs-xs); color: var(--xlight); }
-.day-toggle { font-size: 20px; color: var(--light); transition: transform var(--speed); }
+.day-toggle { font-size: 18px; color: var(--light); transition: transform var(--speed); }
 
 .day-body {
   display: grid;
@@ -609,14 +609,14 @@ a.hotel-cell-phone:hover { text-decoration: underline; }
 .period-label {
   font-size: var(--fs-sm); font-weight: var(--fw-medium); letter-spacing: 0.04em;
   text-transform: uppercase; color: var(--muted);
-  padding: 14px 0 6px 0;
+  padding: 10px 0 5px 0;
 }
 .period:first-child .period-label { padding-top: 4px; }
 
 /* Activity rows */
 .act {
   position: relative;
-  display: flex; gap: 10px; padding: 10px 0;
+  display: flex; gap: 10px; padding: 7px 0;
   align-items: flex-start;
 }
 .act-time {
@@ -754,19 +754,6 @@ body.edit-mode .act.expanded .act-edit-inline { display: inline-block; }
   margin-top: 4px; line-height: 1.5;
 }
 .inline-conf.show { display: block; }
-
-/* Day tip */
-.day-tip {
-  margin-top: 10px; padding: 8px 10px;
-  background: var(--amber-bg); border-left: 3px solid var(--amber-bd);
-  border-radius: 0 var(--r) var(--r) 0;
-  font-size: var(--fs-xs); line-height: 1.5;
-}
-.day-tip-label {
-  font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.06em;
-  color: var(--amber); margin-bottom: 1px; font-size: 10px;
-}
-.day-tip-text { color: var(--muted); }
 
 /* Notes section */
 .notes-section { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-lt); }
