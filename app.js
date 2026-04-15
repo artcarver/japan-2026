@@ -59,7 +59,7 @@ const expandedItems = new Set(); // tracks which activity items are expanded in-
 // ── Trip dates ────────────────────────────────────────────────
 // Set PHOTOS_URL to your shared Google Photos album link.
 // Leave empty ('') to hide the photos card on the Overview.
-const PHOTOS_URL = '';
+const PHOTOS_URL = 'https://photos.app.goo.gl/sjhg5uZhKtqkrLd89';
 
 const TRIP_START = new Date('2026-04-15T00:00:00');
 const TRIP_END   = new Date('2026-04-29T23:59:59');
