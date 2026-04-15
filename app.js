@@ -1317,7 +1317,6 @@ function renderDay(d){
   const isEdit=!!currentUser;
 
   const dateId=dayIdToDate(d.id), fsDay=firestoreDays[dateId];
-  const tip=fsDay?.tip||d.tip||'';
   let bodyContent='';
 
   // Expand all button
@@ -1337,7 +1336,6 @@ function renderDay(d){
 
   // Tip and notes go outside the timeline
   let afterTimeline='';
-  if(tip)afterTimeline+='<div class="day-tip"><div class="day-tip-label">Tip</div><div class="day-tip-text">'+esc(tip)+'</div></div>';
 
   if(isEdit){
     afterTimeline+='<div class="notes-section">'
@@ -1535,7 +1533,7 @@ function initSortable(dayId){
 window.openAddAct=function(dayId){
   editActDayId=dayId; editActId=null;
   $('actModalTitle').textContent='Add activity';
-  ['actTime','actTitle','actNotes','actCost','actPhoto'].forEach(id=>$(id)&&($(id).value=''));
+  ['actTime','actTitle','actNotes','actCost'].forEach(id=>$(id)&&($(id).value=''));
   if($('actCategory'))$('actCategory').value='activity';
   if($('actCurrency'))$('actCurrency').value='JPY';
   if($('actBooked'))$('actBooked').checked=false;
@@ -1555,7 +1553,6 @@ window.openEditAct=function(dayId,actId){
   if($('actNotes'))   $('actNotes').value=act.notes||'';
   if($('actCost'))    $('actCost').value=act.cost||'';
   if($('actCurrency'))$('actCurrency').value=act.currency||'JPY';
-  if($('actPhoto'))   $('actPhoto').value=act.driveUrl||'';
   if($('actBooked'))  $('actBooked').checked=!!act.booked;
   $('actErr')?.classList.add('hidden');
   openModal('activityModal');
@@ -1591,7 +1588,7 @@ async function saveActivity(){
       notes:$('actNotes')?.value.trim()||'',
       cost:parseFloat($('actCost')?.value)||0,
       currency:$('actCurrency')?.value||'JPY',
-      driveUrl:$('actPhoto')?.value.trim()||'',
+      driveUrl:'',
       booked:!!$('actBooked')?.checked,
       order:acts.length,
     };
