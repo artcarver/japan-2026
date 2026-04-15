@@ -611,13 +611,16 @@ const DAYS = {
     {label:'Late Morning',items:[
       {time:'9:30 AM',text:'JR Sagano Line \u2192 Saga-Arashiyama',
        notes:'~25 min \u00b7 \u00a5240/person (~$2)'},
-      {time:'10:00 AM',text:'Arashiyama Bamboo Grove',dur:'~45 min',
+      {time:'10:00 AM',text:'Arashiyama Bamboo Grove',dur:'~30 min',
        notes:'Still manageable at 10 AM on a weekday. Towering bamboo on both sides \u2014 genuinely otherworldly.',
        addr:'Arashiyama Bamboo Grove, Sagatenryuji, Ukyo-ku, Kyoto'},
-      {time:'10:45 AM',text:'Tenryu-ji Temple',dur:'~45 min',cost:500,
+      {time:'10:30 AM',text:'Saihoji \u00b7 Kokedera Moss Garden',type:'booked',dur:'~1 hr',
+       notes:'Visit reg: R194503 \u00b7 Account: S122042\nPresent QR code at entrance \u00b7 passport required\nBus from Arashiyama: Kyoto Bus toward Kokedera, 3 stops (~10 min) OR short taxi\nNichi-nichi Sanpai \u2014 prayer calligraphy before garden walk',
+       addr:'Saihoji Temple Kokedera, Matsuo Jingatanicho, Nishikyo-ku, Kyoto'},
+      {time:'12:00 PM',text:'Tenryu-ji Temple',dur:'~45 min',cost:500,
        notes:'UNESCO site. Beautiful strolling garden with pond \u2014 mountain backdrop is quintessential Kyoto.',
        addr:'Tenryu-ji, 68 Sagatenryuji Susukinobabacho, Ukyo-ku, Kyoto'},
-      {time:'11:30 AM',text:'Togetsukyo Bridge',
+      {time:'12:45 PM',text:'Togetsukyo Bridge',
        notes:'Iconic bridge over the Oi River. Good views of the mountains from the riverbank.',
        addr:'Togetsukyo Bridge, Sagatenryuji, Ukyo-ku, Kyoto'},
     ]},
@@ -709,7 +712,7 @@ const DAYS = {
       {time:'10:00 AM',text:'Check out Hotel Granvia Kyoto',type:'booked',
        notes:'Conf: #23151SF060529'},
       {time:'10:37 AM',text:'Thunder-Bird 15 \u00b7 Kyoto \u2192 Tsuruga',type:'booked',cost:7720,
-       notes:'Res: 47842 \u00b7 Receipt ID: ADN1766K \u00b7 ¥15,440 total for 2\nCar 4, Seats 10-A & 10-B \u00b7 Arrives Tsuruga 11:30 \u00b7 9-min transfer\nPick up physical tickets at JR West machine before boarding \u00b7 bring Visa ending 2990 + 4-digit PIN'},
+       notes:'Res: 47842 \u00b7 Receipt ID: ADN1766K\nCar 4, Seats 10-A & 10-B \u00b7 Arrives Tsuruga 11:30 \u00b7 9-min transfer\nPick up physical tickets at JR West machine before boarding \u00b7 bring Visa ending 2990 + 4-digit PIN'},
       {time:'11:39 AM',text:'Tsurugi 16 \u00b7 Tsuruga \u2192 Kanazawa',type:'booked',sub:true,
        notes:'Car 7, Seats 9-D & 9-E \u00b7 Arrives Kanazawa 12:36'},
     ]},
@@ -764,7 +767,7 @@ const DAYS = {
       {time:'8:30 AM',text:'Check out \u00b7 by 8:30 AM',
        notes:'Hotel checkout is by 11:00 AM but train departs 9:07 \u2014 check out early and walk to Kanazawa Station (~10 min)'},
       {time:'9:07 AM',text:'Kagayaki 506 \u00b7 Kanazawa \u2192 Tokyo',type:'booked',cost:15000,
-       notes:'Res: 41398 \u00b7 Receipt ID: ADN1800K \u00b7 \u00a530,000 total for 2\nCar 7, Seats 5-D & 5-E \u00b7 Arrives Tokyo 11:36 \u00b7 Non-stop ~2.5 hrs\nPick up physical tickets at JR West machine before boarding \u00b7 bring Visa ending 2990 + 4-digit PIN'},
+       notes:'Res: 41398 \u00b7 Receipt ID: ADN1800K\nCar 7, Seats 5-D & 5-E \u00b7 Arrives Tokyo 11:36 \u00b7 Non-stop ~2.5 hrs\nPick up physical tickets at JR West machine before boarding \u00b7 bring Visa ending 2990 + 4-digit PIN'},
     ]},
     {label:'Afternoon',items:[
       {time:'2:30 PM',text:'Hamarikyu Gardens',dur:'~1 hr',cost:300,
@@ -830,6 +833,7 @@ const OVERVIEW_DATA = [
   {city:'Kyoto',dates:'Apr 22\u201326',nights:4,dayIds:['apr22','apr23','apr24','apr25'],hotel:'Hotel Granvia Kyoto \u00b7 connected to Kyoto Station',phone:'+81-75-344-8888',
    highlights:[
      {text:'Fushimi Inari at 6 AM \u2014 10,000 vermilion torii gates, empty at dawn',star:true,url:'https://inari.jp/en/'},
+     {text:'Saihoji (Kokedera) \u2014 serene moss garden with 120+ varieties, advance reservation required',star:true},
      {text:'Arashiyama bamboo grove \u2014 towering stalks swaying overhead',star:true},
      {text:'Gion at dusk \u2014 wooden alleyways, lantern glow, chance to spot a geiko'},
      {text:"Philosopher's Path \u2014 2 km canal walk lined with cherry trees"},
@@ -936,16 +940,41 @@ const CONFIRMATIONS = {
       {k:'Seats',v:'Car 11, Seat 10-D & 10-E'},
       {k:'Boarding',v:'QR-Ticket (display from Smart EX app)'},
     ]},
+    {name:'Saihoji (Kokedera Moss Garden) \u00b7 Apr 23',number:{label:'Visit registration ID',val:'R194503'},rows:[
+      {k:'Date',v:'Thursday April 23, 2026 at 10:30 AM'},
+      {k:'Account ID',v:'S122042',mono:true},
+      {k:'Category',v:'Non-member \u00b7 Nichi-nichi Sanpai'},
+      {k:'Guests',v:'2 adults'},
+      {k:'Entry',v:'Present QR code at reception \u00b7 photo ID required for every visitor'},
+      {k:'Address',v:'56, Matsuo Jingatanicho, Nishikyo-ku, Kyoto 615-8286',addr:'Saihoji Temple Kokedera, Matsuo Jingatanicho, Nishikyo-ku, Kyoto'},
+      {k:'Access',v:'3-min walk from Kokedera bus stop (Kyoto Bus) \u00b7 ~30-min taxi from Kyoto Station (~\u00a54,000)'},
+      {k:'Note',v:'Date and time cannot be changed. Cancel via into Saihoji My Page if needed.'},
+    ]},
+    {name:'Thunder-Bird 15 + Tsurugi 16 \u00b7 Kyoto \u2192 Kanazawa',number:{label:'Reservation No.',val:'47842'},rows:[
+      {k:'Date',v:'Sunday April 26, 2026'},
+      {k:'Leg 1',v:'Thunder-Bird 15 \u00b7 Kyoto 10:37 \u2192 Tsuruga 11:30'},
+      {k:'Seats (Leg 1)',v:'Car 4, Seat 10-A (Gwendalynn) \u00b7 Seat 10-B (Christina)'},
+      {k:'Transfer',v:'Tsuruga \u00b7 9-minute transfer to platform'},
+      {k:'Leg 2',v:'Tsurugi 16 \u00b7 Tsuruga 11:39 \u2192 Kanazawa 12:36'},
+      {k:'Seats (Leg 2)',v:'Car 7, Seat 9-D (Gwendalynn) \u00b7 Seat 9-E (Christina)'},
+      {k:'Receipt ID',v:'ADN1766K',mono:true},
+      {k:'Fare',v:'\u00a530,880 total (\u00a515,440/person) \u00b7 JR-West'},
+      {k:'Pickup',v:'Physical credit card + 4-digit ID required at JR-West ticket machine'},
+    ]},
+    {name:'Kagayaki 506 \u00b7 Kanazawa \u2192 Tokyo',number:{label:'Reservation No.',val:'41398'},rows:[
+      {k:'Date',v:'Tuesday April 28, 2026'},
+      {k:'Route',v:'Kanazawa 9:07 AM \u2192 Tokyo 11:36 AM'},
+      {k:'Train',v:'Kagayaki 506 \u00b7 Reserved seat \u00b7 Non-Smoking'},
+      {k:'Seats',v:'Car 7, Seat 5-D (Gwendalynn) \u00b7 Seat 5-E (Christina)'},
+      {k:'Receipt ID',v:'ADN1800K',mono:true},
+      {k:'Fare',v:'\u00a530,000 total (\u00a515,000/person) \u00b7 JR-West'},
+      {k:'Pickup',v:'Physical credit card + 4-digit ID required at JR-West ticket machine'},
+    ]},
   ],
 };
 
 const URGENT = [
-  {id:'u1',label:'Book Thunderbird Limited Express \u2014 Kyoto \u2192 Kanazawa',
-   sub:'Apr 26 \u00b7 ~\u00a57,120/person \u00b7 fills up on weekends \u00b7 book at smart-ex.jp or JR ticket office',
-   link:'https://smart-ex.jp/en/',linkLabel:'Book at smart-ex.jp \u2197'},
-  {id:'u2',label:'Book Hokuriku Shinkansen \u2014 Kanazawa \u2192 Tokyo',
-   sub:'Apr 28 \u00b7 ~\u00a514,120/person \u00b7 Kagayaki is fastest (no stops) \u00b7 ~2.5 hrs',
-   link:'https://smart-ex.jp/en/',linkLabel:'Book at smart-ex.jp \u2197'},
+  // All urgent items resolved — both train reservations confirmed.
 ];
 
 const BOOKED_LIST = [
@@ -956,7 +985,10 @@ const BOOKED_LIST = [
   {id:'b05',label:'Tensui Saryo Ryokan, Hakone',                sub:'2 nights \u00b7 Apr 20\u201322 \u00b7 Res: IK1516984808'},
   {id:'b06',label:'Shinkansen HIKARI 637 \u2014 Odawara \u2192 Kyoto', sub:'Apr 22 \u00b7 10:11 AM \u00b7 Res: 2002 \u00b7 Car 11, 10-D & 10-E'},
   {id:'b07',label:'Hotel Granvia Kyoto',                        sub:'4 nights \u00b7 Apr 22\u201326 \u00b7 Conf: #23151SF060529'},
+  {id:'b0s',label:'Saihoji (Kokedera Moss Garden)',             sub:'Apr 23 \u00b7 10:30 AM \u00b7 Visit reg: R194503'},
   {id:'b08',label:'Hotel Intergate Kanazawa',                   sub:'2 nights \u00b7 Apr 26\u201328 \u00b7 Conf: 20260125110822242'},
+  {id:'b10',label:'Thunder-Bird 15 + Tsurugi 16 \u2014 Kyoto \u2192 Kanazawa', sub:'Apr 26 \u00b7 10:37 AM \u00b7 Res: 47842 \u00b7 Car 4 + Car 7'},
+  {id:'b11',label:'Kagayaki 506 \u2014 Kanazawa \u2192 Tokyo',          sub:'Apr 28 \u00b7 9:07 AM \u00b7 Res: 41398 \u00b7 Car 7, 5-D & 5-E'},
   {id:'b09',label:'Quintessa Hotel Tokyo Ginza',                sub:'1 night \u00b7 Apr 28\u201329 \u00b7 Conf: 6519361226'},
 ];
 
@@ -1065,7 +1097,7 @@ function DEFAULT_BOOKED_COSTS_fn(){
     {id:'bc5',label:'Tensui Saryo Ryokan \u00b7 2 nights',    category:'Hotels',    jpy:126340, usd:794,  paidBy:'gwen', dates:'Apr 20\u201322', purchased:'Jan 22, 2026'},
     {id:'bc6',label:'Shinkansen HIKARI 637',                  category:'Transport', jpy:23800,  usd:150,  paidBy:'gwen', dates:'Apr 22', purchased:'Mar 20, 2026'},
     {id:'bc7',label:'Hotel Granvia Kyoto \u00b7 4 nights',    category:'Hotels',    jpy:268256, usd:1686, paidBy:'gwen', dates:'Apr 22\u201326', purchased:'Jan 25, 2026'},
-    {id:'bc10',label:'Thunder-Bird 15 + Tsurugi 16 \u00b7 Kyoto \u2192 Kanazawa', category:'Transport', jpy:15440, usd:97, paidBy:'gwen', dates:'Apr 26', purchased:'Mar 27, 2026'},
+    {id:'bc10',label:'Thunder-Bird 15 + Tsurugi 16 \u00b7 Kyoto \u2192 Kanazawa', category:'Transport', jpy:30880, usd:194, paidBy:'gwen', dates:'Apr 26', purchased:'Mar 27, 2026'},
     {id:'bc8',label:'Hotel Intergate Kanazawa \u00b7 2 nights',category:'Hotels',   jpy:39004,  usd:245,  paidBy:'gwen', dates:'Apr 26\u201328', purchased:'Jan 25, 2026'},
     {id:'bc11',label:'Kagayaki 506 \u00b7 Kanazawa \u2192 Tokyo', category:'Transport', jpy:30000, usd:189, paidBy:'gwen', dates:'Apr 28', purchased:'Mar 27, 2026'},
     {id:'bc9',label:'Quintessa Hotel Ginza \u00b7 1 night',   category:'Hotels',    jpy:24713,  usd:155,  paidBy:'gwen', dates:'Apr 28\u201329', purchased:'Jan 25, 2026'},
@@ -1363,14 +1395,13 @@ function renderFsItem(dayId,act,isEdit){
 
   if(isSub)return '<div class="act sub-item"><div class="act-time"></div><div class="act-body"><div class="act-sub">'+esc(act.title)+'</div></div></div>';
 
-  const hasDetails=!!(act.notes||act.cost>0||act.dur||act.addr);
+  const hasDetails=!!(act.notes||act.dur||act.addr);
   const isExp=expandedItems.has(act.id);
   const dragAttr=isEdit?' draggable="true" data-act-id="'+ea(act.id)+'" data-day-id="'+ea(dayId)+'"':'';
 
   let detailHtml='';
   if(hasDetails){
     const metaParts=[];
-    if(act.cost>0)metaParts.push('<span class="act-detail-cost">\u00a5'+Math.round(act.cost).toLocaleString()+'</span>');
     if(act.dur)metaParts.push('<span class="act-detail-dur">'+esc(act.dur)+'</span>');
     const meta=metaParts.length?'<div class="act-detail-meta">'+metaParts.join('')+'</div>':'';
     const notesLines=(act.notes||'').split('\n').filter(Boolean);
@@ -1387,7 +1418,6 @@ function renderFsItem(dayId,act,isEdit){
   // Inline meta visible even when collapsed
   const inlineParts=[];
   if(act.dur)inlineParts.push('<span class="act-inline-dur">'+esc(act.dur)+'</span>');
-  if(act.cost>0)inlineParts.push('<span class="act-inline-cost">\u00a5'+Math.round(act.cost).toLocaleString()+'</span>');
   const inlineMeta=inlineParts.length?'<div class="act-inline-meta">'+inlineParts.join('')+'</div>':'';
 
   return '<div class="act'+(isExp?' expanded':'')+(isBooked?' booked':'')+(clickable?' clickable':'')+'" data-cat="'+ea(cat)+'" data-item-id="'+ea(act.id)+'"'+dragAttr+clickAttr+'>'
@@ -1411,14 +1441,13 @@ function renderStaticItem(item,dayId,isEdit){
   if(isSub)return '<div class="act sub-item"><div class="act-time"></div><div class="act-body"><div class="act-sub">'+esc(item.text||'')+'</div></div></div>';
 
   const conf=item.type==='booked'?findConfForItem(item.text):null;
-  const hasDetails=!!(item.notes||item.cost>0||item.dur||item.addr||conf);
+  const hasDetails=!!(item.notes||item.dur||item.addr||conf);
   const itemId=dayId+'-s-'+(item.time||'x').replace(/[:\s]/g,'')+'-'+(item.text||'').replace(/\s/g,'').slice(0,8);
   const isExp=expandedItems.has(itemId);
 
   let detailHtml='';
   if(hasDetails){
     const metaParts=[];
-    if(item.cost>0)metaParts.push('<span class="act-detail-cost">\u00a5'+Math.round(item.cost).toLocaleString()+'</span>');
     if(item.dur)metaParts.push('<span class="act-detail-dur">'+esc(item.dur)+'</span>');
     const meta=metaParts.length?'<div class="act-detail-meta">'+metaParts.join('')+'</div>':'';
     const notesLines=((item.notes||'')+(conf?'\n'+conf:'')).split('\n').filter(Boolean);
@@ -1433,7 +1462,6 @@ function renderStaticItem(item,dayId,isEdit){
   // Inline meta visible even when collapsed
   const siParts=[];
   if(item.dur)siParts.push('<span class="act-inline-dur">'+esc(item.dur)+'</span>');
-  if(item.cost>0)siParts.push('<span class="act-inline-cost">\u00a5'+Math.round(item.cost).toLocaleString()+'</span>');
   const siMeta=siParts.length?'<div class="act-inline-meta">'+siParts.join('')+'</div>':'';
 
   return '<div class="act'+(isExp?' expanded':'')+(item.type==='booked'?' booked':'')+(hasDetails?' clickable':'')+'" data-cat="'+icat+'" data-item-id="'+itemId+'"'+clickAttr+'>'
@@ -1981,23 +2009,46 @@ function renderBudget(){
     +'<div class="cur-toggle"><button class="cur-btn'+(budgetCur==='JPY'?' active':'')+'" data-cur="JPY">\u00a5 JPY</button><button class="cur-btn'+(budgetCur==='USD'?' active':'')+'" data-cur="USD">$ USD</button></div>'
     +'</div></div>';
 
-  // ── Section 1: Overview totals ──
-  html+='<div class="b-top-row">'
-    +'<div class="b-total-card"><div class="b-total-label">Total trip cost</div><div class="b-total-val">'+fmt(grandTotal)+'</div>'
-    +'<div class="b-total-sub">'+(isUSD?'\u00a5'+Math.round(grandTotal).toLocaleString()+' JPY':'~$'+Math.round(grandTotal/exchRate).toLocaleString()+' USD')+'</div>'
-    +'<div class="b-total-breakdown"><span>Pre-booked '+fmt(bookedTotal)+'</span><span>On-trip '+fmt(expTotal)+'</span></div></div>'
-    +'<div class="b-share-card"><div class="b-share-label">Gwen\'s fair share</div><div class="b-share-val">'+fmt(gwenFairShare)+'</div><div class="b-share-sub">'+(gwenFairShare===christinaFairShare?'50/50 split':'includes personal items')+'</div></div>'
-    +'<div class="b-share-card"><div class="b-share-label">Christina\'s fair share</div><div class="b-share-val">'+fmt(christinaFairShare)+'</div><div class="b-share-sub">'+(gwenFairShare===christinaFairShare?'50/50 split':'includes personal items')+'</div></div>'
+  // ── Section 1: Per-person balance cards (Splitwise-style) ──
+  const gwenBalance=gwenPaid-gwenFairShare; // + means she's owed, - means she owes
+  const christinaBalance=christinaPaid-christinaFairShare;
+  function balanceLabel(b){ return b>0?fmt(b)+' to collect':b<0?fmt(Math.abs(b))+' to pay':'Settled up'; }
+  function balanceClass(b){ return b>0?'b-bal-positive':b<0?'b-bal-negative':'b-bal-even'; }
+
+  html+='<div class="b-balance-row">';
+  // Gwen card
+  html+='<div class="b-balance-card"><div class="b-balance-person"><div class="b-avatar b-avatar-g">G</div><span class="b-balance-name">Gwendalynn</span></div>'
+    +'<div class="b-balance-stats">'
+    +'<div class="b-balance-stat"><span class="b-bal-stat-lbl">Paid</span><span class="b-bal-stat-val">'+fmt(gwenPaid)+'</span></div>'
+    +'<div class="b-balance-stat"><span class="b-bal-stat-lbl">Fair share</span><span class="b-bal-stat-val">'+fmt(gwenFairShare)+'</span></div>'
+    +'</div>'
+    +'<div class="b-balance-result '+balanceClass(gwenBalance)+'">'+balanceLabel(gwenBalance)+'</div>'
+    +'</div>';
+  // Christina card
+  html+='<div class="b-balance-card"><div class="b-balance-person"><div class="b-avatar b-avatar-c">C</div><span class="b-balance-name">Christina</span></div>'
+    +'<div class="b-balance-stats">'
+    +'<div class="b-balance-stat"><span class="b-bal-stat-lbl">Paid</span><span class="b-bal-stat-val">'+fmt(christinaPaid)+'</span></div>'
+    +'<div class="b-balance-stat"><span class="b-bal-stat-lbl">Fair share</span><span class="b-bal-stat-val">'+fmt(christinaFairShare)+'</span></div>'
+    +'</div>'
+    +'<div class="b-balance-result '+balanceClass(christinaBalance)+'">'+balanceLabel(christinaBalance)+'</div>'
+    +'</div>';
+  html+='</div>'; // end b-balance-row
+
+  // Total trip cost strip
+  html+='<div class="b-grand-strip">'
+    +'<span class="b-grand-label">Total trip cost</span>'
+    +'<span class="b-grand-val">'+fmt(grandTotal)+'</span>'
+    +'<span class="b-grand-sub">'+(isUSD?'\u00a5'+Math.round(grandTotal).toLocaleString()+' JPY':'~$'+Math.round(grandTotal/exchRate).toLocaleString()+' USD')+' \u00b7 Pre-booked '+fmt(bookedTotal)+' + On-trip '+fmt(expTotal)+'</span>'
     +'</div>';
 
   // ── Section 2: Settlement ──
-  html+='<div class="settle-wrap">'
-    +'<div class="settle-hd"><span class="settle-title">Settlement</span></div>'
+  html+='<div class="settle-wrap">'\
+    +'<div class="settle-hd"><span class="settle-title">Settlement</span></div>'\
     +'<div class="settle-body">';
 
   // Settlement result banner
   if(Math.round(settlement)===0){
-    html+='<div class="settle-result settle-even">All settled up -- no one owes anything.</div>';
+    html+='<div class="settle-result settle-even">All settled up \u2014 no one owes anything.</div>';
   }else if(christinaOwes>0){
     html+='<div class="settle-result settle-owes">'
       +'<div class="settle-arrow"><div class="b-avatar b-avatar-c" style="width:24px;height:24px;font-size:11px">C</div>'
@@ -2015,23 +2066,29 @@ function renderBudget(){
       +'<div class="b-avatar b-avatar-c" style="width:24px;height:24px;font-size:11px">C</div></div>'
       +'<div class="settle-result-text">Gwendalynn owes Christina <strong>'+fmt(gwenOwes)+'</strong></div></div>';
   }
-
-  // Detailed ledger
-  html+='<div class="settle-ledger">'
-    +'<div class="settle-ledger-hd"><span>Who paid</span><span>Category</span><span>Amount</span></div>';
-  ledgerLines.forEach(l=>{
-    const isG=l.who==='Gwendalynn';
-    html+='<div class="settle-ledger-row">'
-      +'<span class="settle-who"><span class="b-avatar '+(isG?'b-avatar-g':'b-avatar-c')+'" style="width:20px;height:20px;font-size:10px">'+(isG?'G':'C')+'</span>'+esc(l.who)+'</span>'
-      +'<span class="settle-type">'+esc(l.type)+'</span>'
-      +'<span class="settle-amt">'+fmt(l.amount)+'</span></div>';
-  });
-  html+='<div class="settle-ledger-row settle-ledger-total">'
-    +'<span class="settle-who">Total paid</span><span></span><span class="settle-amt">'+fmt(gwenPaid+christinaPaid)+'</span></div>';
-  html+='<div class="settle-ledger-row"><span class="settle-who"><span class="b-avatar b-avatar-g" style="width:20px;height:20px;font-size:10px">G</span>Gwen\'s fair share</span><span></span><span class="settle-amt">'+fmt(gwenFairShare)+'</span></div>';
-  html+='<div class="settle-ledger-row"><span class="settle-who"><span class="b-avatar b-avatar-c" style="width:20px;height:20px;font-size:10px">C</span>Christina\'s fair share</span><span></span><span class="settle-amt">'+fmt(christinaFairShare)+'</span></div>';
-  html+='</div>'; // end ledger
   html+='</div></div>'; // end settle-body, settle-wrap
+
+  // ── Section 3: Category breakdown chart ──
+  const allCatTotals={};
+  bookedCosts.forEach(c=>{const cat=(c.category||'Other').toLowerCase();allCatTotals[cat]=(allCatTotals[cat]||0)+(c.jpy||0);});
+  expenses.forEach(e=>{const cat=(e.category||'other').toLowerCase();allCatTotals[cat]=(allCatTotals[cat]||0)+(e.amount||0);});
+  const catChartOrder=['flights','hotels','transport','activities','food','shopping','sightseeing','nightlife','nature','other'];
+  const catColors={'flights':'#4A90D9','hotels':'#8B5CF6','transport':'#3B82F6','activities':'#10B981','food':'#F59E0B','shopping':'#EC4899','sightseeing':'#C0392B','nightlife':'#8A5A70','nature':'#2E7D5B','other':'#9CA3AF'};
+  const catMax=Math.max(...Object.values(allCatTotals),1);
+  const catRows=catChartOrder.filter(c=>allCatTotals[c]>0).map(c=>{
+    const pct=Math.round((allCatTotals[c]/grandTotal)*100);
+    const barW=Math.round((allCatTotals[c]/catMax)*100);
+    const label=c.charAt(0).toUpperCase()+c.slice(1);
+    return '<div class="b-chart-row">'
+      +'<span class="b-chart-label">'+label+'</span>'
+      +'<div class="b-chart-track"><div class="b-chart-bar" style="width:'+barW+'%;background:'+catColors[c]+'"></div></div>'
+      +'<span class="b-chart-pct">'+pct+'%</span>'
+      +'<span class="b-chart-amt">'+fmt(allCatTotals[c])+'</span>'
+      +'</div>';
+  }).join('');
+  if(catRows){
+    html+='<div class="b-chart-wrap"><div class="b-chart-title">Spending by category</div>'+catRows+'</div>';
+  }
 
   // ── Build pre-booked section HTML ──
   let prebookedHtml='<div class="b-table-wrap"><div class="b-table-hd"><span class="b-table-title">Pre-booked costs</span>'
