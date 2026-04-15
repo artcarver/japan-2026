@@ -1104,7 +1104,7 @@ function DEFAULT_BOOKED_COSTS_fn(){
   ];
 }
 const CAT_COLORS={food:'#E91E8C',transport:'#4A90D9',sightseeing:'#8B5CF6',nightlife:'#EC4899',nature:'#10B981',shopping:'#F39C12',activities:'#27AE60',other:'#8E8E8E'};
-
+CAT_COLORS.settlement = '#2ecc71';
 
 // ═══════════════════════════════════════════════════════════
 // RENDER FUNCTIONS
@@ -2113,6 +2113,7 @@ function renderBudget(){
   // ── Build on-trip expenses section HTML ──
   let expensesHtml='<div class="exp-section">'
     +'<div class="exp-list-hd"><span class="exp-list-title">On-trip expenses</span>'
+     +'<button class="budget-add-btn" onclick="openSettleModal()" style="background:var(--green); border-color:var(--green); margin-right:8px; font-size:11px; padding:4px 8px; width:auto; height:auto;">Settle Up</button>'
     +'<button class="budget-add-btn" id="budgetAddBtn">+ Add expense</button></div>';
   expensesHtml+='<div class="exp-filter-row">'
     +'<button class="exp-filter-btn'+(expFilter==='all'?' active':'')+'" data-filter="all">All'+(expTotal>0?' <span class="efb-total">'+fmt(expTotal)+'</span>':'')+'</button>';
@@ -2335,7 +2336,20 @@ async function saveExpense(){
   }
 }
 $('expSaveBtn')?.addEventListener('click',saveExpense);
-
+window.openSettleModal = function() {
+  openExpenseModal();
+  if($('expModalTitle')) $('expModalTitle').textContent = 'Settle Up / Repayment';
+  if($('expNote')) $('expNote').value = 'Repayment / Settlement';
+  selectedCat = 'settlement';
+  // If you are Gwen, this repayment is for Christina; if you are Christina, it's for Gwen.
+  selectedFor = (selectedPayer === 'gwen') ? 'christina' : 'gwen';
+  
+  // Refresh the UI chips in the modal
+  document.querySelectorAll('#expCatChips .chip').forEach(c => c.classList.toggle('active', c.dataset.cat === 'settlement'));
+  document.querySelectorAll('#expForChips .chip').forEach(c => c.classList.toggle('active', c.dataset.for === selectedFor));
+  
+  if($('expAmount')) $('expAmount').focus();
+};
 // ── Expense Firestore ─────────────────────────────────────────
 function subscribeExpenses(){
   if(expUnsub)expUnsub();
