@@ -1127,7 +1127,7 @@ function cdHtml(){
   }
   if(now>=T_DEPART&&now<T_ARRIVE)return '<span class="ov-cd-num" style="font-size:36px">\u2708</span><span class="ov-cd-label">In the air!</span><span class="ov-cd-sub">UA39 \u2192 arriving Apr 16</span>';
   if(now>TRIP_END)return '<span class="ov-cd-num">Home</span><span class="ov-cd-label">Apr 15\u201329, 2026</span>';
-  const dayNum=Math.min(Math.floor((now-T_ARRIVE)/DAY)+1,15);
+  const dayNum=Math.min(Math.floor((now-TRIP_START)/DAY)+1,15);
   const todayId=getTodayDayId(), d=DAYS[todayId];
   return '<span class="ov-live-dot"></span><span class="ov-cd-num">'+dayNum+'<span class="ov-cd-den">/15</span></span><span class="ov-cd-label">In Japan</span>'+(d?'<span class="ov-cd-sub">'+esc(d.location.split('\u00b7')[0].trim())+'</span>':'');
 }
